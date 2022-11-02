@@ -1,0 +1,11 @@
+{
+    "com.webos.service.mediarecorder.group":[
+        "com.webos.service.mediarecorder/load",
+        "com.webos.service.mediarecorder/unload",
+        "com.webos.service.mediarecorder/play",
+        "com.webos.service.mediarecorder/startRecord",
+        "com.webos.service.mediarecorder/stopRecord",
+        "com.webos.service.mediarecorder/takeSnapshot"
+    ]
+}
+
