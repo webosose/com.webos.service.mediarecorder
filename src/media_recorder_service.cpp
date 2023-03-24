@@ -14,7 +14,9 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#include <media_recorder_service.h>
+#define LOG_TAG "MediaRecorderService"
+#include "media_recorder_service.h"
+#include "log.h"
 
 const std::string service = "com.webos.service.mediarecorder";
 
@@ -40,7 +42,7 @@ bool MediaRecorderService::load(LSMessage &message)
 {
     bool ret      = false;
     auto *payload = LSMessageGetPayload(&message);
-    PMLOG_INFO(CONST_MODULE_MEDIA_RECORDER, "payload %s", payload);
+    PLOGI("payload %s", payload);
 
     pbnjson::JValue reply = pbnjson::Object();
     if (reply.isNull())
@@ -58,7 +60,7 @@ bool MediaRecorderService::unload(LSMessage &message)
 {
     bool ret      = false;
     auto *payload = LSMessageGetPayload(&message);
-    PMLOG_INFO(CONST_MODULE_MEDIA_RECORDER, "payload %s", payload);
+    PLOGI("payload %s", payload);
 
     pbnjson::JValue reply = pbnjson::Object();
     if (reply.isNull())
@@ -75,7 +77,7 @@ bool MediaRecorderService::play(LSMessage &message)
 {
     bool ret      = false;
     auto *payload = LSMessageGetPayload(&message);
-    PMLOG_INFO(CONST_MODULE_MEDIA_RECORDER, "payload %s", payload);
+    PLOGI("payload %s", payload);
 
     pbnjson::JValue reply = pbnjson::Object();
     if (reply.isNull())
@@ -92,7 +94,7 @@ bool MediaRecorderService::startRecord(LSMessage &message)
 {
     bool ret      = false;
     auto *payload = LSMessageGetPayload(&message);
-    PMLOG_INFO(CONST_MODULE_MEDIA_RECORDER, "payload %s", payload);
+    PLOGI("payload %s", payload);
 
     std::string location;
     std::string format;
@@ -159,7 +161,7 @@ bool MediaRecorderService::stopRecord(LSMessage &message)
 {
     bool ret      = false;
     auto *payload = LSMessageGetPayload(&message);
-    PMLOG_INFO(CONST_MODULE_MEDIA_RECORDER, "payload %s", payload);
+    PLOGI("payload %s", payload);
 
     pbnjson::JValue reply = pbnjson::Object();
     if (reply.isNull())
@@ -176,7 +178,7 @@ bool MediaRecorderService::takeSnapshot(LSMessage &message)
 {
     bool ret      = false;
     auto *payload = LSMessageGetPayload(&message);
-    PMLOG_INFO(CONST_MODULE_MEDIA_RECORDER, "payload %s", payload);
+    PLOGI("payload %s", payload);
 
     std::string location;
 

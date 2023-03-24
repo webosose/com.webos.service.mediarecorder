@@ -48,7 +48,7 @@ webos_add_compiler_flags(ALL ${PBNJSON_CPP_CFLAGS_OTHER})
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
 
-include_directories(${CMAKE_SOURCE_DIR}/src)
+include_directories(${CMAKE_SOURCE_DIR}/include)
 
 set(SRCS ${CMAKE_SOURCE_DIR}/src/media_recorder_service.cpp)
 
