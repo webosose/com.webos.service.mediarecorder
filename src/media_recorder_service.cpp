@@ -17,6 +17,10 @@
 #define LOG_TAG "MediaRecorderService"
 #include "media_recorder_service.h"
 #include "log.h"
+#include <nlohmann/json.hpp>
+#include <string>
+
+using namespace nlohmann;
 
 const std::string service = "com.webos.service.mediarecorder";
 
@@ -44,14 +48,11 @@ bool MediaRecorderService::load(LSMessage &message)
     auto *payload = LSMessageGetPayload(&message);
     PLOGI("payload %s", payload);
 
-    pbnjson::JValue reply = pbnjson::Object();
-    if (reply.isNull())
-        return false;
-
-    reply.put("returnValue", ret);
+    json jin;
+    jin["returnValue"] = ret;
 
     LS::Message request(&message);
-    request.respond(reply.stringify().c_str());
+    request.respond(to_string(jin).c_str());
 
     return true;
 }
@@ -62,13 +63,11 @@ bool MediaRecorderService::unload(LSMessage &message)
     auto *payload = LSMessageGetPayload(&message);
     PLOGI("payload %s", payload);
 
-    pbnjson::JValue reply = pbnjson::Object();
-    if (reply.isNull())
-        return false;
-    reply.put("returnValue", ret);
+    json jin;
+    jin["returnValue"] = ret;
 
     LS::Message request(&message);
-    request.respond(reply.stringify().c_str());
+    request.respond(to_string(jin).c_str());
 
     return true;
 }
@@ -79,13 +78,11 @@ bool MediaRecorderService::play(LSMessage &message)
     auto *payload = LSMessageGetPayload(&message);
     PLOGI("payload %s", payload);
 
-    pbnjson::JValue reply = pbnjson::Object();
-    if (reply.isNull())
-        return false;
-    reply.put("returnValue", ret);
+    json jin;
+    jin["returnValue"] = ret;
 
     LS::Message request(&message);
-    request.respond(reply.stringify().c_str());
+    request.respond(to_string(jin).c_str());
 
     return true;
 }
@@ -96,63 +93,11 @@ bool MediaRecorderService::startRecord(LSMessage &message)
     auto *payload = LSMessageGetPayload(&message);
     PLOGI("payload %s", payload);
 
-    std::string location;
-    std::string format;
-    bool audio;
-    std::string audioSrc;
+    json jin;
+    jin["returnValue"] = ret;
 
-    pbnjson::JValue parsed = pbnjson::JDomParser::fromString(payload);
-
-    if (parsed.hasKey("location"))
-    {
-        location = parsed["location"].asString().c_str();
-    }
-    else
-    {
-        location = "/media/internal/";
-    }
-
-    if (parsed.hasKey("format"))
-    {
-        format = parsed["format"].asString().c_str();
-    }
-    else
-    {
-        format = "MP4";
-    }
-
-    if (parsed.hasKey("audio"))
-    {
-        parsed["audio"].asBool(audio);
-    }
-    else
-    {
-        audio = false;
-    }
-
-    if (parsed.hasKey("audioSrc"))
-    {
-        audioSrc = parsed["audioSrc"].asString().c_str();
-    }
-    else
-    {
-        audioSrc = "pcm_input";
-    }
-
-    pbnjson::JValue reply = pbnjson::Object();
-    if (reply.isNull())
-        return false;
-
-    reply.put("returnValue", ret);
-    if (ret == true)
-    {
-        reply.put("location", location);
-        reply.put("format", format);
-        reply.put("audio", audio);
-        reply.put("audioSrc", audioSrc);
-    }
     LS::Message request(&message);
-    request.respond(reply.stringify().c_str());
+    request.respond(to_string(jin).c_str());
 
     return true;
 }
@@ -163,13 +108,11 @@ bool MediaRecorderService::stopRecord(LSMessage &message)
     auto *payload = LSMessageGetPayload(&message);
     PLOGI("payload %s", payload);
 
-    pbnjson::JValue reply = pbnjson::Object();
-    if (reply.isNull())
-        return false;
-    reply.put("returnValue", ret);
+    json jin;
+    jin["returnValue"] = ret;
 
     LS::Message request(&message);
-    request.respond(reply.stringify().c_str());
+    request.respond(to_string(jin).c_str());
 
     return true;
 }
@@ -180,31 +123,11 @@ bool MediaRecorderService::takeSnapshot(LSMessage &message)
     auto *payload = LSMessageGetPayload(&message);
     PLOGI("payload %s", payload);
 
-    std::string location;
-
-    pbnjson::JValue parsed = pbnjson::JDomParser::fromString(payload);
-
-    if (parsed.hasKey("location"))
-    {
-        location = parsed["location"].asString().c_str();
-    }
-    else
-    {
-        location = "/media/internal/";
-    }
-
-    pbnjson::JValue reply = pbnjson::Object();
-    if (reply.isNull())
-        return false;
-
-    reply.put("returnValue", ret);
-    if (ret == true)
-    {
-        reply.put("location", location);
-    }
+    json jin;
+    jin["returnValue"] = ret;
 
     LS::Message request(&message);
-    request.respond(reply.stringify().c_str());
+    request.respond(to_string(jin).c_str());
 
     return true;
 }

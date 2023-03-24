@@ -42,10 +42,6 @@ pkg_check_modules(PMLOG REQUIRED PmLogLib)
 include_directories(${PMLOG_INCLUDE_DIRS})
 webos_add_compiler_flags(ALL ${PMLOG_CFLAGS_OTHER})
 
-pkg_check_modules(PBNJSON_CPP REQUIRED pbnjson_cpp)
-include_directories(${PBNJSON_CPP_INCLUDE_DIRS})
-webos_add_compiler_flags(ALL ${PBNJSON_CPP_CFLAGS_OTHER})
-
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
 
 include_directories(${CMAKE_SOURCE_DIR}/include)
@@ -58,7 +54,6 @@ SET (EXT_LIBS
     ${GLIB2_LDFLAGS}
     ${LUNASERVICE2_LDFLAGS}
     ${PMLOG_LDFLAGS}
-    ${PBNJSON_CPP_LDFLAGS}
 )
 
 target_link_libraries(${PROJECT_NAME} ${EXT_LIBS})

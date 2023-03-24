@@ -16,8 +16,6 @@
 
 #include "luna-service2/lunaservice.hpp"
 #include <glib.h>
-#include <pbnjson.hpp>
-#include <string>
 
 class MediaRecorderService : public LS::Handle
 {
