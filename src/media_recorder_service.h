@@ -14,55 +14,51 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#include <glib.h>
-#include <string>
+#include "PmLogLib.h"
 #include "luna-service2/lunaservice.hpp"
 #include <PmLog.h>
-#include "PmLogLib.h"
+#include <glib.h>
 #include <pbnjson.hpp>
+#include <string>
 
 #define CONST_MODULE_MEDIA_RECORDER "MediaRecorder"
 
 #define PMLOG_ERROR(module, args...) PmLogMsg(getCameraLunaPmLogContext(), Error, module, 0, ##args)
-#define PMLOG_INFO(module, FORMAT__, ...) \
-  PmLogInfo(getCameraLunaPmLogContext(), \
-  module, 0, "%s():%d " FORMAT__, __FUNCTION__, __LINE__, ##__VA_ARGS__)
-#define PMLOG_DEBUG(FORMAT__, ...) \
-  PmLogDebug(getCameraLunaPmLogContext(), \
-  "[%s:%d]" FORMAT__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__)
+#define PMLOG_INFO(module, FORMAT__, ...)                                                          \
+    PmLogInfo(getCameraLunaPmLogContext(), module, 0, "%s():%d " FORMAT__, __FUNCTION__, __LINE__, \
+              ##__VA_ARGS__)
+#define PMLOG_DEBUG(FORMAT__, ...)                                                                 \
+    PmLogDebug(getCameraLunaPmLogContext(), "[%s:%d]" FORMAT__, __PRETTY_FUNCTION__, __LINE__,     \
+               ##__VA_ARGS__)
 
 static inline PmLogContext getCameraLunaPmLogContext()
 {
-  static PmLogContext usLogContext = 0;
-  if (0 == usLogContext)
-  {
-    PmLogGetContext("camera", &usLogContext);
-  }
-  return usLogContext;
+    static PmLogContext usLogContext = 0;
+    if (0 == usLogContext)
+    {
+        PmLogGetContext("camera", &usLogContext);
+    }
+    return usLogContext;
 }
 
 class MediaRecorderService : public LS::Handle
 {
 private:
-using mainloop = std::unique_ptr<GMainLoop, void (*)(GMainLoop *)>;
-mainloop main_loop_ptr_ = {g_main_loop_new(nullptr, false), g_main_loop_unref};
+    using mainloop          = std::unique_ptr<GMainLoop, void (*)(GMainLoop *)>;
+    mainloop main_loop_ptr_ = {g_main_loop_new(nullptr, false), g_main_loop_unref};
 
 public:
-  MediaRecorderService();
+    MediaRecorderService();
 
-  MediaRecorderService(MediaRecorderService const &) = delete;
-  MediaRecorderService(MediaRecorderService &&) = delete;
-  MediaRecorderService &operator=(MediaRecorderService const &) = delete;
-  MediaRecorderService &operator=(MediaRecorderService &&) = delete;
+    MediaRecorderService(MediaRecorderService const &)            = delete;
+    MediaRecorderService(MediaRecorderService &&)                 = delete;
+    MediaRecorderService &operator=(MediaRecorderService const &) = delete;
+    MediaRecorderService &operator=(MediaRecorderService &&)      = delete;
 
-  bool load(LSMessage &message);
-  bool unload(LSMessage &message);
-  bool play(LSMessage &message);
-  bool startRecord(LSMessage &message);
-  bool stopRecord(LSMessage &message);
-  bool takeSnapshot(LSMessage &message);
-
+    bool load(LSMessage &message);
+    bool unload(LSMessage &message);
+    bool play(LSMessage &message);
+    bool startRecord(LSMessage &message);
+    bool stopRecord(LSMessage &message);
+    bool takeSnapshot(LSMessage &message);
 };
-
-
-

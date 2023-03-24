@@ -20,210 +20,203 @@ const std::string service = "com.webos.service.mediarecorder";
 
 MediaRecorderService::MediaRecorderService() : LS::Handle(LS::registerService(service.c_str()))
 {
-  LS_CATEGORY_BEGIN(MediaRecorderService, "/")
-  LS_CATEGORY_METHOD(load)
-  LS_CATEGORY_METHOD(unload)
-  LS_CATEGORY_METHOD(play)
-  LS_CATEGORY_METHOD(startRecord)
-  LS_CATEGORY_METHOD(stopRecord)
-  LS_CATEGORY_METHOD(takeSnapshot)
-  LS_CATEGORY_END;
+    LS_CATEGORY_BEGIN(MediaRecorderService, "/")
+    LS_CATEGORY_METHOD(load)
+    LS_CATEGORY_METHOD(unload)
+    LS_CATEGORY_METHOD(play)
+    LS_CATEGORY_METHOD(startRecord)
+    LS_CATEGORY_METHOD(stopRecord)
+    LS_CATEGORY_METHOD(takeSnapshot)
+    LS_CATEGORY_END;
 
-  // attach to mainloop and run it
-  attachToLoop(main_loop_ptr_.get());
+    // attach to mainloop and run it
+    attachToLoop(main_loop_ptr_.get());
 
     // run the gmainloop
-  g_main_loop_run(main_loop_ptr_.get());
-
-
+    g_main_loop_run(main_loop_ptr_.get());
 }
 
 bool MediaRecorderService::load(LSMessage &message)
 {
-  bool ret = false;
-  auto *payload = LSMessageGetPayload(&message);
-  PMLOG_INFO(CONST_MODULE_MEDIA_RECORDER, "payload %s", payload);
+    bool ret      = false;
+    auto *payload = LSMessageGetPayload(&message);
+    PMLOG_INFO(CONST_MODULE_MEDIA_RECORDER, "payload %s", payload);
 
-  pbnjson::JValue reply = pbnjson::Object();
-  if (reply.isNull())
-      return false;
+    pbnjson::JValue reply = pbnjson::Object();
+    if (reply.isNull())
+        return false;
 
-  reply.put("returnValue", ret);
+    reply.put("returnValue", ret);
 
-  LS::Message request(&message);
-  request.respond(reply.stringify().c_str());
+    LS::Message request(&message);
+    request.respond(reply.stringify().c_str());
 
-  return true;
-
+    return true;
 }
 
 bool MediaRecorderService::unload(LSMessage &message)
 {
-  bool ret = false;
-  auto *payload = LSMessageGetPayload(&message);
-  PMLOG_INFO(CONST_MODULE_MEDIA_RECORDER, "payload %s", payload);
+    bool ret      = false;
+    auto *payload = LSMessageGetPayload(&message);
+    PMLOG_INFO(CONST_MODULE_MEDIA_RECORDER, "payload %s", payload);
 
-  pbnjson::JValue reply = pbnjson::Object();
-  if (reply.isNull())
-      return false;
-  reply.put("returnValue", ret);
+    pbnjson::JValue reply = pbnjson::Object();
+    if (reply.isNull())
+        return false;
+    reply.put("returnValue", ret);
 
-  LS::Message request(&message);
-  request.respond(reply.stringify().c_str());
+    LS::Message request(&message);
+    request.respond(reply.stringify().c_str());
 
-  return true;
-
-
+    return true;
 }
 
 bool MediaRecorderService::play(LSMessage &message)
 {
-  bool ret = false;
-  auto *payload = LSMessageGetPayload(&message);
-  PMLOG_INFO(CONST_MODULE_MEDIA_RECORDER, "payload %s", payload);
+    bool ret      = false;
+    auto *payload = LSMessageGetPayload(&message);
+    PMLOG_INFO(CONST_MODULE_MEDIA_RECORDER, "payload %s", payload);
 
-  pbnjson::JValue reply = pbnjson::Object();
-  if (reply.isNull())
-      return false;
-  reply.put("returnValue", ret);
+    pbnjson::JValue reply = pbnjson::Object();
+    if (reply.isNull())
+        return false;
+    reply.put("returnValue", ret);
 
-  LS::Message request(&message);
-  request.respond(reply.stringify().c_str());
+    LS::Message request(&message);
+    request.respond(reply.stringify().c_str());
 
-  return true;
-
-
+    return true;
 }
 
 bool MediaRecorderService::startRecord(LSMessage &message)
 {
-  bool ret = false;
-  auto *payload = LSMessageGetPayload(&message);
-  PMLOG_INFO(CONST_MODULE_MEDIA_RECORDER, "payload %s", payload);
+    bool ret      = false;
+    auto *payload = LSMessageGetPayload(&message);
+    PMLOG_INFO(CONST_MODULE_MEDIA_RECORDER, "payload %s", payload);
 
-  std::string location;
-  std::string format;
-  bool audio;
-  std::string audioSrc;
+    std::string location;
+    std::string format;
+    bool audio;
+    std::string audioSrc;
 
-  pbnjson::JValue parsed = pbnjson::JDomParser::fromString(payload);
+    pbnjson::JValue parsed = pbnjson::JDomParser::fromString(payload);
 
-  if(parsed.hasKey("location")) {
-      location = parsed["location"].asString().c_str();
-  }
-  else
-  {
-    location = "/media/internal/";
-  }
+    if (parsed.hasKey("location"))
+    {
+        location = parsed["location"].asString().c_str();
+    }
+    else
+    {
+        location = "/media/internal/";
+    }
 
-  if(parsed.hasKey("format")) {
-      format = parsed["format"].asString().c_str();
-  }
-  else
-  {
-    format = "MP4";
-  }
+    if (parsed.hasKey("format"))
+    {
+        format = parsed["format"].asString().c_str();
+    }
+    else
+    {
+        format = "MP4";
+    }
 
-  if(parsed.hasKey("audio")) {
-      parsed["audio"].asBool(audio);
-  }
-  else
-  {
-    audio = false;
-  }
+    if (parsed.hasKey("audio"))
+    {
+        parsed["audio"].asBool(audio);
+    }
+    else
+    {
+        audio = false;
+    }
 
-  if(parsed.hasKey("audioSrc")) {
-      audioSrc = parsed["audioSrc"].asString().c_str();
-  }
-  else
-  {
-    audioSrc = "pcm_input";
-  }
+    if (parsed.hasKey("audioSrc"))
+    {
+        audioSrc = parsed["audioSrc"].asString().c_str();
+    }
+    else
+    {
+        audioSrc = "pcm_input";
+    }
 
-  pbnjson::JValue reply = pbnjson::Object();
-  if (reply.isNull())
-      return false;
+    pbnjson::JValue reply = pbnjson::Object();
+    if (reply.isNull())
+        return false;
 
-  reply.put("returnValue", ret);
-  if(ret == true){
-    reply.put("location", location);
-    reply.put("format", format);
-    reply.put("audio", audio);
-    reply.put("audioSrc", audioSrc);
-  }
-  LS::Message request(&message);
-  request.respond(reply.stringify().c_str());
+    reply.put("returnValue", ret);
+    if (ret == true)
+    {
+        reply.put("location", location);
+        reply.put("format", format);
+        reply.put("audio", audio);
+        reply.put("audioSrc", audioSrc);
+    }
+    LS::Message request(&message);
+    request.respond(reply.stringify().c_str());
 
-  return true;
-
+    return true;
 }
 
 bool MediaRecorderService::stopRecord(LSMessage &message)
 {
-  bool ret = false;
-  auto *payload = LSMessageGetPayload(&message);
-  PMLOG_INFO(CONST_MODULE_MEDIA_RECORDER, "payload %s", payload);
+    bool ret      = false;
+    auto *payload = LSMessageGetPayload(&message);
+    PMLOG_INFO(CONST_MODULE_MEDIA_RECORDER, "payload %s", payload);
 
-  pbnjson::JValue reply = pbnjson::Object();
-  if (reply.isNull())
-      return false;
-  reply.put("returnValue", ret);
+    pbnjson::JValue reply = pbnjson::Object();
+    if (reply.isNull())
+        return false;
+    reply.put("returnValue", ret);
 
-  LS::Message request(&message);
-  request.respond(reply.stringify().c_str());
+    LS::Message request(&message);
+    request.respond(reply.stringify().c_str());
 
-  return true;
-
-
+    return true;
 }
 
 bool MediaRecorderService::takeSnapshot(LSMessage &message)
 {
-  bool ret = false;
-  auto *payload = LSMessageGetPayload(&message);
-  PMLOG_INFO(CONST_MODULE_MEDIA_RECORDER, "payload %s", payload);
+    bool ret      = false;
+    auto *payload = LSMessageGetPayload(&message);
+    PMLOG_INFO(CONST_MODULE_MEDIA_RECORDER, "payload %s", payload);
 
-  std::string location;
+    std::string location;
 
-  pbnjson::JValue parsed = pbnjson::JDomParser::fromString(payload);
+    pbnjson::JValue parsed = pbnjson::JDomParser::fromString(payload);
 
-  if(parsed.hasKey("location")) {
-      location = parsed["location"].asString().c_str();
-  }
-  else
-  {
-    location = "/media/internal/";
-  }
+    if (parsed.hasKey("location"))
+    {
+        location = parsed["location"].asString().c_str();
+    }
+    else
+    {
+        location = "/media/internal/";
+    }
 
-  pbnjson::JValue reply = pbnjson::Object();
-  if (reply.isNull())
-      return false;
+    pbnjson::JValue reply = pbnjson::Object();
+    if (reply.isNull())
+        return false;
 
-  reply.put("returnValue", ret);
-  if(ret == true){
-    reply.put("location", location);
-  }
+    reply.put("returnValue", ret);
+    if (ret == true)
+    {
+        reply.put("location", location);
+    }
 
-  LS::Message request(&message);
-  request.respond(reply.stringify().c_str());
+    LS::Message request(&message);
+    request.respond(reply.stringify().c_str());
 
-  return true;
-
-
+    return true;
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     try
     {
-      MediaRecorderService mediaRecordService;
+        MediaRecorderService mediaRecordService;
     }
     catch (LS::Error &err)
     {
-      LSErrorPrint(err, stdout);
-      return 1;
+        LSErrorPrint(err, stdout);
+        return 1;
     }
     return 0;
-
 }
-
