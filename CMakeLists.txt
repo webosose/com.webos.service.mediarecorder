@@ -20,7 +20,7 @@ set(CMAKE_BUILD_TYPE Debug)
 
 include(webOS/webOS)
 webos_modules_init(1 6 3)
-webos_component(0 0 1)
+webos_component(1 0 0)
 
 include(FindPkgConfig)
 
@@ -40,12 +40,6 @@ pkg_check_modules(PBNJSON_CPP REQUIRED pbnjson_cpp)
 include_directories(${PBNJSON_CPP_INCLUDE_DIRS})
 webos_add_compiler_flags(ALL ${PBNJSON_CPP_CFLAGS_OTHER})
 
-pkg_check_modules(GSTREAMER gstreamer-1.0 REQUIRED)
-include_directories(${GSTREAMER_INCLUDE_DIRS})
-
-pkg_check_modules(GSTPLAYER gstreamer-player-1.0 REQUIRED)
-include_directories(${GSTPLAYER_INCLUDE_DIRS})
-
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
 
 include_directories(${CMAKE_SOURCE_DIR}/src)
@@ -59,9 +53,6 @@ SET (EXT_LIBS
     ${LUNASERVICE2_LDFLAGS}
     ${PMLOG_LDFLAGS}
     ${PBNJSON_CPP_LDFLAGS}
-    ${GSTREAMER_LIBRARIES}
-    ${GSTPLAYER_LIBRARIES}
-    media-recorder-client
 )
 
 target_link_libraries(${PROJECT_NAME} ${EXT_LIBS})

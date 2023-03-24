@@ -20,7 +20,6 @@
 #include <PmLog.h>
 #include "PmLogLib.h"
 #include <pbnjson.hpp>
-#include "cmp/media_recorder_client.h"
 
 #define CONST_MODULE_MEDIA_RECORDER "MediaRecorder"
 
@@ -48,8 +47,6 @@ private:
 using mainloop = std::unique_ptr<GMainLoop, void (*)(GMainLoop *)>;
 mainloop main_loop_ptr_ = {g_main_loop_new(nullptr, false), g_main_loop_unref};
 
-std::unique_ptr<cmp::pipeline::MediaRecorderClient> media_recorder_client_;
-
 public:
   MediaRecorderService();
 
@@ -57,8 +54,6 @@ public:
   MediaRecorderService(MediaRecorderService &&) = delete;
   MediaRecorderService &operator=(MediaRecorderService const &) = delete;
   MediaRecorderService &operator=(MediaRecorderService &&) = delete;
-
-  void Notify(const gint notification, const gint64 numValue, const gchar* strValue = nullptr, void* payload = nullptr);
 
   bool load(LSMessage &message);
   bool unload(LSMessage &message);

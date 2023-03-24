@@ -38,73 +38,6 @@ MediaRecorderService::MediaRecorderService() : LS::Handle(LS::registerService(se
 
 }
 
-
-void MediaRecorderService::Notify(const gint notification, const gint64 numValue,
-        const gchar *strValue, void *payload)
-{
-    switch (notification)
-    {
-        case CMP_NOTIFY_SOURCE_INFO:
-        {
-            PMLOG_DEBUG(CONST_MODULE_MEDIA_RECORDER,"sourceInfo\n");
-            break;
-        }
-        case CMP_NOTIFY_ERROR:
-        {
-            PMLOG_DEBUG(CONST_MODULE_MEDIA_RECORDER,"error\n");
-            break;
-        }
-        case CMP_NOTIFY_LOAD_COMPLETED:
-        {
-            PMLOG_DEBUG(CONST_MODULE_MEDIA_RECORDER,"loadCompleted\n");
-            break;
-        }
-
-        case CMP_NOTIFY_UNLOAD_COMPLETED:
-        {
-            PMLOG_DEBUG(CONST_MODULE_MEDIA_RECORDER,"unloadCompleted\n");
-            break;
-        }
-
-        case CMP_NOTIFY_END_OF_STREAM:
-        {
-            PMLOG_DEBUG(CONST_MODULE_MEDIA_RECORDER,"endOfStream\n");
-            break;
-        }
-
-        case CMP_NOTIFY_PLAYING:
-        {
-            PMLOG_DEBUG(CONST_MODULE_MEDIA_RECORDER,"playing\n");
-            break;
-        }
-
-        case CMP_NOTIFY_PAUSED:
-        {
-            PMLOG_DEBUG(CONST_MODULE_MEDIA_RECORDER,"paused\n");
-            break;
-        }
-        case CMP_NOTIFY_ACTIVITY: {
-            PMLOG_DEBUG(CONST_MODULE_MEDIA_RECORDER,"notifyActivity to resource requestor\n");
-            if (media_recorder_client_)
-                media_recorder_client_->NotifyActivity();
-            break;
-        }
-        case CMP_NOTIFY_ACQUIRE_RESOURCE: {
-            PMLOG_DEBUG(CONST_MODULE_MEDIA_RECORDER,"acquire_resource\n");
-            ACQUIRE_RESOURCE_INFO_T* info = static_cast<ACQUIRE_RESOURCE_INFO_T*>(payload);
-            info->result = false;
-            if (media_recorder_client_)
-                info->result = media_recorder_client_->AcquireResources(*(info->sourceInfo), info->displayMode, numValue);
-            break;
-        }
-        default:
-        {
-            PMLOG_DEBUG(CONST_MODULE_MEDIA_RECORDER,"This notification(%d) can't be handled here!\n", notification);
-            break;
-        }
-    }
-}
-
 bool MediaRecorderService::load(LSMessage &message)
 {
   bool ret = false;
@@ -114,15 +47,6 @@ bool MediaRecorderService::load(LSMessage &message)
   pbnjson::JValue reply = pbnjson::Object();
   if (reply.isNull())
       return false;
-
-  media_recorder_client_ = std::make_unique<cmp::pipeline::MediaRecorderClient>();
-
-  media_recorder_client_->RegisterCallback(
-      std::bind(&MediaRecorderService::Notify, this,
-      std::placeholders::_1, std::placeholders::_2,
-      std::placeholders::_3, std::placeholders::_4));
-
-  ret = media_recorder_client_->Load(payload);
 
   reply.put("returnValue", ret);
 
@@ -143,10 +67,6 @@ bool MediaRecorderService::unload(LSMessage &message)
   pbnjson::JValue reply = pbnjson::Object();
   if (reply.isNull())
       return false;
-
-  if (media_recorder_client_)
-    ret = media_recorder_client_->Unload();
-
   reply.put("returnValue", ret);
 
   LS::Message request(&message);
@@ -167,10 +87,6 @@ bool MediaRecorderService::play(LSMessage &message)
   pbnjson::JValue reply = pbnjson::Object();
   if (reply.isNull())
       return false;
-
-  if (media_recorder_client_)
-    ret = media_recorder_client_->Play();
-
   reply.put("returnValue", ret);
 
   LS::Message request(&message);
@@ -226,11 +142,6 @@ bool MediaRecorderService::startRecord(LSMessage &message)
     audioSrc = "pcm_input";
   }
 
-  if (media_recorder_client_)
-  {
-    ret = media_recorder_client_->StartRecord(location, format, audio, audioSrc);
-  }
-
   pbnjson::JValue reply = pbnjson::Object();
   if (reply.isNull())
       return false;
@@ -258,12 +169,6 @@ bool MediaRecorderService::stopRecord(LSMessage &message)
   pbnjson::JValue reply = pbnjson::Object();
   if (reply.isNull())
       return false;
-
-  if (media_recorder_client_)
-  {
-    ret = media_recorder_client_->StopRecord();
-  }
-
   reply.put("returnValue", ret);
 
   LS::Message request(&message);
@@ -290,12 +195,6 @@ bool MediaRecorderService::takeSnapshot(LSMessage &message)
   else
   {
     location = "/media/internal/";
-  }
-
-
-  if (media_recorder_client_)
-  {
-    ret = media_recorder_client_->TakeSnapshot(location);
   }
 
   pbnjson::JValue reply = pbnjson::Object();
