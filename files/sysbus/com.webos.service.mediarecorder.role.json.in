@@ -1,14 +1,16 @@
 {
     "exeName":"@WEBOS_INSTALL_SBINDIR@/com.webos.service.mediarecorder",
     "type": "regular",
+    "trustLevel": "oem",
     "allowedNames": [
-        "com.webos.service.mediarecorder"
+        "com.webos.service.mediarecorder",
+        "com.webos.service.mediarecorder-*"
     ],
     "permissions": [
         {
-            "service":"com.webos.service.mediarecorder",
-            "outbound":[
-                "*"
+            "service": "com.webos.service.mediarecorder-*",
+            "outbound": [
+                "com.webos.media"
             ]
         }
     ]

@@ -1,5 +1,5 @@
 {
-    "com.webos.service.mediarecorder.group":[
+    "mediarecorder.operation":[
         "com.webos.service.mediarecorder/load",
         "com.webos.service.mediarecorder/unload",
         "com.webos.service.mediarecorder/play",

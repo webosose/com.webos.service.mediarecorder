@@ -1,5 +1,5 @@
 {
-    "com.webos.service.mediarecorder":[
-        "media"
+    "com.webos.service.mediarecorder-*":[
+        "media.operation"
     ]
 }
