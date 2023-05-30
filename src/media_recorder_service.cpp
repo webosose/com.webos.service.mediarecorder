@@ -1,4 +1,4 @@
-// Copyright (c) 2020 LG Electronics, Inc.
+// Copyright (c) 2023 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -59,7 +59,6 @@ bool MediaRecorderService::load(LSMessage &message)
 
 bool MediaRecorderService::unload(LSMessage &message)
 {
-
   bool ret = false;
   auto *payload = LSMessageGetPayload(&message);
   PMLOG_INFO(CONST_MODULE_MEDIA_RECORDER, "payload %s", payload);
@@ -79,7 +78,6 @@ bool MediaRecorderService::unload(LSMessage &message)
 
 bool MediaRecorderService::play(LSMessage &message)
 {
-
   bool ret = false;
   auto *payload = LSMessageGetPayload(&message);
   PMLOG_INFO(CONST_MODULE_MEDIA_RECORDER, "payload %s", payload);
@@ -216,7 +214,6 @@ bool MediaRecorderService::takeSnapshot(LSMessage &message)
 
 int main(int argc, char* argv[])
 {
-
     try
     {
       MediaRecorderService mediaRecordService;

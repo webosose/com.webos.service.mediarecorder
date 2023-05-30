@@ -1,4 +1,4 @@
-# Copyright (c) 2020 LG Electronics, Inc.
+# Copyright (c) 2023 LG Electronics, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,13 +14,19 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-cmake_minimum_required(VERSION 2.8.7)
+cmake_minimum_required(VERSION 3.14)
 project(com.webos.service.mediarecorder CXX)
 set(CMAKE_BUILD_TYPE Debug)
 
 include(webOS/webOS)
 webos_modules_init(1 6 3)
 webos_component(1 0 0)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+webos_add_compiler_flags(ALL -Wall -funwind-tables)
+webos_add_compiler_flags(ALL -Wall -rdynamic)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lrt -Werror -Wno-psabi")
 
 include(FindPkgConfig)
 
@@ -61,4 +67,3 @@ install(TARGETS ${PROJECT_NAME} DESTINATION ${WEBOS_INSTALL_SBINDIR})
 
 webos_build_system_bus_files()
 webos_build_configured_file(files/systemd/com.webos.service.mediarecorder.service SYSCONFDIR systemd/system)
-

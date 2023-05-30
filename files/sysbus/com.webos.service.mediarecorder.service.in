@@ -2,4 +2,3 @@
 Name=com.webos.service.mediarecorder
 Exec=@WEBOS_INSTALL_SBINDIR@/com.webos.service.mediarecorder
 Type=static
-
