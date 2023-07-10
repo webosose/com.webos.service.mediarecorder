@@ -14,27 +14,32 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+#ifndef __MEDIA_RECORDER_MANAGER__
+#define __MEDIA_RECORDER_MANAGER__
+
 #include "luna-service2/lunaservice.hpp"
 #include <glib.h>
 
-class MediaRecorderService : public LS::Handle
+class MediaRecorderManager : public LS::Handle
 {
-private:
     using mainloop          = std::unique_ptr<GMainLoop, void (*)(GMainLoop *)>;
     mainloop main_loop_ptr_ = {g_main_loop_new(nullptr, false), g_main_loop_unref};
 
 public:
-    MediaRecorderService();
+    MediaRecorderManager();
 
-    MediaRecorderService(MediaRecorderService const &)            = delete;
-    MediaRecorderService(MediaRecorderService &&)                 = delete;
-    MediaRecorderService &operator=(MediaRecorderService const &) = delete;
-    MediaRecorderService &operator=(MediaRecorderService &&)      = delete;
+    MediaRecorderManager(MediaRecorderManager const &)            = delete;
+    MediaRecorderManager(MediaRecorderManager &&)                 = delete;
+    MediaRecorderManager &operator=(MediaRecorderManager const &) = delete;
+    MediaRecorderManager &operator=(MediaRecorderManager &&)      = delete;
 
-    bool load(LSMessage &message);
-    bool unload(LSMessage &message);
-    bool play(LSMessage &message);
-    bool startRecord(LSMessage &message);
-    bool stopRecord(LSMessage &message);
+    bool open(LSMessage &message);
+    bool close(LSMessage &message);
+    bool setOutputFile(LSMessage &message);
+    bool setOutputFormat(LSMessage &message);
+    bool start(LSMessage &message);
+    bool stop(LSMessage &message);
     bool takeSnapshot(LSMessage &message);
 };
+
+#endif // __MEDIA_RECORDER_MANAGER__

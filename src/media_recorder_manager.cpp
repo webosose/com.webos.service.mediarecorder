@@ -14,8 +14,8 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#define LOG_TAG "MediaRecorderService"
-#include "media_recorder_service.h"
+#define LOG_TAG "MediaRecorderManager"
+#include "media_recorder_manager.h"
 #include "log.h"
 #include <nlohmann/json.hpp>
 #include <string>
@@ -24,14 +24,15 @@ using namespace nlohmann;
 
 const std::string service = "com.webos.service.mediarecorder";
 
-MediaRecorderService::MediaRecorderService() : LS::Handle(LS::registerService(service.c_str()))
+MediaRecorderManager::MediaRecorderManager() : LS::Handle(LS::registerService(service.c_str()))
 {
-    LS_CATEGORY_BEGIN(MediaRecorderService, "/")
-    LS_CATEGORY_METHOD(load)
-    LS_CATEGORY_METHOD(unload)
-    LS_CATEGORY_METHOD(play)
-    LS_CATEGORY_METHOD(startRecord)
-    LS_CATEGORY_METHOD(stopRecord)
+    LS_CATEGORY_BEGIN(MediaRecorderManager, "/")
+    LS_CATEGORY_METHOD(open)
+    LS_CATEGORY_METHOD(close)
+    LS_CATEGORY_METHOD(setOutputFile)
+    LS_CATEGORY_METHOD(setOutputFormat)
+    LS_CATEGORY_METHOD(start)
+    LS_CATEGORY_METHOD(stop)
     LS_CATEGORY_METHOD(takeSnapshot)
     LS_CATEGORY_END;
 
@@ -42,92 +43,107 @@ MediaRecorderService::MediaRecorderService() : LS::Handle(LS::registerService(se
     g_main_loop_run(main_loop_ptr_.get());
 }
 
-bool MediaRecorderService::load(LSMessage &message)
+bool MediaRecorderManager::open(LSMessage &message)
 {
     bool ret      = false;
     auto *payload = LSMessageGetPayload(&message);
     PLOGI("payload %s", payload);
 
-    json jin;
-    jin["returnValue"] = ret;
+    json resp;
+    resp["returnValue"] = ret;
 
     LS::Message request(&message);
-    request.respond(to_string(jin).c_str());
+    request.respond(to_string(resp).c_str());
 
     return true;
 }
 
-bool MediaRecorderService::unload(LSMessage &message)
+bool MediaRecorderManager::close(LSMessage &message)
 {
     bool ret      = false;
     auto *payload = LSMessageGetPayload(&message);
     PLOGI("payload %s", payload);
 
-    json jin;
-    jin["returnValue"] = ret;
+    json resp;
+    resp["returnValue"] = ret;
 
     LS::Message request(&message);
-    request.respond(to_string(jin).c_str());
+    request.respond(to_string(resp).c_str());
 
     return true;
 }
 
-bool MediaRecorderService::play(LSMessage &message)
+bool MediaRecorderManager::setOutputFile(LSMessage &message)
 {
     bool ret      = false;
     auto *payload = LSMessageGetPayload(&message);
     PLOGI("payload %s", payload);
 
-    json jin;
-    jin["returnValue"] = ret;
+    json resp;
+    resp["returnValue"] = ret;
 
     LS::Message request(&message);
-    request.respond(to_string(jin).c_str());
+    request.respond(to_string(resp).c_str());
 
     return true;
 }
 
-bool MediaRecorderService::startRecord(LSMessage &message)
+bool MediaRecorderManager::setOutputFormat(LSMessage &message)
 {
     bool ret      = false;
     auto *payload = LSMessageGetPayload(&message);
     PLOGI("payload %s", payload);
 
-    json jin;
-    jin["returnValue"] = ret;
+    json resp;
+    resp["returnValue"] = ret;
 
     LS::Message request(&message);
-    request.respond(to_string(jin).c_str());
+    request.respond(to_string(resp).c_str());
 
     return true;
 }
 
-bool MediaRecorderService::stopRecord(LSMessage &message)
+bool MediaRecorderManager::start(LSMessage &message)
 {
     bool ret      = false;
     auto *payload = LSMessageGetPayload(&message);
     PLOGI("payload %s", payload);
 
-    json jin;
-    jin["returnValue"] = ret;
+    json resp;
+    resp["returnValue"] = ret;
 
     LS::Message request(&message);
-    request.respond(to_string(jin).c_str());
+    request.respond(to_string(resp).c_str());
 
     return true;
 }
 
-bool MediaRecorderService::takeSnapshot(LSMessage &message)
+bool MediaRecorderManager::stop(LSMessage &message)
 {
     bool ret      = false;
     auto *payload = LSMessageGetPayload(&message);
     PLOGI("payload %s", payload);
 
-    json jin;
-    jin["returnValue"] = ret;
+    json resp;
+    resp["returnValue"] = ret;
 
     LS::Message request(&message);
-    request.respond(to_string(jin).c_str());
+    request.respond(to_string(resp).c_str());
+
+    return true;
+}
+
+bool MediaRecorderManager::takeSnapshot(LSMessage &message)
+{
+    bool ret      = false;
+    auto *payload = LSMessageGetPayload(&message);
+    PLOGI("payload %s", payload);
+
+    json resp;
+    resp["returnValue"] = ret;
+
+    LS::Message request(&message);
+    request.respond(to_string(resp).c_str());
 
     return true;
 }
@@ -136,7 +152,7 @@ int main(int argc, char *argv[])
 {
     try
     {
-        MediaRecorderService mediaRecordService;
+        MediaRecorderManager mediaRecordService;
     }
     catch (LS::Error &err)
     {
