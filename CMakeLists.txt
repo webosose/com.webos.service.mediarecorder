@@ -45,9 +45,14 @@ webos_add_compiler_flags(ALL ${PMLOG_CFLAGS_OTHER})
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
 
 include_directories(${CMAKE_SOURCE_DIR}/include)
+include_directories(${CMAKE_SOURCE_DIR}/src/error_manager)
 
 set(SRCS
     ${CMAKE_SOURCE_DIR}/src/media_recorder_manager.cpp
+    ${CMAKE_SOURCE_DIR}/src/media_recorder.cpp
+    ${CMAKE_SOURCE_DIR}/src/luna_client.cpp
+    ${CMAKE_SOURCE_DIR}/src/error_manager/error.cpp
+    ${CMAKE_SOURCE_DIR}/src/error_manager/error_manager.cpp
 )
 
 add_executable(${PROJECT_NAME} ${SRCS})

@@ -19,11 +19,16 @@
 
 #include "luna-service2/lunaservice.hpp"
 #include <glib.h>
+#include <map>
+#include <memory>
 
+class MediaRecorder;
 class MediaRecorderManager : public LS::Handle
 {
     using mainloop          = std::unique_ptr<GMainLoop, void (*)(GMainLoop *)>;
     mainloop main_loop_ptr_ = {g_main_loop_new(nullptr, false), g_main_loop_unref};
+
+    std::map<int, std::unique_ptr<MediaRecorder>> recorders;
 
 public:
     MediaRecorderManager();
@@ -40,6 +45,8 @@ public:
     bool start(LSMessage &message);
     bool stop(LSMessage &message);
     bool takeSnapshot(LSMessage &message);
+
+    void printRecorders(); //[TODO] Remove this for debugging purpose.
 };
 
 #endif // __MEDIA_RECORDER_MANAGER__
