@@ -1,0 +1,10 @@
+{
+  "id": "com.sample.camera.test",
+  "version": "0.0.1",
+  "vendor": "My Company",
+  "type": "native",
+  "main": "camera_test",
+  "title": "Camera Test",
+  "icon": "icon.png",
+  "requiredPermissions" : ["all"]
+}

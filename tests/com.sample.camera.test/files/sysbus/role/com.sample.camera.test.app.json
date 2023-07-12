@@ -1,0 +1,16 @@
+{
+    "exeName": "/usr/palm/applications/com.sample.camera.test/camera_test",
+    "type": "regular",
+    "allowedNames": [
+        "com.sample.camera.test*"
+    ],
+    "permissions": [
+        {
+            "service": "com.sample.camera.test*",
+            "outbound": [
+                "*"
+            ]
+        }
+    ],
+    "trustLevel": "oem"
+}
