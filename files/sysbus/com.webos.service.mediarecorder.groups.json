@@ -1,0 +1,4 @@
+{
+    "allowedNames": ["com.webos.service.mediarecorder"],
+        "mediarecorder.operation": ["dev"]
+}
