@@ -499,7 +499,7 @@ bool MediaRecorderManager::takeSnapshot(LSMessage &message)
 void MediaRecorderManager::printRecorders()
 {
     int index = 0;
-    PLOGI("recorders size %ld", recorders.size());
+    PLOGI("recorders size %zd", recorders.size());
     for (const auto &r : recorders)
     {
         PLOGI("[%d] recorder %d", index, r.first);
