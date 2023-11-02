@@ -48,13 +48,17 @@ void Button::createTexture(std::string name)
     glGenTextures(3, textureId);
 
     unsigned char *data = jpeg_load(file_name, &width, &height, &channels, 0);
-    DEBUG_LOG("%d %d %d %s", width, height, channels, file_name);
+    // DEBUG_LOG("%d %d %d %s", width, height, channels, file_name);
 
-    for (int i = 0; i < 3; i++)
+    numPic = 3;
+    if (width == 128)
+        numPic = height / width;
+
+    for (int i = 0; i < numPic; i++)
     {
         glBindTexture(GL_TEXTURE_2D, textureId[i]);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height / 3, 0, GL_RGB, GL_UNSIGNED_BYTE,
-                     data + width * height / 3 * channels * i);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height / numPic, 0, GL_RGB, GL_UNSIGNED_BYTE,
+                     data + width * height / numPic * channels * i);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     }
@@ -63,8 +67,11 @@ void Button::createTexture(std::string name)
     hover  = textureId[1];
     yellow = textureId[2];
 
+    texID[0] = textureId[0];
+    texID[1] = textureId[1];
+
     w = width;
-    h = height / 3;
+    h = height / numPic;
 
     delete[] data;
 }
@@ -109,11 +116,43 @@ GLuint Button::getId()
     return id;
 }
 
+GLuint Button::getIdFromValue()
+{
+
+    if (InRange())
+    {
+        if (mState)
+            pressed = 1;
+        else
+        {
+            if (pressed)
+            {
+                enable ^= true;
+                handler_();
+            }
+            pressed = 0;
+        }
+    }
+    else
+    {
+        if (pressed)
+        {
+            if (!mState)
+                pressed = 0;
+        }
+    }
+
+    return texID[enable];
+}
+
 void Button::draw()
 {
     GLushort indices[] = {0, 1, 2, 0, 2, 3};
 
     glViewport(x, y, w, h);
-    glBindTexture(GL_TEXTURE_2D, getId());
+    if (numPic == 2)
+        glBindTexture(GL_TEXTURE_2D, getIdFromValue());
+    else
+        glBindTexture(GL_TEXTURE_2D, getId());
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
 }

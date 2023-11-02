@@ -14,7 +14,7 @@ Image::Image()
 Image::~Image() {}
 
 // JPEG Image
-void Image::createTexture(const char *file)
+void Image::createJpegTexture(const char *file)
 {
     int width, height, channels;
 
@@ -41,7 +41,7 @@ void Image::createTexture(const char *file)
 }
 
 // YUY2 Image
-void Image::createTexture(const char *filename, int width, int height)
+void Image::createYuvTexture(const char *filename, int width, int height)
 {
     // Use tightly packed data
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);

@@ -96,5 +96,6 @@ install(FILES res/play.jpg DESTINATION palm/applications/com.sample.camera.test)
 install(FILES res/exit.jpg DESTINATION palm/applications/com.sample.camera.test)
 install(FILES res/take_picture.jpg DESTINATION palm/applications/com.sample.camera.test)
 install(FILES res/pause.jpg DESTINATION palm/applications/com.sample.camera.test)
+install(FILES res/ptz.jpg DESTINATION palm/applications/com.sample.camera.test)
 
 add_subdirectory(files)

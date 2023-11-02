@@ -11,8 +11,8 @@ public:
     Image();
     ~Image();
 
-    void createTexture(const char *file);
-    void createTexture(const char *file, int width, int height);
+    void createJpegTexture(const char *file);
+    void createYuvTexture(const char *file, int width, int height);
     void draw();
     void deleteTexture();
 

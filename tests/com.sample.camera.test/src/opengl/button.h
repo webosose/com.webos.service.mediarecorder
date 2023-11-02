@@ -15,10 +15,14 @@ class Button
     int pressed;
     Callback funcPtr;
     std::function<void()> handler_;
+    GLuint texID[3];
+    bool enable = false;
+    int numPic;
 
     void createTexture(std::string name);
     int InRange();
     GLuint getId();
+    GLuint getIdFromValue();
 
 public:
     Button(int x, int y, std::string name, void *cb);
@@ -26,6 +30,7 @@ public:
     ~Button();
 
     void draw();
+    bool get() { return enable; };
 
     int x, y, w, h;
 };

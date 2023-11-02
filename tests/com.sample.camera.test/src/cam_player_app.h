@@ -15,6 +15,7 @@ class CamPlayerApp
     void stopCamera();
     void startCapture();
     void stopCapture();
+    void capture();
 
     void playVideo();
     void pauseVideo();
@@ -25,6 +26,7 @@ class CamPlayerApp
     void takeCameraSnapshot();
 
     void exitProgram();
+    void setSolutions();
 
     bool parseOption(int argc, char **argv);
     void printHelp();
@@ -54,6 +56,7 @@ class CamPlayerApp
     std::unique_ptr<Button> stopVideoButton;
     std::unique_ptr<Button> startCaptureButton;
     std::unique_ptr<Button> exitButton;
+    std::unique_ptr<Button> ptzButton;
 
     std::unique_ptr<Image> imageBox;
 
@@ -63,6 +66,9 @@ public:
 
     bool initialize();
     bool execute();
+    void setExporterRegion(int exporter_number, int x, int y, int w, int h);
+
+    bool mFullScreen = false;
 };
 
 #endif // _CAM_PLAYER_APP_

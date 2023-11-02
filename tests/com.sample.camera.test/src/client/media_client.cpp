@@ -203,6 +203,8 @@ bool MediaClient::subscribe()
 
     DEBUG_LOG("%s '%s'", uri.c_str(), to_string(j).c_str());
 
+    startTime = std::chrono::steady_clock::now();
+
     auto subscribeCb = [](const char *msg, void *data) -> bool
     {
         json j = json::parse(msg, nullptr, false);
@@ -212,10 +214,30 @@ bool MediaClient::subscribe()
             return false;
         }
 
-        DEBUG_LOG("subscribeCb");
-        printf("%s\n", j.dump(4).c_str());
-
         MediaClient *client = (MediaClient *)data;
+
+        const std::string currentTimeStr("currentTime");
+        if (j.contains(currentTimeStr))
+        {
+            if (client->state == PLAY)
+            {
+                auto currentTime = std::chrono::steady_clock::now();
+                auto elapsedTime = std::chrono::duration_cast<std::chrono::seconds>(
+                                       currentTime - client->startTime)
+                                       .count();
+
+                if (elapsedTime >= 1)
+                {
+                    printf("%s: %d\n", currentTimeStr.c_str(), (int)j[currentTimeStr]);
+                    client->startTime = currentTime;
+                }
+            }
+        }
+        else
+        {
+            DEBUG_LOG("subscribeCb");
+            printf("%s\n", j.dump(4).c_str());
+        }
 
         if (j.contains(eosStr))
         {

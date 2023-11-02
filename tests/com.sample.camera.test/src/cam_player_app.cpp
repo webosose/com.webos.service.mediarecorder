@@ -17,14 +17,15 @@ using namespace nlohmann;
 
 CustomData appParm = {
     false,   // use UMS
-    "shmem", // memory type (shmem, device)
+    "shmem", // memory type (shmem, posixshm, device)
     "JPEG",  // Image format (JPEG, YUV)
     1280,    // Camera width
     720,     // Camear height
     false,   // disable audio recording
     30,      // Preview fps
     0,       // x1
-    1280     // x2
+    1280,    // x2
+    false,   // use startCamera
 };
 
 CamPlayerApp::CamPlayerApp(int argc, char **argv)
@@ -77,8 +78,18 @@ bool CamPlayerApp::execute()
     while ((wl_display_dispatch_pending(mWindowManager->foreign.getDisplay()) != -1) &&
            (!mDone)) // Dispatch main queue events without reading from the display fd
     {
-        drawButtons();
-        drawImage();
+        if (miCameraApp->mFullScreen)
+        {
+            // Clear the color buffer
+            glClear(GL_COLOR_BUFFER_BIT);
+        }
+        else
+        {
+            drawButtons();
+            drawImage();
+        }
+        g_usleep(100 * 1000); // 100 ms
+
         eglSwapBuffers(eglGetCurrentDisplay(), eglGetCurrentSurface(EGL_READ));
     }
 
@@ -89,7 +100,7 @@ bool CamPlayerApp::parseOption(int argc, char **argv)
 {
     for (;;)
     {
-        switch (getopt(argc, argv, "m:f:w:h:ud?"))
+        switch (getopt(argc, argv, "m:f:w:h:p:udo?"))
         {
         case 'm':
             appParm.memType = optarg;
@@ -109,8 +120,16 @@ bool CamPlayerApp::parseOption(int argc, char **argv)
             appParm.height = atoi(optarg);
             continue;
 
+        case 'p':
+            appParm.fps = atoi(optarg);
+            continue;
+
         case 'd':
             appParm.disable_audio = true;
+            continue;
+
+        case 'o':
+            appParm.use_start_camera = true;
             continue;
 
         case '?':
@@ -135,11 +154,13 @@ void CamPlayerApp::printHelp()
     std::cout << "Usage: camera_test [OPTION]..." << std::endl;
     std::cout << "Options" << std::endl;
     std::cout << "  -u          use ums" << std::endl;
-    std::cout << "  -m          mode (shmem, device)" << std::endl;
+    std::cout << "  -m          mode (shmem, posixshm, device)" << std::endl;
     std::cout << "  -f          format (JPEG, YUV)" << std::endl;
     std::cout << "  -w          width" << std::endl;
     std::cout << "  -h          height" << std::endl;
+    std::cout << "  -p          preview fps" << std::endl;
     std::cout << "  -d          disable audio record" << std::endl;
+    std::cout << "  -o          use startCamera" << std::endl;
     std::cout << "  -?          help" << std::endl;
 }
 
@@ -151,7 +172,9 @@ void CamPlayerApp::printOption()
     std::cout << "format : " << appParm.format << std::endl;
     std::cout << "width : " << appParm.width << std::endl;
     std::cout << "height : " << appParm.height << std::endl;
+    std::cout << "fps    : " << appParm.fps << std::endl;
     std::cout << "disable audio : " << appParm.disable_audio << std::endl;
+    std::cout << "use startCamera : " << appParm.use_start_camera << std::endl;
     std::cout << std::endl;
 }
 
@@ -185,12 +208,21 @@ void CamPlayerApp::startCamera()
 
     DEBUG_LOG("start");
 
-    if (appParm.memType.compare("shmem") == 0)
+    if (appParm.memType == "shmem" || appParm.memType == "posixshm")
     {
         mCameraClient->getCameraList();
         mCameraClient->open();
         mCameraClient->setFormat();
-        mCameraClient->startPreview();
+
+        if (appParm.use_start_camera)
+        {
+            mCameraClient->startCamera();
+        }
+        else
+        {
+            mCameraClient->startPreview(mWindowManager->exporter1.getWindowID());
+            return;
+        }
     }
 
     std::string image_format = appParm.format;
@@ -205,6 +237,8 @@ void CamPlayerApp::startCamera()
         mem_src = "/dev/video0"; //[ToDo] Set temporarily.
     }
 
+    mCameraClient->getFormat();
+
     json option;
     option["appId"]            = "com.webos.app.mediaevents-test";
     option["windowId"]         = mWindowManager->exporter1.getWindowID();
@@ -212,30 +246,47 @@ void CamPlayerApp::startCamera()
     option["width"]            = appParm.width;
     option["height"]           = appParm.height;
     option["format"]           = image_format;
-    option["frameRate"]        = appParm.fps;
+    option["frameRate"]        = mCameraClient->preview_fps;
     option["memType"]          = appParm.memType;
     option["memSrc"]           = mem_src;
+
+    if (appParm.memType == "posixshm")
+    {
+        option["handle"] = mCameraClient->handle;
+    }
 
     mCameraPlayer->load(option);
 }
 
 void CamPlayerApp::stopCamera()
 {
-    DEBUG_LOG("state %d", mCameraPlayer->state);
-    if (mCameraPlayer->state == MediaClient::STOP)
+
+    if (appParm.use_start_camera)
     {
-        DEBUG_LOG("invalid state");
-        return;
+        DEBUG_LOG("state %d", mCameraPlayer->state);
+        if (mCameraPlayer->state == MediaClient::STOP)
+        {
+            DEBUG_LOG("invalid state");
+            return;
+        }
+
+        DEBUG_LOG("start");
+
+        mCameraPlayer->unload();
+
+        if (appParm.memType == "shmem" || appParm.memType == "posixshm")
+        {
+            mCameraClient->stopCamera();
+            mCameraClient->close();
+        }
     }
-
-    DEBUG_LOG("start");
-
-    mCameraPlayer->unload();
-
-    if (appParm.memType.compare("shmem") == 0)
+    else
     {
-        mCameraClient->stopPreview();
-        mCameraClient->close();
+        if (appParm.memType == "shmem" || appParm.memType == "posixshm")
+        {
+            mCameraClient->stopPreview();
+            mCameraClient->close();
+        }
     }
 
     imageBox->deleteTexture();
@@ -255,7 +306,9 @@ void CamPlayerApp::startRecord()
     }
     else
     {
-        mMediaRecorder->open(mCameraPlayer->mediaId);
+        std::string &media_id =
+            (appParm.use_start_camera) ? mCameraPlayer->mediaId : mCameraClient->mediaId;
+        mMediaRecorder->open(media_id);
         mMediaRecorder->setOutputFile();
         mMediaRecorder->setOutputFormat();
         mMediaRecorder->start();
@@ -310,7 +363,7 @@ void CamPlayerApp::takeCameraSnapshot()
         }
         DEBUG_LOG("getFile = %d ms", (i + 1) * 10);
 
-        imageBox->createTexture(snapshot_file_name.c_str());
+        imageBox->createJpegTexture(snapshot_file_name.c_str());
         deleteFile(snapshot_file_name);
     }
 
@@ -331,12 +384,12 @@ void CamPlayerApp::startCapture()
         if (appParm.format == "JPEG")
         {
             capture_file_name = getLastFile("/tmp/", "jpeg");
-            imageBox->createTexture(capture_file_name.c_str());
+            imageBox->createJpegTexture(capture_file_name.c_str());
         }
         else
         {
             capture_file_name = getLastFile("/tmp/", "yuv");
-            imageBox->createTexture(capture_file_name.c_str(), appParm.width, appParm.height);
+            imageBox->createYuvTexture(capture_file_name.c_str(), appParm.width, appParm.height);
         }
 
         deleteFile(capture_file_name);
@@ -347,10 +400,38 @@ void CamPlayerApp::startCapture()
 
 void CamPlayerApp::stopCapture() { mCameraClient->stopCapture(); }
 
+void CamPlayerApp::capture()
+{
+    DEBUG_LOG("start");
+
+    bool ret = mCameraClient->capture();
+    if (ret)
+    {
+        std::string capture_file_name = mCameraClient->captureFileList[0].c_str();
+
+        if (appParm.format == "JPEG")
+        {
+            imageBox->createJpegTexture(capture_file_name.c_str());
+        }
+        else
+        {
+            imageBox->createYuvTexture(capture_file_name.c_str(), appParm.width, appParm.height);
+        }
+    }
+
+    DEBUG_LOG("end\n");
+}
+
 void CamPlayerApp::exitProgram()
 {
     DEBUG_LOG("start");
     mDone = true;
+}
+
+void CamPlayerApp::setSolutions()
+{
+    DEBUG_LOG("start %d", ptzButton->get());
+    mCameraClient->setSolutions(ptzButton->get());
 }
 
 void CamPlayerApp::playVideo()
@@ -419,19 +500,29 @@ void CamPlayerApp::CreateButton()
     stopVideoButton =
         std::make_unique<Button>(360 + (128 + 40) * 2, PY2, "stop_rec", [this]() { stopVideo(); });
 
-#if 0
-    startCaptureButton = std::make_unique<Button>(360 + (128 + 40) * 3, PY2, "take_picture",
-                                                  [this]() { startCapture(); });
+#if 1
+    if (appParm.use_start_camera)
+    {
+
+        startCaptureButton = std::make_unique<Button>(360 + (128 + 40) * 3, PY2, "take_picture",
+                                                      [this]() { startCapture(); });
+    }
+    else
+    {
+
+        startCaptureButton = std::make_unique<Button>(360 + (128 + 40) * 3, PY2, "take_picture",
+                                                      [this]() { capture(); });
+    }
 #else
     startCaptureButton = std::make_unique<Button>(360 + (128 + 40) * 3, PY2, "take_picture",
                                                   [this]() { takeCameraSnapshot(); });
 #endif
-    /*
-        stopCaptureButton = std::make_unique<Button>(360 + (128 + 40) * 4, PY2, "stop_rec",
-                                                     [this]() { stopCapture(); });
-     */
+
     exitButton =
         std::make_unique<Button>(360 + (128 + 40) * 4, PY2, "exit", [this]() { exitProgram(); });
+
+    ptzButton = std::make_unique<Button>(360 + (128 + 40) * 4, PY1 - 4, "ptz",
+                                         [this]() { setSolutions(); });
 }
 
 void CamPlayerApp::CreateImageBox()
@@ -464,6 +555,12 @@ void CamPlayerApp::drawButtons()
     // stopCaptureButton->draw();
 
     exitButton->draw();
+    ptzButton->draw();
 }
 
 void CamPlayerApp::drawImage() { imageBox->draw(); }
+
+void CamPlayerApp::setExporterRegion(int exporter_number, int x, int y, int w, int h)
+{
+    mWindowManager->setExporterRegion(exporter_number, x, y, w, h);
+}
