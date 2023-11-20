@@ -1,0 +1,17 @@
+{
+    "recordpipeline.resourcemanagement": [
+        "com.webos.rm.client._*/acquireComplete",
+        "com.webos.rm.client._*/policyAction"
+   ],
+    "recordpipeline.operation": [
+        "com.webos.pipeline.*/load",
+        "com.webos.pipeline.*/attach",
+        "com.webos.pipeline.*/unload",
+        "com.webos.pipeline.*/play",
+        "com.webos.pipeline.*/pause",
+        "com.webos.pipeline.*/stateChange",
+        "com.webos.pipeline.*/unsubscribe",
+        "com.webos.pipeline.*/setUri",
+        "com.webos.pipeline.*/setPlane"
+    ]
+}

@@ -71,3 +71,4 @@ webos_build_system_bus_files()
 webos_build_configured_file(files/systemd/com.webos.service.mediarecorder.service SYSCONFDIR systemd/system)
 
 add_subdirectory(tests)
+add_subdirectory(pipeline)
