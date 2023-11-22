@@ -18,6 +18,7 @@
 #define __MEDIA_RECORDER__
 
 #include "error.h"
+#include "format_utils.h"
 #include "luna-service2/lunaservice.hpp"
 #include <memory>
 #include <vector>
@@ -29,8 +30,8 @@ class MediaRecorder
     {
         CLOSE,
         OPEN,
-        PREPARED,
         RECORDING,
+        PAUSE
     };
 
     int recorderId = 0;
@@ -44,6 +45,10 @@ class MediaRecorder
     GMainLoop *loop_{nullptr};
     std::unique_ptr<std::thread> loopThread_;
 
+    video_format_t mVideoFormat;
+    audio_format_t mAudioFormat;
+    std::string mMediaId;
+
 public:
     MediaRecorder();
     ~MediaRecorder();
@@ -51,10 +56,16 @@ public:
     ErrorCode open(std::string &video_src, std::string &audio_src);
     ErrorCode setOutputFile(std::string &path);
     ErrorCode setOutputFormat(std::string &format);
+    ErrorCode setVideoFormat(std::string &videoCodec, unsigned int width, unsigned int height,
+                             unsigned int fps, unsigned int bitRate);
+    ErrorCode setAudioFormat(std::string &audioCodec, unsigned int sampleRate,
+                             unsigned int channels, unsigned int bitRate);
     ErrorCode start();
     ErrorCode stop();
     ErrorCode takeSnapshot(std::string &path, std::string &format);
     ErrorCode close();
+    ErrorCode pause();
+    ErrorCode resume();
 
     int getRecorderId() { return recorderId; }
 };

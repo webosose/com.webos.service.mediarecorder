@@ -51,6 +51,8 @@ void ErrorManager::registerErrors()
     addError(ERR_FAILED_TO_START_RECORDING, "Failed to start recording");
     addError(ERR_FAILED_TO_STOP_RECORDING, "Failed to stop recording");
     addError(ERR_SNAPSHOT_CAPTURE_FAILED, "Snapshot capture failed");
+    addError(ERR_FAILED_TO_PAUSE, "Failed to pause");
+    addError(ERR_FAILED_TO_RESUME, "Failed to resume");
 
     // 700
     addError(ERR_OPEN_FAIL, "Failed to open recorder");

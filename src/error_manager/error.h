@@ -30,6 +30,8 @@ enum ErrorCode
     ERR_FAILED_TO_START_RECORDING        = 600,
     ERR_FAILED_TO_STOP_RECORDING         = 610,
     ERR_SNAPSHOT_CAPTURE_FAILED          = 620,
+    ERR_FAILED_TO_PAUSE                  = 630,
+    ERR_FAILED_TO_RESUME                 = 640,
     ERR_OPEN_FAIL                        = 700,
     ERR_CLOSE_FAIL                       = 710,
     ERR_INVALID_STATE                    = 800,

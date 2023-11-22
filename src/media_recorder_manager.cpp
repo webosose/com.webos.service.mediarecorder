@@ -53,9 +53,13 @@ MediaRecorderManager::MediaRecorderManager() : LS::Handle(LS::registerService(se
     LS_CATEGORY_METHOD(close)
     LS_CATEGORY_METHOD(setOutputFile)
     LS_CATEGORY_METHOD(setOutputFormat)
+    LS_CATEGORY_METHOD(setVideoFormat)
+    LS_CATEGORY_METHOD(setAudioFormat)
     LS_CATEGORY_METHOD(start)
     LS_CATEGORY_METHOD(stop)
     LS_CATEGORY_METHOD(takeSnapshot)
+    LS_CATEGORY_METHOD(pause)
+    LS_CATEGORY_METHOD(resume)
     LS_CATEGORY_END;
 
     // attach to mainloop and run it
@@ -307,6 +311,133 @@ bool MediaRecorderManager::setOutputFormat(LSMessage &message)
     return true;
 }
 
+bool MediaRecorderManager::setVideoFormat(LSMessage &message)
+{
+    ErrorCode error_code = ERR_LIST_END;
+    auto *payload        = LSMessageGetPayload(&message);
+    PLOGI("payload %s", payload);
+
+    try
+    {
+        json j = json::parse(payload);
+
+        int recorder_id = 0;
+        if (auto value = get_optional<int>(j, "recorderId"))
+        {
+            recorder_id = *value;
+        }
+        else
+        {
+            error_code = ERR_RECORDER_ID_NOT_SPECIFIED;
+            throw std::invalid_argument("Parameter is missing");
+        }
+
+        if (recorders.find(recorder_id) == recorders.end())
+        {
+            error_code = ERR_INVALID_RECORDER_ID;
+            throw std::invalid_argument("Parameter is invalid");
+        }
+
+        // Video format
+        std::string videoCodec = get_optional<std::string>(j, "codec").value_or("");
+        unsigned int width     = get_optional<unsigned int>(j, "width").value_or(0);
+        unsigned int height    = get_optional<unsigned int>(j, "height").value_or(0);
+        unsigned int fps       = get_optional<unsigned int>(j, "fps").value_or(0);
+        unsigned int bitRate   = get_optional<unsigned int>(j, "bitRate").value_or(0);
+
+        error_code =
+            recorders[recorder_id]->setVideoFormat(videoCodec, width, height, fps, bitRate);
+    }
+    catch (const std::exception &e)
+    {
+        handleJsonException(e, error_code);
+    }
+
+    json resp;
+    if (error_code == ERR_NONE)
+    {
+        resp["returnValue"] = true;
+    }
+    else
+    {
+        resp["returnValue"] = false;
+
+        Error error       = ErrorManager::getInstance().getError(error_code);
+        resp["errorCode"] = error.getCode();
+        resp["errorText"] = error.getMessage();
+
+        PLOGE("%d %s", error.getCode(), error.getMessage().c_str());
+    }
+
+    LS::Message request(&message);
+    request.respond(to_string(resp).c_str());
+
+    return true;
+}
+
+bool MediaRecorderManager::setAudioFormat(LSMessage &message)
+{
+    ErrorCode error_code = ERR_LIST_END;
+    auto *payload        = LSMessageGetPayload(&message);
+    PLOGI("payload %s", payload);
+
+    try
+    {
+        json j = json::parse(payload);
+
+        int recorder_id = 0;
+        if (auto value = get_optional<int>(j, "recorderId"))
+        {
+            recorder_id = *value;
+        }
+        else
+        {
+            error_code = ERR_RECORDER_ID_NOT_SPECIFIED;
+            throw std::invalid_argument("Parameter is missing");
+        }
+
+        if (recorders.find(recorder_id) == recorders.end())
+        {
+            error_code = ERR_INVALID_RECORDER_ID;
+            throw std::invalid_argument("Parameter is invalid");
+        }
+
+        // audio format
+        std::string audioCodec    = get_optional<std::string>(j, "codec").value_or("");
+        unsigned int sampleRate   = get_optional<unsigned int>(j, "sampleRate").value_or(0);
+        unsigned int audioChannel = get_optional<unsigned int>(j, "channelCount").value_or(0);
+        unsigned int bitRate      = get_optional<unsigned int>(j, "bitRate").value_or(0);
+
+        error_code =
+            recorders[recorder_id]->setAudioFormat(audioCodec, sampleRate, audioChannel, bitRate);
+    }
+    catch (const std::exception &e)
+    {
+        handleJsonException(e, error_code);
+    }
+
+    json resp;
+    if (error_code == ERR_NONE)
+    {
+        resp["returnValue"] = true;
+    }
+    else
+    {
+        resp["returnValue"] = false;
+
+        Error error       = ErrorManager::getInstance().getError(error_code);
+        resp["errorCode"] = error.getCode();
+        resp["errorText"] = error.getMessage();
+
+        PLOGE("%d %s", error.getCode(), error.getMessage().c_str());
+    }
+
+    LS::Message request(&message);
+    request.respond(to_string(resp).c_str());
+
+    return true;
+}
+
 bool MediaRecorderManager::start(LSMessage &message)
 {
     ErrorCode error_code = ERR_LIST_END;
@@ -468,6 +599,118 @@ bool MediaRecorderManager::takeSnapshot(LSMessage &message)
             error_code = ERR_FORMAT_NOT_SPECIFIED;
             throw std::invalid_argument("Parameter is missing");
         }
+    }
+    catch (const std::exception &e)
+    {
+        handleJsonException(e, error_code);
+    }
+
+    json resp;
+    if (error_code == ERR_NONE)
+    {
+        resp["returnValue"] = true;
+    }
+    else
+    {
+        resp["returnValue"] = false;
+
+        Error error       = ErrorManager::getInstance().getError(error_code);
+        resp["errorCode"] = error.getCode();
+        resp["errorText"] = error.getMessage();
+
+        PLOGE("%d %s", error.getCode(), error.getMessage().c_str());
+    }
+
+    LS::Message request(&message);
+    request.respond(to_string(resp).c_str());
+
+    return true;
+}
+
+bool MediaRecorderManager::pause(LSMessage &message)
+{
+    ErrorCode error_code = ERR_LIST_END;
+    auto *payload        = LSMessageGetPayload(&message);
+    PLOGI("payload %s", payload);
+
+    try
+    {
+        json j = json::parse(payload);
+
+        int recorder_id = 0;
+        if (auto value = get_optional<int>(j, "recorderId"))
+        {
+            recorder_id = *value;
+        }
+        else
+        {
+            error_code = ERR_RECORDER_ID_NOT_SPECIFIED;
+            throw std::invalid_argument("Parameter is missing");
+        }
+
+        if (recorders.find(recorder_id) == recorders.end())
+        {
+            error_code = ERR_INVALID_RECORDER_ID;
+            throw std::invalid_argument("Parameter is invalid");
+        }
+
+        error_code = recorders[recorder_id]->pause();
+    }
+    catch (const std::exception &e)
+    {
+        handleJsonException(e, error_code);
+    }
+
+    json resp;
+    if (error_code == ERR_NONE)
+    {
+        resp["returnValue"] = true;
+    }
+    else
+    {
+        resp["returnValue"] = false;
+
+        Error error       = ErrorManager::getInstance().getError(error_code);
+        resp["errorCode"] = error.getCode();
+        resp["errorText"] = error.getMessage();
+
+        PLOGE("%d %s", error.getCode(), error.getMessage().c_str());
+    }
+
+    LS::Message request(&message);
+    request.respond(to_string(resp).c_str());
+
+    return true;
+}
+
+bool MediaRecorderManager::resume(LSMessage &message)
+{
+    ErrorCode error_code = ERR_LIST_END;
+    auto *payload        = LSMessageGetPayload(&message);
+    PLOGI("payload %s", payload);
+
+    try
+    {
+        json j = json::parse(payload);
+
+        int recorder_id = 0;
+        if (auto value = get_optional<int>(j, "recorderId"))
+        {
+            recorder_id = *value;
+        }
+        else
+        {
+            error_code = ERR_RECORDER_ID_NOT_SPECIFIED;
+            throw std::invalid_argument("Parameter is missing");
+        }
+
+        if (recorders.find(recorder_id) == recorders.end())
+        {
+            error_code = ERR_INVALID_RECORDER_ID;
+            throw std::invalid_argument("Parameter is invalid");
+        }
+
+        error_code = recorders[recorder_id]->resume();
     }
     catch (const std::exception &e)
     {

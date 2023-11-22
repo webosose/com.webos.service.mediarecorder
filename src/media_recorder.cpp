@@ -104,23 +104,28 @@ ErrorCode MediaRecorder::open(std::string &video_src, std::string &audio_src)
 {
     PLOGI("");
 
-    if (video_src.empty())
+    if (video_src.empty() && audio_src.empty())
     {
-        if (audio_src.empty())
-        {
-            PLOGE("Source must be specified");
-            return ERR_SOURCE_NOT_SPECIFIED;
-        }
-        else
-        {
-            PLOGE("Audio only recording is not supported");
-            return ERR_NOT_SUPPORT_AUDIO_ONLY_RECORDING;
-        }
+        PLOGE("Source must be specified");
+        return ERR_SOURCE_NOT_SPECIFIED;
     }
 
     videoSrc   = video_src;
     audioSrc   = audio_src;
     recorderId = getRandomNumber();
+
+    // set default audio format (audioCodec, sampleRate, channels, bitRate)
+    mAudioFormat = {"AAC", 44100, 2, 192000};
+
+    PLOGI("mAudioFormat: %s, %d, %d, %d", mAudioFormat.audioCodec.c_str(), mAudioFormat.sampleRate,
+          mAudioFormat.channels, mAudioFormat.bitRate);
+
+    // set default vidoe format (width, height, fps, bitRate)
+    // ToDo camera service getFormat
+    mVideoFormat = {"H264", 1280, 720, 30, 200000};
+
+    PLOGI("mVideoFormat: %s, %d, %d, %d, %d", mVideoFormat.videoCodec.c_str(), mVideoFormat.width,
+          mVideoFormat.height, mVideoFormat.fps, mAudioFormat.bitRate);
 
     GMainContext *c = g_main_context_new();
     loop_           = g_main_loop_new(c, false);
@@ -153,7 +158,7 @@ ErrorCode MediaRecorder::open(std::string &video_src, std::string &audio_src)
 ErrorCode MediaRecorder::close()
 {
     PLOGI("");
-    if (state != OPEN && state != PREPARED)
+    if (state != OPEN)
     {
         PLOGE("Invalid state %d", state);
         return ERR_INVALID_STATE;
@@ -219,7 +224,6 @@ ErrorCode MediaRecorder::setOutputFormat(std::string &format)
             mFormat = "MP4";
         }
 
-        state = PREPARED;
         return ERR_NONE;
     }
     else
@@ -231,21 +235,51 @@ ErrorCode MediaRecorder::setOutputFormat(std::string &format)
 ErrorCode MediaRecorder::start()
 {
     PLOGI("");
-    if (state != PREPARED)
+    if (state != OPEN)
     {
         PLOGE("Invalid state %d", state);
         return ERR_INVALID_STATE;
     }
 
-    // send message
-    std::string uri = "luna://com.webos.media/startCameraRecord";
+    auto json_obj     = json::object();
+    json_obj["appId"] = "com.webos.app.mediaevents-test";
+
+    if (!videoSrc.empty())
+    {
+        auto video        = json::object();
+        video["videoSrc"] = videoSrc;
+        video["width"]    = mVideoFormat.width;
+        video["height"]   = mVideoFormat.height;
+        video["codec"]    = mVideoFormat.videoCodec;
+        video["fps"]      = mVideoFormat.fps;
+        video["bitRate"]  = mVideoFormat.bitRate;
+        json_obj["video"] = video;
+    }
+
+    if (!audioSrc.empty())
+    {
+        auto audio            = json::object();
+        audio["codec"]        = mAudioFormat.audioCodec;
+        audio["sampleRate"]   = mAudioFormat.sampleRate;
+        audio["channelCount"] = mAudioFormat.channels;
+        audio["bitRate"]      = mAudioFormat.bitRate;
+        json_obj["audio"]     = audio;
+    }
+
+    json_obj["path"]   = mPath;
+    json_obj["format"] = mFormat;
+
+    auto json_obj_option      = json::object();
+    json_obj_option["option"] = json_obj;
 
     json j;
-    j["mediaId"]  = videoSrc;
-    j["location"] = mPath;
-    j["format"]   = mFormat;
-    j["audio"]    = audioSrc.empty() ? false : true;
-    j["audioSrc"] = audioSrc;
+    j["uri"]     = "record://com.webos.service.mediarecorder";
+    j["payload"] = json_obj_option;
+    j["type"]    = "record";
+
+    // send message for load
+    std::string uri = "luna://com.webos.media/load";
+
     PLOGI("%s '%s'", uri.c_str(), to_string(j).c_str());
 
     std::string resp;
@@ -257,8 +291,28 @@ ErrorCode MediaRecorder::start()
         json jOut = json::parse(resp);
         if (get_optional<bool>(jOut, returnValueStr.c_str()).value_or(false))
         {
-            state = RECORDING;
-            return ERR_NONE;
+            mMediaId = get_optional<std::string>(jOut, "mediaId").value_or("");
+
+            // send message for play
+            if (mMediaId.empty())
+            {
+
+                throw std::invalid_argument("mMediaId is empty");
+            }
+
+            json j;
+            j["mediaId"]    = mMediaId;
+            std::string uri = "luna://com.webos.media/play";
+            std::string resp;
+            luna_client->callSync(uri.c_str(), to_string(j).c_str(), &resp);
+            PLOGI("resp %s", resp.c_str());
+
+            json jOut = json::parse(resp);
+            if (get_optional<bool>(jOut, returnValueStr.c_str()).value_or(false))
+            {
+                state = RECORDING;
+                return ERR_NONE;
+            }
         }
     }
     catch (const json::exception &e)
@@ -272,17 +326,17 @@ ErrorCode MediaRecorder::start()
 ErrorCode MediaRecorder::stop()
 {
     PLOGI("");
-    if (state != RECORDING)
+    if (state != RECORDING && state != PAUSE)
     {
         PLOGE("Invalid state %d", state);
         return ERR_INVALID_STATE;
     }
 
     // send message
-    std::string uri = "luna://com.webos.media/stopCameraRecord";
+    std::string uri = "luna://com.webos.media/unload";
 
     json j;
-    j["mediaId"] = videoSrc;
+    j["mediaId"] = mMediaId;
     PLOGI("%s '%s'", uri.c_str(), to_string(j).c_str());
 
     std::string resp;
@@ -294,7 +348,7 @@ ErrorCode MediaRecorder::stop()
         json jOut = json::parse(resp);
         if (get_optional<bool>(jOut, returnValueStr.c_str()).value_or(false))
         {
-            state = PREPARED;
+            state = OPEN;
             return ERR_NONE;
         }
     }
@@ -308,6 +362,7 @@ ErrorCode MediaRecorder::stop()
 
 ErrorCode MediaRecorder::takeSnapshot(std::string &path, std::string &format)
 {
+    // ToDo : New Implementation required
     PLOGI("");
     if (state != RECORDING)
     {
@@ -355,4 +410,132 @@ ErrorCode MediaRecorder::takeSnapshot(std::string &path, std::string &format)
     }
 
     return ERR_SNAPSHOT_CAPTURE_FAILED;
+}
+
+ErrorCode MediaRecorder::setAudioFormat(std::string &audioCodec, unsigned int sampleRate,
+                                        unsigned int channels, unsigned int bitRate)
+{
+    PLOGI("");
+    if (state != OPEN)
+    {
+        PLOGE("Invalid state %d", state);
+        return ERR_INVALID_STATE;
+    }
+
+    if (!audioCodec.empty())
+        mAudioFormat.audioCodec = audioCodec;
+    if (sampleRate != 0)
+        mAudioFormat.sampleRate = sampleRate;
+    if (channels != 0)
+        mAudioFormat.channels = channels;
+    if (bitRate != 0)
+        mAudioFormat.bitRate = bitRate;
+
+    PLOGI("mAudioFormat: %s, %d, %d, %d", mAudioFormat.audioCodec.c_str(), mAudioFormat.sampleRate,
+          mAudioFormat.channels, mAudioFormat.bitRate);
+
+    return ERR_NONE;
+}
+
+ErrorCode MediaRecorder::setVideoFormat(std::string &videoCodec, unsigned int width,
+                                        unsigned int height, unsigned int fps, unsigned int bitRate)
+{
+    PLOGI("");
+    if (state != OPEN)
+    {
+        PLOGE("Invalid state %d", state);
+        return ERR_INVALID_STATE;
+    }
+
+    if (!videoCodec.empty())
+        mVideoFormat.videoCodec = videoCodec;
+    if (width != 0)
+        mVideoFormat.width = width;
+    if (height != 0)
+        mVideoFormat.height = height;
+    if (fps != 0)
+        mVideoFormat.fps = fps;
+    if (bitRate != 0)
+        mVideoFormat.bitRate = bitRate;
+
+    PLOGI("mAudioFormat: %s, %d, %d, %d", mAudioFormat.audioCodec.c_str(), mAudioFormat.sampleRate,
+          mAudioFormat.channels, mAudioFormat.bitRate);
+
+    return ERR_NONE;
+}
+
+ErrorCode MediaRecorder::pause()
+{
+    PLOGI("");
+
+    if (state != RECORDING)
+    {
+        PLOGE("Invalid state %d", state);
+        return ERR_INVALID_STATE;
+    }
+
+    // send message
+    std::string uri = "luna://com.webos.media/pause";
+
+    json j;
+    j["mediaId"] = mMediaId;
+    PLOGI("%s '%s'", uri.c_str(), to_string(j).c_str());
+
+    std::string resp;
+    luna_client->callSync(uri.c_str(), to_string(j).c_str(), &resp);
+    PLOGI("resp %s", resp.c_str());
+
+    try
+    {
+        json jOut = json::parse(resp);
+        if (get_optional<bool>(jOut, returnValueStr.c_str()).value_or(false))
+        {
+            state = PAUSE;
+            return ERR_NONE;
+        }
+    }
+    catch (const json::exception &e)
+    {
+        PLOGE("Error occurred: %s", e.what());
+    }
+
+    return ERR_FAILED_TO_PAUSE;
+}
+
+ErrorCode MediaRecorder::resume()
+{
+    PLOGI("");
+
+    if (state != PAUSE)
+    {
+        PLOGE("Invalid state %d", state);
+        return ERR_INVALID_STATE;
+    }
+
+    // send message
+    std::string uri = "luna://com.webos.media/play";
+
+    json j;
+    j["mediaId"] = mMediaId;
+    PLOGI("%s '%s'", uri.c_str(), to_string(j).c_str());
+
+    std::string resp;
+    luna_client->callSync(uri.c_str(), to_string(j).c_str(), &resp);
+    PLOGI("resp %s", resp.c_str());
+
+    try
+    {
+        json jOut = json::parse(resp);
+        if (get_optional<bool>(jOut, returnValueStr.c_str()).value_or(false))
+        {
+            state = RECORDING;
+            return ERR_NONE;
+        }
+    }
+    catch (const json::exception &e)
+    {
+        PLOGE("Error occurred: %s", e.what());
+    }
+
+    return ERR_FAILED_TO_RESUME;
 }
