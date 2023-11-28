@@ -109,7 +109,7 @@ bool BaseRecordPipeline::Load(const std::string &msg)
     }
 
     // 3. Ready for record.
-    Pause();
+    BaseRecordPipeline::Pause();
 
     LOGI("end");
     return true;

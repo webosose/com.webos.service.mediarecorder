@@ -16,11 +16,20 @@ bool VideoRecordPipeline::launch()
     }
     else
     {
-        std::string element = ElementFactory::GetPreferredElementName(pipelineType, "record-src");
-        if (!element.empty())
-            pipeline_desc = element + " name=src";
+        std::string socketPath = "/tmp/" + video_src_;
+        std::string filePath   = createRecordFileName(path_);
 
-        pipeline_desc += " ! waylandsink";
+        pipeline_desc =
+            "shmsrc socket-path=" + socketPath + " is-live=true do-timestamp=true name=videoSrc";
+
+        pipeline_desc += " ! video/x-raw, width=" + std::to_string(mVideoFormat.width) +
+                         ", height=" + std::to_string(mVideoFormat.height) +
+                         ", format=RGB16, framerate=0/1, colorimetry=1:1:5:1";
+        pipeline_desc +=
+            " ! v4l2h264enc ! capsfilter name=videoEnc ! h264parse ! queue ! qtmux name=mux";
+        pipeline_desc += " ! filesink sync=true location=" + filePath;
+
+        pipeline_desc += " pulsesrc do_timestamp=false ! queue ! audioconvert ! avenc_aac ! mux.";
     }
 
     LOGI("pipeline : %s", pipeline_desc.c_str());
@@ -32,13 +41,50 @@ bool VideoRecordPipeline::launch()
         return false;
     }
 
-    // 2. Setup src
-    auto src = gst_bin_get_by_name(GST_BIN(pipeline_), "src");
-    if (src)
+    // 2. Setup encoder
+    auto caps_h264 = gst_bin_get_by_name(GST_BIN(pipeline_), "videoEnc");
+    if (caps_h264)
     {
-        ElementFactory::SetProperties(pipelineType, src, "record-src");
+        auto caps = gst_caps_new_simple("video/x-h264", "level", G_TYPE_STRING, "4", nullptr);
+
+        g_object_set(caps_h264, "caps", caps, nullptr);
     }
 
     LOGI("end");
     return true;
+}
+
+bool VideoRecordPipeline::Pause()
+{
+    LOGI("start");
+
+    bool ret = BaseRecordPipeline::Pause();
+
+    // Reconfigure shmsrc
+    auto src = gst_bin_get_by_name(GST_BIN(pipeline_), "videoSrc");
+    gst_element_set_state(src, GST_STATE_PAUSED);
+
+    gst_element_set_state(src, GST_STATE_NULL);
+    gst_element_set_state(src, GST_STATE_PAUSED);
+
+    LOGI("end");
+    return ret;
+}
+
+bool VideoRecordPipeline::Unload()
+{
+    LOGI("start");
+
+    GstState state;
+    gst_element_get_state(pipeline_, &state, nullptr, GST_CLOCK_TIME_NONE);
+    LOGI("state = %s", gst_element_state_get_name(state));
+    if (state == GST_STATE_PAUSED)
+    {
+        Play();
+    }
+
+    bool ret = BaseRecordPipeline::Unload();
+
+    LOGI("end");
+    return ret;
 }
