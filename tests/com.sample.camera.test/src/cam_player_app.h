@@ -23,7 +23,10 @@ class CamPlayerApp
 
     void startRecord();
     void stopRecord();
+    void pauseRecord();
+    void resumeRecord();
     void takeCameraSnapshot();
+    void takeSnapshot();
 
     void exitProgram();
     void setSolutions();
@@ -37,8 +40,7 @@ class CamPlayerApp
     void drawButtons();
     void drawImage();
 
-    bool mDone       = false;
-    bool isRecording = false;
+    bool mDone = false;
 
     std::unique_ptr<WindowManager> mWindowManager;
 
@@ -51,6 +53,8 @@ class CamPlayerApp
     std::unique_ptr<Button> stopCameraButton;
     std::unique_ptr<Button> startRecordButton;
     std::unique_ptr<Button> stopRecordButton;
+    std::unique_ptr<Button> pauseRecordButton;
+    std::unique_ptr<Button> resumeRecordButton;
     std::unique_ptr<Button> playVideoButton;
     std::unique_ptr<Button> pauseVideoButton;
     std::unique_ptr<Button> stopVideoButton;

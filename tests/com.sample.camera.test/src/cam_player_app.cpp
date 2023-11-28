@@ -306,15 +306,13 @@ void CamPlayerApp::startRecord()
     }
     else
     {
-        std::string &media_id =
-            (appParm.use_start_camera) ? mCameraPlayer->mediaId : mCameraClient->mediaId;
-        mMediaRecorder->open(media_id);
+        std::string &videoSrc =
+            (appParm.use_start_camera) ? mCameraPlayer->mediaId : mCameraClient->cameraId;
+        mMediaRecorder->open(videoSrc);
         mMediaRecorder->setOutputFile();
         mMediaRecorder->setOutputFormat();
         mMediaRecorder->start();
     }
-
-    isRecording = true;
 }
 
 void CamPlayerApp::stopRecord()
@@ -330,8 +328,18 @@ void CamPlayerApp::stopRecord()
         mMediaRecorder->stop();
         mMediaRecorder->close();
     }
+}
 
-    isRecording = false;
+void CamPlayerApp::pauseRecord()
+{
+    DEBUG_LOG("start");
+    mMediaRecorder->pause();
+}
+
+void CamPlayerApp::resumeRecord()
+{
+    DEBUG_LOG("start");
+    mMediaRecorder->resume();
 }
 
 void CamPlayerApp::takeCameraSnapshot()
@@ -365,6 +373,24 @@ void CamPlayerApp::takeCameraSnapshot()
 
         imageBox->createJpegTexture(snapshot_file_name.c_str());
         deleteFile(snapshot_file_name);
+    }
+
+    DEBUG_LOG("end\n");
+}
+
+void CamPlayerApp::takeSnapshot()
+{
+    DEBUG_LOG("start");
+
+    auto start = std::chrono::high_resolution_clock::now();
+    if (mMediaRecorder->takeSnapshot())
+    {
+        auto end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double, std::milli> duration = end - start;
+        DEBUG_LOG("%d ms", static_cast<int>(duration.count()));
+
+        std::string snapshot_file_name = getLastFile("/media/internal/", "jpeg");
+        imageBox->createJpegTexture(snapshot_file_name.c_str());
     }
 
     DEBUG_LOG("end\n");
@@ -486,36 +512,46 @@ void CamPlayerApp::CreateButton()
     const int PY1 = 200;
     const int PY2 = (PY1 - 180);
 
-    startCameraButton = std::make_unique<Button>(360, PY1, "start", [this]() { startCamera(); });
-    stopCameraButton  = std::make_unique<Button>(700, PY1, "stop", [this]() { stopCamera(); });
+    startCameraButton =
+        std::make_unique<Button>(360, PY1, "start_cam", [this]() { startCamera(); });
+    stopCameraButton = std::make_unique<Button>(700, PY1, "stop_cam", [this]() { stopCamera(); });
 
-    startRecordButton =
-        std::make_unique<Button>(360, PY2, "start_rec", [this]() { startRecord(); });
-    stopRecordButton = std::make_unique<Button>(360, PY2, "stop_rec", [this]() { stopRecord(); });
+    startRecordButton  = std::make_unique<Button>(360, PY2, "record", [this]() { startRecord(); });
+    pauseRecordButton  = std::make_unique<Button>(360, PY2, "pause", [this]() { pauseRecord(); });
+    resumeRecordButton = std::make_unique<Button>(360, PY2, "play", [this]() { resumeRecord(); });
+
+    stopVideoButton =
+        std::make_unique<Button>(360 + 128 + 40, PY2, "stop", [this]() { stopVideo(); });
+    stopRecordButton =
+        std::make_unique<Button>(360 + 128 + 40, PY2, "stop", [this]() { stopRecord(); });
 
     playVideoButton =
-        std::make_unique<Button>(360 + 128 + 40, PY2, "play", [this]() { playVideo(); });
+        std::make_unique<Button>(360 + (128 + 40) * 2, PY2, "play", [this]() { playVideo(); });
     pauseVideoButton =
-        std::make_unique<Button>(360 + 128 + 40, PY2, "pause", [this]() { pauseVideo(); });
-    stopVideoButton =
-        std::make_unique<Button>(360 + (128 + 40) * 2, PY2, "stop_rec", [this]() { stopVideo(); });
+        std::make_unique<Button>(360 + (128 + 40) * 2, PY2, "pause", [this]() { pauseVideo(); });
 
-#if 1
+#if 0
     if (appParm.use_start_camera)
     {
-
         startCaptureButton = std::make_unique<Button>(360 + (128 + 40) * 3, PY2, "take_picture",
                                                       [this]() { startCapture(); });
     }
     else
     {
-
         startCaptureButton = std::make_unique<Button>(360 + (128 + 40) * 3, PY2, "take_picture",
                                                       [this]() { capture(); });
     }
 #else
-    startCaptureButton = std::make_unique<Button>(360 + (128 + 40) * 3, PY2, "take_picture",
-                                                  [this]() { takeCameraSnapshot(); });
+    if (appParm.use_start_camera)
+    {
+        startCaptureButton = std::make_unique<Button>(360 + (128 + 40) * 3, PY2, "take_picture",
+                                                      [this]() { takeCameraSnapshot(); });
+    }
+    else
+    {
+        startCaptureButton = std::make_unique<Button>(360 + (128 + 40) * 3, PY2, "take_picture",
+                                                      [this]() { takeSnapshot(); });
+    }
 #endif
 
     exitButton =
@@ -539,20 +575,30 @@ void CamPlayerApp::drawButtons()
     startCameraButton->draw();
     stopCameraButton->draw();
 
-    if (isRecording)
-        stopRecordButton->draw();
-    else
+    switch (mMediaRecorder->state)
+    {
+    case RecordingState::Stopped:
         startRecordButton->draw();
+        stopVideoButton->draw();
+        break;
+    case RecordingState::Recording:
+        pauseRecordButton->draw();
+        stopRecordButton->draw();
+        break;
+    case RecordingState::Paused:
+        resumeRecordButton->draw();
+        stopRecordButton->draw();
+        break;
+    default:
+        break;
+    }
 
     if (mMediaPlayer->state == MediaClient::PLAY)
         pauseVideoButton->draw();
     else
         playVideoButton->draw();
 
-    stopVideoButton->draw();
-
     startCaptureButton->draw();
-    // stopCaptureButton->draw();
 
     exitButton->draw();
     ptzButton->draw();

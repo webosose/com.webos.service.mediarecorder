@@ -6,8 +6,6 @@
 
 class CameraClient : public Client
 {
-    std::string cameraId;
-
 public:
     CameraClient();
     ~CameraClient();
@@ -32,6 +30,7 @@ public:
     std::vector<std::string> captureFileList;
     int preview_fps = 30;
     std::string mediaId;
+    std::string cameraId;
 };
 
 #endif // __CAMERA_CLIENT__
