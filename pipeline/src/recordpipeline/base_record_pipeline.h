@@ -3,6 +3,7 @@
 
 #include "base.h"
 #include "camera_types.h"
+#include "format_utils.h"
 #include "record_pipeline.h"
 #include <memory>
 #include <thread>
@@ -44,11 +45,14 @@ public:
     virtual bool launch() = 0;
 
 protected:
-    int32_t width_{0}, height_{0}, framerate_{0}, display_path_{GRP_DEFAULT_DISPLAY}, handle_{0};
-    std::string uri_, memtype_, memsrc_, format_, camera_id_;
+    int32_t display_path_{GRP_DEFAULT_DISPLAY};
+    std::string uri_, format_, video_src_, path_;
 
     GstElement *pipeline_{nullptr};
     std::string pipelineType;
+
+    video_format_t mVideoFormat = {"H264", 1280, 720, 30, 200000};
+    audio_format_t mAudioFormat = {"AAC", 44100, 2, 192000};
 
     std::string createRecordFileName(const std::string &) const;
 };

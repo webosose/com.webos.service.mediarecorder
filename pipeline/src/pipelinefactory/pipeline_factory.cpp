@@ -8,15 +8,30 @@ std::shared_ptr<RecordPipeline> PipelineFactory::CreateRecoder(const pbnjson::JV
 {
     LOGI("start");
 
-    std::string camera_id, format;
-    if (parsed["options"]["option"].hasKey("cameraId"))
+    const pbnjson::JValue &video = parsed["options"]["option"]["video"];
+    if (video.isObject())
     {
-        camera_id = parsed["options"]["option"]["cameraId"].asString();
+
+        LOGI("Create Video Recorder");
+        return std::make_shared<VideoRecordPipeline>();
     }
-    if (parsed["options"]["option"].hasKey("format"))
+    else
     {
-        format = parsed["options"]["option"]["format"].asString();
+        const pbnjson::JValue &audio = parsed["options"]["option"]["audio"];
+        if (audio.isObject())
+        {
+            LOGI("Create Audio Recorder");
+            return std::make_shared<AudioRecordPipeline>();
+        }
+
+        const pbnjson::JValue &image = parsed["options"]["option"]["image"];
+        if (image.isObject())
+        {
+            LOGI("Create Snapshot");
+            return std::make_shared<SnapshotPipeline>();
+        }
     }
 
-    return std::make_shared<VideoRecordPipeline>();
+    LOGE("Cant not create recoder");
+    return nullptr;
 }

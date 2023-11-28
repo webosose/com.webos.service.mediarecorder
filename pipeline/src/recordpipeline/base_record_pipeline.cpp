@@ -64,13 +64,14 @@ bool BaseRecordPipeline::Load(const std::string &msg)
     gst_init(NULL, NULL);
 
     ParseOptionString(msg);
+    LOGI("video_src_ : %s", video_src_.c_str());
+    LOGI("width : %d", mVideoFormat.width);
+    LOGI("height : %d", mVideoFormat.height);
+    LOGI("fps: %d", mVideoFormat.fps);
+    LOGI("sampleRate : %d", mAudioFormat.sampleRate);
+    LOGI("channelCount : %d", mAudioFormat.channels);
     LOGI("format_ : %s", format_.c_str());
-    LOGI("width_ : %d", width_);
-    LOGI("height_ : %d", height_);
-    LOGI("framerate_: %d", framerate_);
-    LOGI("memtype_ : %s", memtype_.c_str());
-    LOGI("memsrc_ : %s", memsrc_.c_str());
-    LOGI("camera_id_ : %s", camera_id_.c_str());
+    LOGI("path_ : %s", path_.c_str());
 
     if (!GetSourceInfo())
     {
@@ -275,11 +276,11 @@ bool BaseRecordPipeline::GetSourceInfo()
 {
     base::video_info_t video_stream_info = {};
 
-    video_stream_info.width          = width_;
-    video_stream_info.height         = height_;
+    video_stream_info.width          = mVideoFormat.width;
+    video_stream_info.height         = mVideoFormat.height;
     video_stream_info.decode         = VIDEO_CODEC_MJPEG;
     video_stream_info.encode         = VIDEO_CODEC_H264;
-    video_stream_info.frame_rate.num = framerate_;
+    video_stream_info.frame_rate.num = mVideoFormat.fps;
     video_stream_info.frame_rate.den = 1;
     LOGI("[video info] width: %d, height: %d, frameRate: %d/%d", video_stream_info.width,
          video_stream_info.height, video_stream_info.frame_rate.num,
@@ -444,14 +445,6 @@ void BaseRecordPipeline::ParseOptionString(const std::string &options)
         int32_t display_path = parsed["options"]["option"]["displayPath"].asNumber<int32_t>();
         display_path_        = (display_path > GRP_SECONDARY_DISPLAY ? 0 : display_path);
     }
-    if (parsed["options"]["option"].hasKey("windowId"))
-    {
-        window_id_ = parsed["options"]["option"]["windowId"].asString();
-    }
-    if (parsed["options"]["option"].hasKey("handle"))
-    {
-        handle_ = parsed["options"]["option"]["handle"].asNumber<int>();
-    }
     if (parsed["options"]["option"].hasKey("videoDisplayMode"))
     {
         display_mode_ = parsed["options"]["option"]["videoDisplayMode"].asString();
@@ -460,33 +453,33 @@ void BaseRecordPipeline::ParseOptionString(const std::string &options)
     {
         format_ = parsed["options"]["option"]["format"].asString();
     }
-    if (parsed["options"]["option"].hasKey("width"))
+    if (parsed["options"]["option"].hasKey("path"))
     {
-        width_ = parsed["options"]["option"]["width"].asNumber<int>();
-    }
-    if (parsed["options"]["option"].hasKey("height"))
-    {
-        height_ = parsed["options"]["option"]["height"].asNumber<int>();
-    }
-    if (parsed["options"]["option"].hasKey("frameRate"))
-    {
-        framerate_ = parsed["options"]["option"]["frameRate"].asNumber<int>();
-    }
-    if (parsed["options"]["option"].hasKey("memType"))
-    {
-        memtype_ = parsed["options"]["option"]["memType"].asString();
-    }
-    if (parsed["options"]["option"].hasKey("memSrc"))
-    {
-        memsrc_ = parsed["options"]["option"]["memSrc"].asString();
-    }
-    if (parsed["options"]["option"].hasKey("cameraId"))
-    {
-        camera_id_ = parsed["options"]["option"]["cameraId"].asString();
+        path_ = parsed["options"]["option"]["path"].asString();
     }
 
-    LOGI("uri: %s, display-path: %d, window_id: %s, display_mode: %s", uri_.c_str(), display_path_,
-         window_id_.c_str(), display_mode_.c_str());
+    pbnjson::JValue video = parsed["options"]["option"]["video"];
+    if (video.isObject())
+    {
+        video_src_              = video["videoSrc"].asString();
+        mVideoFormat.videoCodec = video["codec"].asString();
+        mVideoFormat.width      = video["width"].asNumber<int>();
+        mVideoFormat.height     = video["height"].asNumber<int>();
+        mVideoFormat.fps        = video["fps"].asNumber<int>();
+        mVideoFormat.bitRate    = video["bitRate"].asNumber<int>();
+    }
+
+    pbnjson::JValue audio = parsed["options"]["option"]["audio"];
+    if (audio.isObject())
+    {
+        mAudioFormat.audioCodec = audio["codec"].asString();
+        mAudioFormat.sampleRate = audio["sampleRate"].asNumber<int>();
+        mAudioFormat.channels   = audio["channelCount"].asNumber<int>();
+        mAudioFormat.bitRate    = audio["bitRate"].asNumber<int>();
+    }
+
+    LOGI("uri: %s, display-path: %d,  display_mode: %s", uri_.c_str(), display_path_,
+         display_mode_.c_str());
 }
 
 void BaseRecordPipeline::SetGstreamerDebug()
