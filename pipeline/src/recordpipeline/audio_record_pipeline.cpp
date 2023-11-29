@@ -18,9 +18,37 @@ bool AudioRecordPipeline::launch()
     {
         std::string element = ElementFactory::GetPreferredElementName(pipelineType, "record-src");
         if (!element.empty())
-            pipeline_desc = element + " name=src";
+            pipeline_desc = element + " name=src ! queue";
 
-        pipeline_desc += " ! waylandsink";
+        element = ElementFactory::GetPreferredElementName(pipelineType, "audio-converter");
+        if (!element.empty())
+            pipeline_desc += " ! " + element + " ! capsfilter name=capsfilter";
+
+        if (mAudioFormat.audioCodec == "AAC")
+        {
+            element = ElementFactory::GetPreferredElementName(pipelineType, "audio-encoder-aac");
+            if (!element.empty())
+                pipeline_desc += " ! " + element + " name=encoder";
+
+            element = ElementFactory::GetPreferredElementName(pipelineType, "audio-mux");
+            if (!element.empty())
+                pipeline_desc += " ! " + element;
+        }
+        else
+        {
+            element =
+                ElementFactory::GetPreferredElementName(pipelineType, "audio-encoder-default");
+            if (!element.empty())
+                pipeline_desc += " ! " + element + " name=encoder";
+
+            element = ElementFactory::GetPreferredElementName(pipelineType, "audio-mux");
+            if (!element.empty())
+                pipeline_desc += " ! " + element;
+        }
+
+        element = ElementFactory::GetPreferredElementName(pipelineType, "record-sink");
+        if (!element.empty())
+            pipeline_desc += " ! " + element + " name=sink";
     }
 
     LOGI("pipeline : %s", pipeline_desc.c_str());
@@ -32,11 +60,29 @@ bool AudioRecordPipeline::launch()
         return false;
     }
 
-    // 2. Setup src
-    auto src = gst_bin_get_by_name(GST_BIN(pipeline_), "src");
-    if (src)
+    // 2. Setup capsfilter
+    auto capsfilter = gst_bin_get_by_name(GST_BIN(pipeline_), "capsfilter");
+    if (capsfilter)
     {
-        ElementFactory::SetProperties(pipelineType, src, "record-src");
+        auto caps = gst_caps_new_simple("audio/x-raw", "rate", G_TYPE_INT, mAudioFormat.sampleRate,
+                                        "channels", G_TYPE_INT, mAudioFormat.channels, nullptr);
+
+        g_object_set(capsfilter, "caps", caps, nullptr);
+    }
+
+    // 3. Setup encoder
+    auto encoder = gst_bin_get_by_name(GST_BIN(pipeline_), "encoder");
+    if (encoder)
+    {
+        g_object_set(encoder, "bitrate", mAudioFormat.bitRate, nullptr);
+    }
+
+    // 4. Setup sink
+    std::string filePath = createRecordFileName(path_);
+    auto sink            = gst_bin_get_by_name(GST_BIN(pipeline_), "sink");
+    if (sink)
+    {
+        g_object_set(sink, "location", filePath.c_str(), nullptr);
     }
 
     LOGI("end");
