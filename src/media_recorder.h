@@ -46,6 +46,7 @@ class MediaRecorder
     video_format_t mVideoFormat;
     audio_format_t mAudioFormat;
     std::string mMediaId;
+    bool mEos{false};
 
 public:
     MediaRecorder();
@@ -66,6 +67,7 @@ public:
     ErrorCode resume();
 
     int getRecorderId() { return recorderId; }
+    bool snapshotCb(const char *message);
 };
 
 #endif // __MEDIA_RECORDER__

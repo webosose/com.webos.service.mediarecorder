@@ -125,19 +125,23 @@ bool BaseRecordPipeline::Unload()
         return false;
     }
 
-    LOGI("Send EOS");
-    gst_element_send_event(pipeline_, gst_event_new_eos());
-
     auto bus = gst_pipeline_get_bus(GST_PIPELINE(pipeline_));
-    if (bus != nullptr)
+
+    if (pipelineType != "Snapshot")
     {
-        LOGI("Wait for EOS");
-        auto msg = gst_bus_timed_pop_filtered(
-            bus, GST_CLOCK_TIME_NONE,
-            static_cast<GstMessageType>(GST_MESSAGE_ERROR | GST_MESSAGE_EOS));
-        if (msg != NULL)
+        LOGI("Send EOS");
+        gst_element_send_event(pipeline_, gst_event_new_eos());
+
+        if (bus != nullptr)
         {
-            gst_message_unref(msg);
+            LOGI("Wait for EOS");
+            auto msg = gst_bus_timed_pop_filtered(
+                bus, GST_CLOCK_TIME_NONE,
+                static_cast<GstMessageType>(GST_MESSAGE_ERROR | GST_MESSAGE_EOS));
+            if (msg != NULL)
+            {
+                gst_message_unref(msg);
+            }
         }
     }
 
@@ -158,7 +162,12 @@ bool BaseRecordPipeline::Unload()
     }
 
     if (remBus())
-        gst_bus_remove_watch(bus);
+    {
+        if (bus != nullptr)
+        {
+            gst_bus_remove_watch(bus);
+        }
+    }
 
     gst_object_unref(bus);
 
@@ -476,6 +485,16 @@ void BaseRecordPipeline::ParseOptionString(const std::string &options)
         mAudioFormat.sampleRate = audio["sampleRate"].asNumber<int>();
         mAudioFormat.channels   = audio["channelCount"].asNumber<int>();
         mAudioFormat.bitRate    = audio["bitRate"].asNumber<int>();
+    }
+
+    pbnjson::JValue image = parsed["options"]["option"]["image"];
+    if (image.isObject())
+    {
+        video_src_              = image["videoSrc"].asString();
+        mImageFormat.imageCodec = image["codec"].asString();
+        mImageFormat.width      = image["width"].asNumber<int>();
+        mImageFormat.height     = image["height"].asNumber<int>();
+        mImageFormat.quality    = image["quality"].asNumber<int>();
     }
 
     LOGI("uri: %s, display-path: %d,  display_mode: %s", uri_.c_str(), display_path_,

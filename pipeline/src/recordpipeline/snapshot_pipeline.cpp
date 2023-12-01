@@ -9,18 +9,30 @@ bool SnapshotPipeline::launch()
     // 1. Build pipeline description and launch.
     gchar *content = nullptr;
     std::string pipeline_desc;
-    if (g_file_get_contents(record_pipeline_path.c_str(), &content, nullptr, nullptr))
+    const char *snapshot_pipeline_path = "/etc/g-record-pipeline/snapshot_pipeline";
+
+    if (g_file_get_contents(snapshot_pipeline_path, &content, nullptr, nullptr))
     {
         pipeline_desc = std::string(content);
         g_free(content);
     }
     else
     {
-        std::string element = ElementFactory::GetPreferredElementName(pipelineType, "record-src");
-        if (!element.empty())
-            pipeline_desc = element + " name=src";
+        std::string socketPath = "/tmp/" + video_src_;
+        pipeline_desc          = "shmsrc socket-path=" + socketPath + " num-buffers=1";
+        pipeline_desc += " ! video/x-raw, width=" + std::to_string(mImageFormat.width) +
+                         ", height=" + std::to_string(mImageFormat.height) +
+                         ", format=RGB16, framerate=0/1";
 
-        pipeline_desc += " ! waylandsink";
+        pipeline_desc += " ! videoconvert";
+        std::string element =
+            ElementFactory::GetPreferredElementName(pipelineType, "snapshot-encoder");
+        if (!element.empty())
+            pipeline_desc += " ! " + element + " name=encoder";
+
+        element = ElementFactory::GetPreferredElementName(pipelineType, "snapshot-sink");
+        if (!element.empty())
+            pipeline_desc += " ! " + element + " name=sink";
     }
 
     LOGI("pipeline : %s", pipeline_desc.c_str());
@@ -32,11 +44,18 @@ bool SnapshotPipeline::launch()
         return false;
     }
 
-    // 2. Setup src
-    auto src = gst_bin_get_by_name(GST_BIN(pipeline_), "src");
-    if (src)
+    // 2. Setup snapshot encoder
+    auto encoder = gst_bin_get_by_name(GST_BIN(pipeline_), "encoder");
+    if (encoder)
     {
-        ElementFactory::SetProperties(pipelineType, src, "record-src");
+        g_object_set(encoder, "quality", mImageFormat.quality, nullptr);
+    }
+
+    // 3. Setup sink
+    auto sink = gst_bin_get_by_name(GST_BIN(pipeline_), "sink");
+    if (sink)
+    {
+        g_object_set(sink, "location", createRecordFileName(path_).c_str(), nullptr);
     }
 
     LOGI("end");

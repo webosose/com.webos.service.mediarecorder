@@ -27,6 +27,9 @@ using namespace nlohmann;
 const char *const mediaIdStr     = "mediaId";
 const char *const returnValueStr = "returnValue";
 
+#define LUNA_CALLBACK(NAME)                                                                        \
+    +[](const char *m, void *c) -> bool { return ((MediaRecorder *)c)->NAME(m); }
+
 // Get random number between 1000 and 9999
 static int getRandomNumber()
 {
@@ -130,9 +133,6 @@ ErrorCode MediaRecorder::open(std::string &video_src, std::string &audio_src)
 
     std::string service_name = "com.webos.service.mediarecorder-" + std::to_string(recorderId);
     record_client            = std::make_unique<LSConnector>(service_name, "record");
-
-    service_name    = "com.webos.service.mediarecorder-" + std::to_string(recorderId) + "-snapshot";
-    snapshot_client = std::make_unique<LSConnector>(service_name, "snapshot");
 
     state = OPEN;
     return ERR_NONE;
@@ -346,17 +346,40 @@ ErrorCode MediaRecorder::takeSnapshot(std::string &path, std::string &format)
         return ERR_UNSUPPORTED_FORMAT;
     }
 
-    // send message
-    std::string uri = "luna://com.webos.media/takeCameraSnapshot";
+    auto json_obj     = json::object();
+    json_obj["appId"] = "com.webos.app.mediaevents-test";
+
+    if (!videoSrc.empty())
+    {
+        auto image        = json::object();
+        image["videoSrc"] = videoSrc;
+        image["width"]    = mVideoFormat.width;
+        image["height"]   = mVideoFormat.height;
+        image["codec"]    = format;
+        image["quality"]  = 90;
+        json_obj["image"] = image;
+    }
+
+    json_obj["path"] = path.c_str();
+
+    auto json_obj_option      = json::object();
+    json_obj_option["option"] = json_obj;
 
     json j;
-    j["mediaId"]        = videoSrc;
-    j["location"]       = path;
-    j["format"]         = format; // [TODO] Required but does not work
-    j["width"]          = 1280;   // [TODO] Required but does not work
-    j["height"]         = 720;    // [TODO] Required but does not work
-    j["pictureQuality"] = 30;     // [TODO] Required but does not work
+    j["uri"]     = "record://com.webos.service.mediarecorder";
+    j["payload"] = json_obj_option;
+    j["type"]    = "record";
+
+    // send message for load
+    std::string uri = "luna://com.webos.media/load";
     PLOGI("%s '%s'", uri.c_str(), to_string(j).c_str());
+
+    if (snapshot_client == nullptr)
+    {
+        std::string service_name =
+            "com.webos.service.mediarecorder-" + std::to_string(recorderId) + "-snapshot";
+        snapshot_client = std::make_unique<LSConnector>(service_name, "snapshot");
+    }
 
     std::string resp;
     snapshot_client->callSync(uri.c_str(), to_string(j).c_str(), &resp);
@@ -367,7 +390,43 @@ ErrorCode MediaRecorder::takeSnapshot(std::string &path, std::string &format)
         json jOut = json::parse(resp);
         if (get_optional<bool>(jOut, returnValueStr).value_or(false))
         {
-            return ERR_NONE;
+            // send message for subscribe
+            json j;
+            j[mediaIdStr] = get_optional<std::string>(jOut, mediaIdStr).value_or("");
+
+            std::string uri = "luna://com.webos.media/subscribe";
+            bool retVal     = snapshot_client->subscribe(uri.c_str(), j.dump().c_str(),
+                                                         LUNA_CALLBACK(snapshotCb), this);
+            PLOGI("%s '%s'", uri.c_str(), to_string(j).c_str());
+            if (!retVal)
+            {
+                PLOGE("%s fail to subscribe", __func__);
+            }
+
+            // send message for play
+            uri = "luna://com.webos.media/play";
+            PLOGI("%s '%s'", uri.c_str(), to_string(j).c_str());
+
+            std::string resp;
+            snapshot_client->callSync(uri.c_str(), to_string(j).c_str(), &resp);
+            PLOGI("resp %s", resp.c_str());
+
+            json jOut = json::parse(resp);
+            if (get_optional<bool>(jOut, returnValueStr).value_or(false))
+            {
+                mEos = false;
+                {
+                    int cnt = 0;
+                    while (!mEos && cnt < 10000) // 10s
+                    {
+                        g_usleep(1000);
+                        cnt++;
+                    }
+                    PLOGI("capture done : %d ms", cnt);
+                }
+
+                return ERR_NONE;
+            }
         }
     }
     catch (const json::exception &e)
@@ -376,6 +435,32 @@ ErrorCode MediaRecorder::takeSnapshot(std::string &path, std::string &format)
     }
 
     return ERR_SNAPSHOT_CAPTURE_FAILED;
+}
+
+bool MediaRecorder::snapshotCb(const char *message)
+{
+    PLOGI("payload : %s", message);
+
+    json j = json::parse(message, nullptr, false);
+    if (j.is_discarded())
+    {
+        PLOGE("payload parsing fail!");
+        return false;
+    }
+
+    if (j.contains("endOfStream"))
+    {
+        mEos = true;
+
+        // send message for unsubscribe
+        bool retVal = snapshot_client->unsubscribe();
+        if (!retVal)
+        {
+            PLOGE("%s fail to subscribe", __func__);
+        }
+    }
+
+    return true;
 }
 
 ErrorCode MediaRecorder::setAudioFormat(std::string &audioCodec, unsigned int sampleRate,

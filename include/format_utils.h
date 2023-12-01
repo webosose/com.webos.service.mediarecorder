@@ -32,3 +32,11 @@ struct audio_format_t
     unsigned int channels;
     unsigned int bitRate;
 };
+
+struct image_format_t
+{
+    std::string imageCodec;
+    unsigned int width;
+    unsigned int height;
+    unsigned int quality;
+};
