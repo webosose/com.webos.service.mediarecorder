@@ -29,7 +29,30 @@ bool VideoRecordPipeline::launch()
             " ! v4l2h264enc ! capsfilter name=videoEnc ! h264parse ! queue ! qtmux name=mux";
         pipeline_desc += " ! filesink sync=true location=" + filePath;
 
-        pipeline_desc += " pulsesrc do_timestamp=false ! queue ! audioconvert ! avenc_aac ! mux.";
+        // for audio
+        pipeline_desc += " pulsesrc do_timestamp=false ! queue";
+
+        std::string element =
+            ElementFactory::GetPreferredElementName(pipelineType, "audio-converter");
+        if (!element.empty())
+            pipeline_desc += " ! " + element + " ! capsfilter name=audioCaps";
+        else
+            pipeline_desc += " ! audioconvert ! capsfilter name=audioCaps";
+
+        if (mAudioFormat.audioCodec == "AAC")
+        {
+            element = ElementFactory::GetPreferredElementName(pipelineType, "audio-encoder-aac");
+            if (!element.empty())
+                pipeline_desc += " ! " + element + " name=audioEnc";
+            else
+                pipeline_desc += " ! avenc_aac name=audioEnc";
+        }
+        else
+        {
+            pipeline_desc += " ! avenc_aac name=audioEnc";
+        }
+
+        pipeline_desc += " ! mux.";
     }
 
     LOGI("pipeline : %s", pipeline_desc.c_str());
@@ -48,6 +71,22 @@ bool VideoRecordPipeline::launch()
         auto caps = gst_caps_new_simple("video/x-h264", "level", G_TYPE_STRING, "4", nullptr);
 
         g_object_set(caps_h264, "caps", caps, nullptr);
+    }
+
+    // 3. Setup audio capsfilter
+    auto audio_caps = gst_bin_get_by_name(GST_BIN(pipeline_), "audioCaps");
+    if (audio_caps)
+    {
+        auto caps = gst_caps_new_simple("audio/x-raw", "rate", G_TYPE_INT, mAudioFormat.sampleRate,
+                                        "channels", G_TYPE_INT, mAudioFormat.channels, nullptr);
+        g_object_set(audio_caps, "caps", caps, nullptr);
+    }
+
+    // 4. Setup audio encoder
+    auto audio_enc = gst_bin_get_by_name(GST_BIN(pipeline_), "audioEnc");
+    if (audio_enc)
+    {
+        g_object_set(audio_enc, "bitrate", mAudioFormat.bitRate, nullptr);
     }
 
     LOGI("end");

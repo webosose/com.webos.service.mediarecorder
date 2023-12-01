@@ -16,39 +16,42 @@ bool AudioRecordPipeline::launch()
     }
     else
     {
-        std::string element = ElementFactory::GetPreferredElementName(pipelineType, "record-src");
+        std::string element = ElementFactory::GetPreferredElementName(pipelineType, "audio-src");
         if (!element.empty())
-            pipeline_desc = element + " name=src ! queue";
+            pipeline_desc = element + " ! queue";
+        else
+            pipeline_desc = "pulsesrc ! queue";
 
         element = ElementFactory::GetPreferredElementName(pipelineType, "audio-converter");
         if (!element.empty())
-            pipeline_desc += " ! " + element + " ! capsfilter name=capsfilter";
+            pipeline_desc += " ! " + element + " ! capsfilter name=audioCaps";
+        else
+            pipeline_desc += " ! audioconvert ! capsfilter name=audioCaps";
 
         if (mAudioFormat.audioCodec == "AAC")
         {
             element = ElementFactory::GetPreferredElementName(pipelineType, "audio-encoder-aac");
             if (!element.empty())
-                pipeline_desc += " ! " + element + " name=encoder";
-
-            element = ElementFactory::GetPreferredElementName(pipelineType, "audio-mux");
-            if (!element.empty())
-                pipeline_desc += " ! " + element;
+                pipeline_desc += " ! " + element + " name=audioEnc";
+            else
+                pipeline_desc += " ! avenc_aac name=audioEnc";
         }
         else
         {
-            element =
-                ElementFactory::GetPreferredElementName(pipelineType, "audio-encoder-default");
-            if (!element.empty())
-                pipeline_desc += " ! " + element + " name=encoder";
-
-            element = ElementFactory::GetPreferredElementName(pipelineType, "audio-mux");
-            if (!element.empty())
-                pipeline_desc += " ! " + element;
+            pipeline_desc += " ! avenc_aac name=audioEnc";
         }
 
-        element = ElementFactory::GetPreferredElementName(pipelineType, "record-sink");
+        element = ElementFactory::GetPreferredElementName(pipelineType, "audio-mux");
         if (!element.empty())
-            pipeline_desc += " ! " + element + " name=sink";
+            pipeline_desc += " ! " + element;
+        else
+            pipeline_desc += " ! mp4mux";
+
+        element = ElementFactory::GetPreferredElementName(pipelineType, "audio-sink");
+        if (!element.empty())
+            pipeline_desc += " ! " + element + " name=audioSink";
+        else
+            pipeline_desc += " ! filesink name=audioSink";
     }
 
     LOGI("pipeline : %s", pipeline_desc.c_str());
@@ -61,28 +64,28 @@ bool AudioRecordPipeline::launch()
     }
 
     // 2. Setup capsfilter
-    auto capsfilter = gst_bin_get_by_name(GST_BIN(pipeline_), "capsfilter");
-    if (capsfilter)
+    auto audio_caps = gst_bin_get_by_name(GST_BIN(pipeline_), "audioCaps");
+    if (audio_caps)
     {
         auto caps = gst_caps_new_simple("audio/x-raw", "rate", G_TYPE_INT, mAudioFormat.sampleRate,
                                         "channels", G_TYPE_INT, mAudioFormat.channels, nullptr);
 
-        g_object_set(capsfilter, "caps", caps, nullptr);
+        g_object_set(audio_caps, "caps", caps, nullptr);
     }
 
     // 3. Setup encoder
-    auto encoder = gst_bin_get_by_name(GST_BIN(pipeline_), "encoder");
-    if (encoder)
+    auto audio_enc = gst_bin_get_by_name(GST_BIN(pipeline_), "audioEnc");
+    if (audio_enc)
     {
-        g_object_set(encoder, "bitrate", mAudioFormat.bitRate, nullptr);
+        g_object_set(audio_enc, "bitrate", mAudioFormat.bitRate, nullptr);
     }
 
     // 4. Setup sink
     std::string filePath = createRecordFileName(path_);
-    auto sink            = gst_bin_get_by_name(GST_BIN(pipeline_), "sink");
-    if (sink)
+    auto audio_sink      = gst_bin_get_by_name(GST_BIN(pipeline_), "audioSink");
+    if (audio_sink)
     {
-        g_object_set(sink, "location", filePath.c_str(), nullptr);
+        g_object_set(audio_sink, "location", filePath.c_str(), nullptr);
     }
 
     LOGI("end");
