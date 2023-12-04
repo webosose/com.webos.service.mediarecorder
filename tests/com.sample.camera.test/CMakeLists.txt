@@ -56,7 +56,7 @@ set(SRC_LIST
     src/client/media_client.cpp
     src/client/camera_client.cpp
     src/client/media_recorder_client.cpp
-    ${CMAKE_SOURCE_DIR}/src/luna_client.cpp
+    ${CMAKE_SOURCE_DIR}/src/ls_connector/luna_client.cpp
     src/opengl/button.cpp
     src/opengl/image.cpp
     src/opengl/init_opengl.cpp

@@ -18,13 +18,14 @@
 #include "media_recorder.h"
 #include "json_utils.h"
 #include "log.h"
-#include "luna_client.h"
+#include "ls_connector.h"
 #include <nlohmann/json.hpp>
 #include <random>
 
 using namespace nlohmann;
 
-const std::string returnValueStr("returnValue");
+const char *const mediaIdStr     = "mediaId";
+const char *const returnValueStr = "returnValue";
 
 // Get random number between 1000 and 9999
 static int getRandomNumber()
@@ -127,29 +128,11 @@ ErrorCode MediaRecorder::open(std::string &video_src, std::string &audio_src)
     PLOGI("mVideoFormat: %s, %d, %d, %d, %d", mVideoFormat.videoCodec.c_str(), mVideoFormat.width,
           mVideoFormat.height, mVideoFormat.fps, mAudioFormat.bitRate);
 
-    GMainContext *c = g_main_context_new();
-    loop_           = g_main_loop_new(c, false);
-
-    try
-    {
-        loopThread_ = std::make_unique<std::thread>(g_main_loop_run, loop_);
-    }
-    catch (const std::system_error &e)
-    {
-        PLOGE("Caught a system_error with code %d meaning %s", e.code().value(), e.what());
-        return ERR_OPEN_FAIL;
-    }
-
-    while (!g_main_loop_is_running(loop_))
-    {
-    }
-
-    std::string thread_name = "t" + std::to_string(recorderId);
-    pthread_setname_np(loopThread_->native_handle(), thread_name.c_str());
-
     std::string service_name = "com.webos.service.mediarecorder-" + std::to_string(recorderId);
-    luna_client              = std::make_unique<LunaClient>(service_name.c_str(), c);
-    g_main_context_unref(c);
+    record_client            = std::make_unique<LSConnector>(service_name, "record");
+
+    service_name    = "com.webos.service.mediarecorder-" + std::to_string(recorderId) + "-snapshot";
+    snapshot_client = std::make_unique<LSConnector>(service_name, "snapshot");
 
     state = OPEN;
     return ERR_NONE;
@@ -163,21 +146,6 @@ ErrorCode MediaRecorder::close()
         PLOGE("Invalid state %d", state);
         return ERR_INVALID_STATE;
     }
-
-    g_main_loop_quit(loop_);
-    if (loopThread_->joinable())
-    {
-        try
-        {
-            loopThread_->join();
-        }
-        catch (const std::system_error &e)
-        {
-            PLOGE("Caught a system_error with code %d meaning %s", e.code().value(), e.what());
-            return ERR_CLOSE_FAIL;
-        }
-    }
-    g_main_loop_unref(loop_);
 
     state = CLOSE;
     return ERR_NONE;
@@ -279,36 +247,34 @@ ErrorCode MediaRecorder::start()
 
     // send message for load
     std::string uri = "luna://com.webos.media/load";
-
     PLOGI("%s '%s'", uri.c_str(), to_string(j).c_str());
 
     std::string resp;
-    luna_client->callSync(uri.c_str(), to_string(j).c_str(), &resp);
+    record_client->callSync(uri.c_str(), to_string(j).c_str(), &resp);
     PLOGI("resp %s", resp.c_str());
 
     try
     {
         json jOut = json::parse(resp);
-        if (get_optional<bool>(jOut, returnValueStr.c_str()).value_or(false))
+        if (get_optional<bool>(jOut, returnValueStr).value_or(false))
         {
-            mMediaId = get_optional<std::string>(jOut, "mediaId").value_or("");
+            mMediaId = get_optional<std::string>(jOut, mediaIdStr).value_or("");
 
             // send message for play
             if (mMediaId.empty())
             {
-
                 throw std::invalid_argument("mMediaId is empty");
             }
 
             json j;
-            j["mediaId"]    = mMediaId;
+            j[mediaIdStr]   = mMediaId;
             std::string uri = "luna://com.webos.media/play";
             std::string resp;
-            luna_client->callSync(uri.c_str(), to_string(j).c_str(), &resp);
+            record_client->callSync(uri.c_str(), to_string(j).c_str(), &resp);
             PLOGI("resp %s", resp.c_str());
 
             json jOut = json::parse(resp);
-            if (get_optional<bool>(jOut, returnValueStr.c_str()).value_or(false))
+            if (get_optional<bool>(jOut, returnValueStr).value_or(false))
             {
                 state = RECORDING;
                 return ERR_NONE;
@@ -336,17 +302,17 @@ ErrorCode MediaRecorder::stop()
     std::string uri = "luna://com.webos.media/unload";
 
     json j;
-    j["mediaId"] = mMediaId;
+    j[mediaIdStr] = mMediaId;
     PLOGI("%s '%s'", uri.c_str(), to_string(j).c_str());
 
     std::string resp;
-    luna_client->callSync(uri.c_str(), to_string(j).c_str(), &resp);
+    record_client->callSync(uri.c_str(), to_string(j).c_str(), &resp);
     PLOGI("resp %s", resp.c_str());
 
     try
     {
         json jOut = json::parse(resp);
-        if (get_optional<bool>(jOut, returnValueStr.c_str()).value_or(false))
+        if (get_optional<bool>(jOut, returnValueStr).value_or(false))
         {
             state = OPEN;
             return ERR_NONE;
@@ -393,13 +359,13 @@ ErrorCode MediaRecorder::takeSnapshot(std::string &path, std::string &format)
     PLOGI("%s '%s'", uri.c_str(), to_string(j).c_str());
 
     std::string resp;
-    luna_client->callSync(uri.c_str(), to_string(j).c_str(), &resp);
+    snapshot_client->callSync(uri.c_str(), to_string(j).c_str(), &resp);
     PLOGI("resp %s", resp.c_str());
 
     try
     {
         json jOut = json::parse(resp);
-        if (get_optional<bool>(jOut, returnValueStr.c_str()).value_or(false))
+        if (get_optional<bool>(jOut, returnValueStr).value_or(false))
         {
             return ERR_NONE;
         }
@@ -478,17 +444,17 @@ ErrorCode MediaRecorder::pause()
     std::string uri = "luna://com.webos.media/pause";
 
     json j;
-    j["mediaId"] = mMediaId;
+    j[mediaIdStr] = mMediaId;
     PLOGI("%s '%s'", uri.c_str(), to_string(j).c_str());
 
     std::string resp;
-    luna_client->callSync(uri.c_str(), to_string(j).c_str(), &resp);
+    record_client->callSync(uri.c_str(), to_string(j).c_str(), &resp);
     PLOGI("resp %s", resp.c_str());
 
     try
     {
         json jOut = json::parse(resp);
-        if (get_optional<bool>(jOut, returnValueStr.c_str()).value_or(false))
+        if (get_optional<bool>(jOut, returnValueStr).value_or(false))
         {
             state = PAUSE;
             return ERR_NONE;
@@ -516,17 +482,17 @@ ErrorCode MediaRecorder::resume()
     std::string uri = "luna://com.webos.media/play";
 
     json j;
-    j["mediaId"] = mMediaId;
+    j[mediaIdStr] = mMediaId;
     PLOGI("%s '%s'", uri.c_str(), to_string(j).c_str());
 
     std::string resp;
-    luna_client->callSync(uri.c_str(), to_string(j).c_str(), &resp);
+    record_client->callSync(uri.c_str(), to_string(j).c_str(), &resp);
     PLOGI("resp %s", resp.c_str());
 
     try
     {
         json jOut = json::parse(resp);
-        if (get_optional<bool>(jOut, returnValueStr.c_str()).value_or(false))
+        if (get_optional<bool>(jOut, returnValueStr).value_or(false))
         {
             state = RECORDING;
             return ERR_NONE;

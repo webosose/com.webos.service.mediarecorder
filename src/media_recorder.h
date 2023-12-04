@@ -19,11 +19,10 @@
 
 #include "error.h"
 #include "format_utils.h"
-#include "luna-service2/lunaservice.hpp"
 #include <memory>
 #include <vector>
 
-class LunaClient;
+class LSConnector;
 class MediaRecorder
 {
     enum State
@@ -41,9 +40,8 @@ class MediaRecorder
     std::string audioSrc;
     State state = CLOSE;
 
-    std::unique_ptr<LunaClient> luna_client{nullptr};
-    GMainLoop *loop_{nullptr};
-    std::unique_ptr<std::thread> loopThread_;
+    std::unique_ptr<LSConnector> record_client{nullptr};
+    std::unique_ptr<LSConnector> snapshot_client{nullptr};
 
     video_format_t mVideoFormat;
     audio_format_t mAudioFormat;
