@@ -27,6 +27,7 @@ enum ErrorCode
     ERR_PATH_NOT_SPECIFIED               = 400,
     ERR_FORMAT_NOT_SPECIFIED             = 500,
     ERR_UNSUPPORTED_FORMAT               = 510,
+    ERR_CAMERA_OPEN_FAIL                 = 520,
     ERR_FAILED_TO_START_RECORDING        = 600,
     ERR_FAILED_TO_STOP_RECORDING         = 610,
     ERR_SNAPSHOT_CAPTURE_FAILED          = 620,

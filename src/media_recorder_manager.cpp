@@ -340,13 +340,9 @@ bool MediaRecorderManager::setVideoFormat(LSMessage &message)
 
         // Video format
         std::string videoCodec = get_optional<std::string>(j, "codec").value_or("");
-        unsigned int width     = get_optional<unsigned int>(j, "width").value_or(0);
-        unsigned int height    = get_optional<unsigned int>(j, "height").value_or(0);
-        unsigned int fps       = get_optional<unsigned int>(j, "fps").value_or(0);
         unsigned int bitRate   = get_optional<unsigned int>(j, "bitRate").value_or(0);
 
-        error_code =
-            recorders[recorder_id]->setVideoFormat(videoCodec, width, height, fps, bitRate);
+        error_code = recorders[recorder_id]->setVideoFormat(videoCodec, bitRate);
     }
     catch (const std::exception &e)
     {

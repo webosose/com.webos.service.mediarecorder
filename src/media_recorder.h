@@ -45,13 +45,18 @@ class MediaRecorder
     std::unique_ptr<LSConnector> record_client{nullptr};
     std::unique_ptr<LSConnector> snapshot_client{nullptr};
 
-    video_format_t mVideoFormat;
-    audio_format_t mAudioFormat;
+    video_format_t mVideoFormat{
+        "H264", 1280, 720, 30,
+        200000}; // default vidoe format (video codec, width, height, fps, bitRate)
+    audio_format_t mAudioFormat{
+        "AAC", 44100, 2,
+        192000}; // default audio format (audio codec, sampleRate, channels, bitRate)
     std::string mMediaId;
     bool mEos{false};
 
     bool isSupportedExtension(const std::string &) const;
     std::string createRecordFileName(const std::string &, const std::string &) const;
+    bool getCameraFormat();
 
 public:
     MediaRecorder();
@@ -60,8 +65,7 @@ public:
     ErrorCode open(std::string &video_src, std::string &audio_src);
     ErrorCode setOutputFile(std::string &path);
     ErrorCode setOutputFormat(std::string &format);
-    ErrorCode setVideoFormat(std::string &videoCodec, unsigned int width, unsigned int height,
-                             unsigned int fps, unsigned int bitRate);
+    ErrorCode setVideoFormat(std::string &videoCodec, unsigned int bitRate);
     ErrorCode setAudioFormat(std::string &audioCodec, unsigned int sampleRate,
                              unsigned int channels, unsigned int bitRate);
     ErrorCode start();

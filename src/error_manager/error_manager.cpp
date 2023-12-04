@@ -46,6 +46,7 @@ void ErrorManager::registerErrors()
     // 500
     addError(ERR_FORMAT_NOT_SPECIFIED, "Format must be specified");
     addError(ERR_UNSUPPORTED_FORMAT, "Unsupported format");
+    addError(ERR_CAMERA_OPEN_FAIL, "Failed to open camera");
 
     // 600
     addError(ERR_FAILED_TO_START_RECORDING, "Failed to start recording");

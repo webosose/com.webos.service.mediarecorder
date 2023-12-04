@@ -119,19 +119,6 @@ ErrorCode MediaRecorder::open(std::string &video_src, std::string &audio_src)
     audioSrc   = audio_src;
     recorderId = getRandomNumber();
 
-    // set default audio format (audioCodec, sampleRate, channels, bitRate)
-    mAudioFormat = {"AAC", 44100, 2, 192000};
-
-    PLOGI("mAudioFormat: %s, %d, %d, %d", mAudioFormat.audioCodec.c_str(), mAudioFormat.sampleRate,
-          mAudioFormat.channels, mAudioFormat.bitRate);
-
-    // set default vidoe format (width, height, fps, bitRate)
-    // ToDo camera service getFormat
-    mVideoFormat = {"H264", 1280, 720, 30, 200000};
-
-    PLOGI("mVideoFormat: %s, %d, %d, %d, %d", mVideoFormat.videoCodec.c_str(), mVideoFormat.width,
-          mVideoFormat.height, mVideoFormat.fps, mAudioFormat.bitRate);
-
     std::string service_name = "com.webos.service.mediarecorder-" + std::to_string(recorderId);
     record_client            = std::make_unique<LSConnector>(service_name, "record");
 
@@ -215,6 +202,11 @@ ErrorCode MediaRecorder::start()
 
     if (!videoSrc.empty())
     {
+        if (!getCameraFormat())
+        {
+            return ERR_CAMERA_OPEN_FAIL;
+        }
+
         auto video        = json::object();
         video["videoSrc"] = videoSrc;
         video["width"]    = mVideoFormat.width;
@@ -223,6 +215,10 @@ ErrorCode MediaRecorder::start()
         video["fps"]      = mVideoFormat.fps;
         video["bitRate"]  = mVideoFormat.bitRate;
         json_obj["video"] = video;
+
+        PLOGI("Video Format: codec=%s, width=%d, height=%d, fps=%d, bitRate=%d",
+              mVideoFormat.videoCodec.c_str(), mVideoFormat.width, mVideoFormat.height,
+              mVideoFormat.fps, mVideoFormat.bitRate);
     }
 
     if (!audioSrc.empty())
@@ -233,6 +229,10 @@ ErrorCode MediaRecorder::start()
         audio["channelCount"] = mAudioFormat.channels;
         audio["bitRate"]      = mAudioFormat.bitRate;
         json_obj["audio"]     = audio;
+
+        PLOGI("Audio Format: codec=%s, sampleRate=%d, channels=%d, bitRate=%d",
+              mAudioFormat.audioCodec.c_str(), mAudioFormat.sampleRate, mAudioFormat.channels,
+              mAudioFormat.bitRate);
     }
 
     if (!videoSrc.empty())
@@ -502,8 +502,7 @@ ErrorCode MediaRecorder::setAudioFormat(std::string &audioCodec, unsigned int sa
     return ERR_NONE;
 }
 
-ErrorCode MediaRecorder::setVideoFormat(std::string &videoCodec, unsigned int width,
-                                        unsigned int height, unsigned int fps, unsigned int bitRate)
+ErrorCode MediaRecorder::setVideoFormat(std::string &videoCodec, unsigned int bitRate)
 {
     PLOGI("");
     if (state != OPEN)
@@ -514,17 +513,10 @@ ErrorCode MediaRecorder::setVideoFormat(std::string &videoCodec, unsigned int wi
 
     if (!videoCodec.empty())
         mVideoFormat.videoCodec = videoCodec;
-    if (width != 0)
-        mVideoFormat.width = width;
-    if (height != 0)
-        mVideoFormat.height = height;
-    if (fps != 0)
-        mVideoFormat.fps = fps;
     if (bitRate != 0)
         mVideoFormat.bitRate = bitRate;
 
-    PLOGI("mAudioFormat: %s, %d, %d, %d", mAudioFormat.audioCodec.c_str(), mAudioFormat.sampleRate,
-          mAudioFormat.channels, mAudioFormat.bitRate);
+    PLOGI("mVideoFormat: %s,  %d", mVideoFormat.videoCodec.c_str(), mVideoFormat.bitRate);
 
     return ERR_NONE;
 }
@@ -678,4 +670,37 @@ std::string MediaRecorder::createRecordFileName(const std::string &recordpath,
 
     PLOGI("path : %s", path.c_str());
     return path;
+}
+
+bool MediaRecorder::getCameraFormat()
+{
+    // send message for getFormat
+    json j;
+    j["id"] = videoSrc;
+
+    std::string uri = "luna://com.webos.service.camera2/getFormat";
+    PLOGI("%s '%s'", uri.c_str(), to_string(j).c_str());
+
+    std::string resp;
+    record_client->callSync(uri.c_str(), to_string(j).c_str(), &resp);
+    PLOGI("resp %s", resp.c_str());
+
+    json jOut = json::parse(resp);
+    if (get_optional<bool>(jOut, returnValueStr).value_or(false))
+    {
+        if (jOut.contains("params"))
+        {
+            json params         = jOut["params"];
+            mVideoFormat.width  = get_optional<unsigned int>(params, "width").value_or(0);
+            mVideoFormat.height = get_optional<unsigned int>(params, "height").value_or(0);
+            mVideoFormat.fps    = get_optional<unsigned int>(params, "fps").value_or(0);
+            PLOGI("width=%d, height=%d, fps=%d", mVideoFormat.width, mVideoFormat.height,
+                  mVideoFormat.fps);
+
+            return true;
+        }
+    }
+
+    PLOGE("get camera format fail");
+    return false;
 }
