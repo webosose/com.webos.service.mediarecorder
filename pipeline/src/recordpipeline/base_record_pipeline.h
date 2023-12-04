@@ -31,7 +31,6 @@ class BaseRecordPipeline : public RecordPipeline
     bool handleBusMessage(GstBus *bus, GstMessage *msg);
     bool addBus();
     bool remBus();
-    bool isSupportedExtension(const std::string &) const;
 
 public:
     BaseRecordPipeline();
@@ -54,8 +53,6 @@ protected:
     video_format_t mVideoFormat = {"H264", 1280, 720, 30, 200000};
     audio_format_t mAudioFormat = {"AAC", 44100, 2, 192000};
     image_format_t mImageFormat = {"JPEG", 1280, 720, 90};
-
-    std::string createRecordFileName(const std::string &) const;
 };
 
 #endif // _BASE_RECORD_PIPELINE_H_

@@ -302,8 +302,6 @@ void CamPlayerApp::startRecord()
 
     stopVideo();
 
-    deleteAll("/media/internal/", "mp4");
-
     if (appParm.use_ums)
     {
         mCameraPlayer->startCameraRecord();
@@ -398,7 +396,7 @@ void CamPlayerApp::takeSnapshot()
         std::chrono::duration<double, std::milli> duration = end - start;
         DEBUG_LOG("%d ms", static_cast<int>(duration.count()));
 
-        std::string snapshot_file_name = getLastFile("/media/internal/", "jpeg");
+        std::string snapshot_file_name = mMediaRecorder->getCapturePath();
         imageBox->createJpegTexture(snapshot_file_name.c_str());
     }
 
@@ -475,7 +473,9 @@ void CamPlayerApp::playVideo()
 
     if (mMediaPlayer->state == MediaClient::STOP)
     {
-        std::string video_name = getLastFile("/media/internal/", "mp4");
+        std::string video_name = mMediaRecorder->getRecordPath();
+        if (video_name.empty())
+            video_name = getLastFile("/media/internal/", "mp4");
 
         if (video_name.empty())
         {

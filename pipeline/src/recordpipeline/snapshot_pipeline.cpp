@@ -55,7 +55,7 @@ bool SnapshotPipeline::launch()
     auto sink = gst_bin_get_by_name(GST_BIN(pipeline_), "sink");
     if (sink)
     {
-        g_object_set(sink, "location", createRecordFileName(path_).c_str(), nullptr);
+        g_object_set(sink, "location", path_.c_str(), nullptr);
     }
 
     LOGI("end");

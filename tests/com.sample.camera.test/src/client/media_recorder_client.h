@@ -16,6 +16,8 @@ enum class RecordingState
 class MediaRecorderClient : public Client
 {
     int recorderId = 0;
+    std::string mRecordPath;
+    std::string mCapturePath;
 
 public:
     MediaRecorderClient(std::string name = "media-recorder");
@@ -30,6 +32,9 @@ public:
     bool takeSnapshot();
     bool pause();
     bool resume();
+
+    std::string &getRecordPath() { return mRecordPath; }
+    std::string &getCapturePath() { return mCapturePath; }
 
     RecordingState state = RecordingState::Stopped;
 };

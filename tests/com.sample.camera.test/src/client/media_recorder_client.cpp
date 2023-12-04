@@ -164,7 +164,13 @@ bool MediaRecorderClient::stop()
         return false;
     }
 
-    ret   = get_optional<bool>(jOut, returnValueStr.c_str()).value_or(false);
+    ret = get_optional<bool>(jOut, returnValueStr.c_str()).value_or(false);
+    if (ret)
+    {
+        mRecordPath = get_optional<std::string>(jOut, "path").value_or("");
+        DEBUG_LOG("mRecordPath = %s", mRecordPath.c_str());
+    }
+
     state = RecordingState::Stopped;
     return ret;
 }
@@ -224,6 +230,11 @@ bool MediaRecorderClient::takeSnapshot()
     }
 
     ret = get_optional<bool>(jOut, returnValueStr.c_str()).value_or(false);
+    if (ret)
+    {
+        mCapturePath = get_optional<std::string>(jOut, "path").value_or("");
+        DEBUG_LOG("mCapturePath = %s", mCapturePath.c_str());
+    }
     return ret;
 }
 

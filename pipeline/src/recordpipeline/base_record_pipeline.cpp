@@ -3,7 +3,6 @@
 #include "message.h"
 #include <iomanip>
 #include <pbnjson.hpp>
-#include <sys/time.h>
 #include <system_error>
 
 BaseRecordPipeline::BaseRecordPipeline()
@@ -602,81 +601,4 @@ base::error_t BaseRecordPipeline::HandleErrorMessage(GstMessage *message)
     g_free(debug_info);
 
     return error;
-}
-
-bool BaseRecordPipeline::isSupportedExtension(const std::string &extension) const
-{
-    std::string lowercaseExtension = extension;
-    std::transform(lowercaseExtension.begin(), lowercaseExtension.end(), lowercaseExtension.begin(),
-                   ::tolower);
-
-    return (lowercaseExtension == "mp4") || (lowercaseExtension == "m4a") ||
-           (lowercaseExtension == "jpg") || (lowercaseExtension == "jpeg");
-}
-
-std::string BaseRecordPipeline::createRecordFileName(const std::string &recordpath) const
-{
-    auto path = recordpath;
-    if (path.empty())
-        path = "/media/internal";
-
-    // Find the file extension to check if file name is provided or path is provided
-    std::size_t position  = path.find_last_of(".");
-    std::string extension = path.substr(position + 1);
-
-    if (!isSupportedExtension(extension))
-    {
-        // Check if specified location ends with '/' else add
-        char ch = path.back();
-        if (ch != '/')
-            path += "/";
-
-        std::time_t now  = std::time(nullptr);
-        std::tm *timePtr = std::localtime(&now);
-        if (timePtr == nullptr)
-        {
-            LOGE("failed to get local time");
-            return "";
-        }
-
-        struct timeval tmnow;
-        gettimeofday(&tmnow, NULL);
-
-        std::string prefix, ext;
-        if (pipelineType == "VideoRecord")
-        {
-            prefix = "Record";
-            ext    = "mp4";
-        }
-        else if (pipelineType == "AudioRecord")
-        {
-            prefix = "Audio";
-            ext    = "m4a";
-        }
-        else if (pipelineType == "Snapshot")
-        {
-            prefix = "Capture";
-            ext    = "jpeg";
-        }
-        else
-        {
-            LOGE("Invalid pipeline type");
-            return "";
-        }
-
-        // prefix + "DDMMYYYY-HHMMSSss" + "." + ext
-        std::ostringstream oss;
-        oss << prefix << std::setw(2) << std::setfill('0') << timePtr->tm_mday << std::setw(2)
-            << std::setfill('0') << (timePtr->tm_mon) + 1 << std::setw(2) << std::setfill('0')
-            << (timePtr->tm_year) + 1900 << "-" << std::setw(2) << std::setfill('0')
-            << timePtr->tm_hour << std::setw(2) << std::setfill('0') << timePtr->tm_min
-            << std::setw(2) << std::setfill('0') << timePtr->tm_sec << std::setw(2)
-            << std::setfill('0') << tmnow.tv_usec / 10000;
-
-        path += oss.str();
-        path += "." + ext;
-    }
-
-    LOGI("path : %s", path.c_str());
-    return path;
 }

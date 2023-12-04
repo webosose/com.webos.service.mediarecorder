@@ -17,7 +17,6 @@ bool VideoRecordPipeline::launch()
     else
     {
         std::string socketPath = "/tmp/" + video_src_;
-        std::string filePath   = createRecordFileName(path_);
 
         pipeline_desc =
             "shmsrc socket-path=" + socketPath + " is-live=true do-timestamp=true name=videoSrc";
@@ -27,7 +26,7 @@ bool VideoRecordPipeline::launch()
                          ", format=RGB16, framerate=0/1, colorimetry=1:1:5:1";
         pipeline_desc +=
             " ! v4l2h264enc ! capsfilter name=videoEnc ! h264parse ! queue ! qtmux name=mux";
-        pipeline_desc += " ! filesink sync=true location=" + filePath;
+        pipeline_desc += " ! filesink sync=true location=" + path_;
 
         // for audio
         pipeline_desc += " pulsesrc do_timestamp=false ! queue";

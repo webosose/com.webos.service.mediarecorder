@@ -81,11 +81,10 @@ bool AudioRecordPipeline::launch()
     }
 
     // 4. Setup sink
-    std::string filePath = createRecordFileName(path_);
-    auto audio_sink      = gst_bin_get_by_name(GST_BIN(pipeline_), "audioSink");
+    auto audio_sink = gst_bin_get_by_name(GST_BIN(pipeline_), "audioSink");
     if (audio_sink)
     {
-        g_object_set(audio_sink, "location", filePath.c_str(), nullptr);
+        g_object_set(audio_sink, "location", path_.c_str(), nullptr);
     }
 
     LOGI("end");

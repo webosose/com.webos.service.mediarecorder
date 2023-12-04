@@ -21,6 +21,7 @@
 #include "ls_connector.h"
 #include <nlohmann/json.hpp>
 #include <random>
+#include <sys/time.h>
 
 using namespace nlohmann;
 
@@ -165,7 +166,7 @@ ErrorCode MediaRecorder::setOutputFile(std::string &path)
         return ERR_CANNOT_WRITE;
     }
 
-    mPath = path;
+    mRecordPath = path;
     return ERR_NONE;
 }
 
@@ -179,10 +180,10 @@ ErrorCode MediaRecorder::setOutputFormat(std::string &format)
     }
 
     // If setOutputFile method is not invoked
-    if (mPath.empty())
+    if (mRecordPath.empty())
     {
         PLOGI("Using default path : /media/internal/");
-        mPath = "/media/internal/";
+        mRecordPath = "/media/internal/";
     }
 
     if (isSupportedVideoFileFormat(format))
@@ -234,7 +235,19 @@ ErrorCode MediaRecorder::start()
         json_obj["audio"]     = audio;
     }
 
-    json_obj["path"]   = mPath;
+    if (!videoSrc.empty())
+    {
+        mRecordPath = createRecordFileName(mRecordPath, "Record");
+    }
+    else
+    {
+        if (!audioSrc.empty())
+        {
+            mRecordPath = createRecordFileName(mRecordPath, "Audio");
+        }
+    }
+
+    json_obj["path"]   = mRecordPath;
     json_obj["format"] = mFormat;
 
     auto json_obj_option      = json::object();
@@ -360,7 +373,8 @@ ErrorCode MediaRecorder::takeSnapshot(std::string &path, std::string &format)
         json_obj["image"] = image;
     }
 
-    json_obj["path"] = path.c_str();
+    mCapturePath     = createRecordFileName(path, "Capture");
+    json_obj["path"] = mCapturePath;
 
     auto json_obj_option      = json::object();
     json_obj_option["option"] = json_obj;
@@ -589,4 +603,79 @@ ErrorCode MediaRecorder::resume()
     }
 
     return ERR_FAILED_TO_RESUME;
+}
+
+bool MediaRecorder::isSupportedExtension(const std::string &extension) const
+{
+    std::string lowercaseExtension = extension;
+    std::transform(lowercaseExtension.begin(), lowercaseExtension.end(), lowercaseExtension.begin(),
+                   ::tolower);
+
+    return (lowercaseExtension == "mp4") || (lowercaseExtension == "m4a") ||
+           (lowercaseExtension == "jpg") || (lowercaseExtension == "jpeg");
+}
+
+std::string MediaRecorder::createRecordFileName(const std::string &recordpath,
+                                                const std::string &prefix) const
+{
+    auto path = recordpath;
+    if (path.empty())
+        path = "/media/internal";
+
+    // Find the file extension to check if file name is provided or path is provided
+    std::size_t position  = path.find_last_of(".");
+    std::string extension = path.substr(position + 1);
+
+    if (!isSupportedExtension(extension))
+    {
+        // Check if specified location ends with '/' else add
+        char ch = path.back();
+        if (ch != '/')
+            path += "/";
+
+        std::time_t now  = std::time(nullptr);
+        std::tm *timePtr = std::localtime(&now);
+        if (timePtr == nullptr)
+        {
+            PLOGE("failed to get local time");
+            return "";
+        }
+
+        struct timeval tmnow;
+        gettimeofday(&tmnow, NULL);
+
+        std::string ext;
+        if (prefix == "Record")
+        {
+            ext = "mp4";
+        }
+        else if (prefix == "Audio")
+        {
+            ext = "m4a";
+        }
+        else if (prefix == "Capture")
+        {
+            ext = "jpeg";
+        }
+        else
+        {
+            PLOGE("Invalid prefix");
+            return "";
+        }
+
+        // prefix + "DDMMYYYY-HHMMSSss" + "." + ext
+        std::ostringstream oss;
+        oss << prefix << std::setw(2) << std::setfill('0') << timePtr->tm_mday << std::setw(2)
+            << std::setfill('0') << (timePtr->tm_mon) + 1 << std::setw(2) << std::setfill('0')
+            << (timePtr->tm_year) + 1900 << "-" << std::setw(2) << std::setfill('0')
+            << timePtr->tm_hour << std::setw(2) << std::setfill('0') << timePtr->tm_min
+            << std::setw(2) << std::setfill('0') << timePtr->tm_sec << std::setw(2)
+            << std::setfill('0') << tmnow.tv_usec / 10000;
+
+        path += oss.str();
+        path += "." + ext;
+    }
+
+    PLOGI("path : %s", path.c_str());
+    return path;
 }

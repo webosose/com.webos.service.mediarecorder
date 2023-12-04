@@ -500,11 +500,11 @@ bool MediaRecorderManager::stop(LSMessage &message)
     auto *payload        = LSMessageGetPayload(&message);
     PLOGI("payload %s", payload);
 
+    int recorder_id = 0;
+
     try
     {
         json j = json::parse(payload);
-
-        int recorder_id = 0;
         if (auto value = get_optional<int>(j, "recorderId"))
         {
             recorder_id = *value;
@@ -532,6 +532,7 @@ bool MediaRecorderManager::stop(LSMessage &message)
     if (error_code == ERR_NONE)
     {
         resp["returnValue"] = true;
+        resp["path"]        = recorders[recorder_id]->getRecordPath();
     }
     else
     {
@@ -556,11 +557,11 @@ bool MediaRecorderManager::takeSnapshot(LSMessage &message)
     auto *payload        = LSMessageGetPayload(&message);
     PLOGI("payload %s", payload);
 
+    int recorder_id = 0;
+
     try
     {
         json j = json::parse(payload);
-
-        int recorder_id = 0;
         if (auto value = get_optional<int>(j, "recorderId"))
         {
             recorder_id = *value;
@@ -609,6 +610,7 @@ bool MediaRecorderManager::takeSnapshot(LSMessage &message)
     if (error_code == ERR_NONE)
     {
         resp["returnValue"] = true;
+        resp["path"]        = recorders[recorder_id]->getCapturePath();
     }
     else
     {

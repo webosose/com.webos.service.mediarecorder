@@ -35,6 +35,8 @@ class MediaRecorder
 
     int recorderId = 0;
     std::string mPath;
+    std::string mRecordPath;
+    std::string mCapturePath;
     std::string mFormat;
     std::string videoSrc;
     std::string audioSrc;
@@ -47,6 +49,9 @@ class MediaRecorder
     audio_format_t mAudioFormat;
     std::string mMediaId;
     bool mEos{false};
+
+    bool isSupportedExtension(const std::string &) const;
+    std::string createRecordFileName(const std::string &, const std::string &) const;
 
 public:
     MediaRecorder();
@@ -67,6 +72,8 @@ public:
     ErrorCode resume();
 
     int getRecorderId() { return recorderId; }
+    std::string &getRecordPath() { return mRecordPath; }
+    std::string &getCapturePath() { return mCapturePath; }
     bool snapshotCb(const char *message);
 };
 
