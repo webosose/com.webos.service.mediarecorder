@@ -58,6 +58,8 @@ void ErrorManager::registerErrors()
     // 700
     addError(ERR_OPEN_FAIL, "Failed to open recorder");
     addError(ERR_CLOSE_FAIL, "Failed to close recorder");
+    addError(ERR_VIDEO_NOT_OPENED, "Video is not opened");
+    addError(ERR_AUDIO_NOT_OPENED, "Audio is not opened");
 
     // 800
     addError(ERR_INVALID_STATE, "Invalid state");

@@ -35,6 +35,8 @@ enum ErrorCode
     ERR_FAILED_TO_RESUME                 = 640,
     ERR_OPEN_FAIL                        = 700,
     ERR_CLOSE_FAIL                       = 710,
+    ERR_VIDEO_NOT_OPENED                 = 720,
+    ERR_AUDIO_NOT_OPENED                 = 730,
     ERR_INVALID_STATE                    = 800,
     ERR_CANNOT_WRITE                     = 900,
     ERR_LIST_END                         = 1000,

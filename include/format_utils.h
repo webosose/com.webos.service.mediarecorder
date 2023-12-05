@@ -16,6 +16,9 @@
 
 #pragma once
 
+#include <cstdint>
+#include <vector>
+
 struct video_format_t
 {
     std::string videoCodec;
@@ -28,9 +31,9 @@ struct video_format_t
 struct audio_format_t
 {
     std::string audioCodec;
-    unsigned int sampleRate;
-    unsigned int channels;
-    unsigned int bitRate;
+    uint32_t sampleRate;
+    uint32_t channels;
+    uint32_t bitRate;
 };
 
 struct image_format_t
@@ -39,4 +42,12 @@ struct image_format_t
     unsigned int width;
     unsigned int height;
     unsigned int quality;
+};
+
+struct audio_support_list_t
+{
+    std::string codec;
+    std::vector<uint32_t> sampleRate;
+    std::vector<uint32_t> channels;
+    std::vector<uint32_t> bitRate;
 };

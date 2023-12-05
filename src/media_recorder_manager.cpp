@@ -81,7 +81,7 @@ bool MediaRecorderManager::open(LSMessage &message)
         json j = json::parse(payload);
 
         std::string video_src = get_optional<std::string>(j, "video").value_or("");
-        bool audio_src = get_optional<bool>(j, "audio").value_or(false);
+        bool audio_src        = get_optional<bool>(j, "audio").value_or(false);
 
         std::unique_ptr<MediaRecorder> recorder = std::make_unique<MediaRecorder>();
         error_code                              = recorder->open(video_src, audio_src);
@@ -399,10 +399,15 @@ bool MediaRecorderManager::setAudioFormat(LSMessage &message)
         }
 
         // audio format
-        std::string audioCodec    = get_optional<std::string>(j, "codec").value_or("");
-        unsigned int sampleRate   = get_optional<unsigned int>(j, "sampleRate").value_or(0);
-        unsigned int audioChannel = get_optional<unsigned int>(j, "channelCount").value_or(0);
-        unsigned int bitRate      = get_optional<unsigned int>(j, "bitRate").value_or(0);
+        std::string audioCodec =
+            get_optional<std::string>(j, "codec")
+                .value_or(recorders[recorder_id]->mAudioFormatDefault.audioCodec);
+        uint32_t sampleRate = get_optional<uint32_t>(j, "sampleRate")
+                                  .value_or(recorders[recorder_id]->mAudioFormatDefault.sampleRate);
+        uint32_t audioChannel = get_optional<uint32_t>(j, "channelCount")
+                                    .value_or(recorders[recorder_id]->mAudioFormatDefault.channels);
+        uint32_t bitRate = get_optional<uint32_t>(j, "bitRate")
+                               .value_or(recorders[recorder_id]->mAudioFormatDefault.bitRate);
 
         error_code =
             recorders[recorder_id]->setAudioFormat(audioCodec, sampleRate, audioChannel, bitRate);

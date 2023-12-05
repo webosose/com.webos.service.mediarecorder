@@ -40,7 +40,7 @@ class MediaRecorder
     std::string mFormat;
     std::string videoSrc;
     bool audioSrc = false;
-    State state = CLOSE;
+    State state   = CLOSE;
 
     std::unique_ptr<LSConnector> record_client{nullptr};
     std::unique_ptr<LSConnector> snapshot_client{nullptr};
@@ -48,9 +48,8 @@ class MediaRecorder
     video_format_t mVideoFormat{
         "H264", 1280, 720, 30,
         200000}; // default vidoe format (video codec, width, height, fps, bitRate)
-    audio_format_t mAudioFormat{
-        "AAC", 44100, 2,
-        192000}; // default audio format (audio codec, sampleRate, channels, bitRate)
+
+    audio_format_t mAudioFormat;
     std::string mMediaId;
     bool mEos{false};
 
@@ -79,6 +78,9 @@ public:
     std::string &getRecordPath() { return mRecordPath; }
     std::string &getCapturePath() { return mCapturePath; }
     bool snapshotCb(const char *message);
+
+    audio_format_t const mAudioFormatDefault = {
+        "AAC", 44100, 2, 0}; // default audio format (audio codec, sampleRate, channels, bitRate)
 };
 
 #endif // __MEDIA_RECORDER__

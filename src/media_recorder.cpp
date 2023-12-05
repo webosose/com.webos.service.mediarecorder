@@ -77,6 +77,82 @@ static bool isSupportedImageFileFormat(const std::string &input)
     return false;
 }
 
+static ErrorCode isSupportedAudioFormat(const std::string &codec, const unsigned int sampleRate,
+                                        const unsigned int channels, const unsigned int bitRate)
+{
+    std::vector<audio_support_list_t> audioSupportTypes = {
+        // Additional audio format types can be added here.
+        // example
+        //{"AAC_check_bitrate", {32000, 44100, 48000}, {1, 2, 3, 4, 5}, {0,
+        // 64000,128000,192000,256000}},
+        {"AAC",
+         {8000, 12000, 16000, 22050, 24000, 32000, 44100, 48000, 64000, 88200, 96000},
+         {1, 2, 3, 4, 5},
+         {}}};
+
+    auto pos = std::find_if(
+        audioSupportTypes.begin(), audioSupportTypes.end(),
+        [&](audio_support_list_t &i)
+        {
+            if (i.codec == "AAC")
+            {
+                auto samplePos =
+                    std::find_if(i.sampleRate.begin(), i.sampleRate.end(),
+                                 [&sampleRate](unsigned int n) { return n == sampleRate; });
+
+                auto channelPos =
+                    std::find_if(i.channels.begin(), i.channels.end(),
+                                 [&channels](unsigned int n) { return n == channels; });
+
+                if ((i.codec == codec) && samplePos != i.sampleRate.end() &&
+                    channelPos != i.channels.end())
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            else if (i.codec == "AAC_check_bitrate")
+            {
+                auto samplePos =
+                    std::find_if(i.sampleRate.begin(), i.sampleRate.end(),
+                                 [&sampleRate](unsigned int n) { return n == sampleRate; });
+
+                auto channelPos =
+                    std::find_if(i.channels.begin(), i.channels.end(),
+                                 [&channels](unsigned int n) { return n == channels; });
+
+                auto bitRatePos = std::find_if(i.bitRate.begin(), i.bitRate.end(),
+                                               [&bitRate](unsigned int n) { return n == bitRate; });
+
+                if ((i.codec == codec) && samplePos != i.sampleRate.end() &&
+                    channelPos != i.channels.end() && bitRatePos != i.bitRate.end())
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                return false;
+            }
+        });
+
+    if (pos != audioSupportTypes.end())
+    {
+        return ERR_NONE;
+    }
+    else
+    {
+        return ERR_UNSUPPORTED_FORMAT;
+    }
+}
+
 static bool isInTargetFolders(const std::string &path)
 {
     std::vector<std::string> targetFolders = {
@@ -119,6 +195,14 @@ ErrorCode MediaRecorder::open(std::string &video_src, bool audio_src)
     audioSrc   = audio_src;
     recorderId = getRandomNumber();
 
+    // set default audio format
+    if (audioSrc)
+    {
+        mAudioFormat = mAudioFormatDefault;
+
+        PLOGI("mAudioFormat: %s, %u, %u, %u", mAudioFormat.audioCodec.c_str(),
+              mAudioFormat.sampleRate, mAudioFormat.channels, mAudioFormat.bitRate);
+    }
     std::string service_name = "com.webos.service.mediarecorder-" + std::to_string(recorderId);
     record_client            = std::make_unique<LSConnector>(service_name, "record");
 
@@ -477,8 +561,8 @@ bool MediaRecorder::snapshotCb(const char *message)
     return true;
 }
 
-ErrorCode MediaRecorder::setAudioFormat(std::string &audioCodec, unsigned int sampleRate,
-                                        unsigned int channels, unsigned int bitRate)
+ErrorCode MediaRecorder::setAudioFormat(std::string &audioCodec, uint32_t sampleRate,
+                                        uint32_t channels, uint32_t bitRate)
 {
     PLOGI("");
     if (state != OPEN)
@@ -487,16 +571,32 @@ ErrorCode MediaRecorder::setAudioFormat(std::string &audioCodec, unsigned int sa
         return ERR_INVALID_STATE;
     }
 
-    if (!audioCodec.empty())
-        mAudioFormat.audioCodec = audioCodec;
-    if (sampleRate != 0)
-        mAudioFormat.sampleRate = sampleRate;
-    if (channels != 0)
-        mAudioFormat.channels = channels;
-    if (bitRate != 0)
-        mAudioFormat.bitRate = bitRate;
+    if (!audioSrc)
+    {
+        PLOGE("audio is not opened");
+        return ERR_AUDIO_NOT_OPENED;
+    }
 
-    PLOGI("mAudioFormat: %s, %d, %d, %d", mAudioFormat.audioCodec.c_str(), mAudioFormat.sampleRate,
+    if (isSupportedAudioFormat(audioCodec, sampleRate, channels, bitRate) != ERR_NONE)
+    {
+        return ERR_UNSUPPORTED_FORMAT;
+    }
+
+    mAudioFormat.audioCodec = audioCodec;
+    mAudioFormat.sampleRate = sampleRate;
+    mAudioFormat.channels   = channels;
+
+    // prevent pipeline errors
+    if (bitRate > 0 && bitRate < channels * 5 && audioCodec == "AAC")
+    {
+        mAudioFormat.bitRate = mAudioFormat.channels * 5;
+    }
+    else
+    {
+        mAudioFormat.bitRate = bitRate;
+    }
+
+    PLOGI("mAudioFormat: %s, %u, %u, %u", mAudioFormat.audioCodec.c_str(), mAudioFormat.sampleRate,
           mAudioFormat.channels, mAudioFormat.bitRate);
 
     return ERR_NONE;
@@ -509,6 +609,12 @@ ErrorCode MediaRecorder::setVideoFormat(std::string &videoCodec, unsigned int bi
     {
         PLOGE("Invalid state %d", state);
         return ERR_INVALID_STATE;
+    }
+
+    if (videoSrc.empty())
+    {
+        PLOGE("video is not opened");
+        return ERR_VIDEO_NOT_OPENED;
     }
 
     if (!videoCodec.empty())
