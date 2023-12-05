@@ -80,8 +80,8 @@ bool MediaRecorderManager::open(LSMessage &message)
     {
         json j = json::parse(payload);
 
-        std::string video_src = get_optional<std::string>(j, "videoSrc").value_or("");
-        std::string audio_src = get_optional<std::string>(j, "audioSrc").value_or("");
+        std::string video_src = get_optional<std::string>(j, "video").value_or("");
+        bool audio_src = get_optional<bool>(j, "audio").value_or(false);
 
         std::unique_ptr<MediaRecorder> recorder = std::make_unique<MediaRecorder>();
         error_code                              = recorder->open(video_src, audio_src);

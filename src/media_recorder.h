@@ -39,7 +39,7 @@ class MediaRecorder
     std::string mCapturePath;
     std::string mFormat;
     std::string videoSrc;
-    std::string audioSrc;
+    bool audioSrc = false;
     State state = CLOSE;
 
     std::unique_ptr<LSConnector> record_client{nullptr};
@@ -62,7 +62,7 @@ public:
     MediaRecorder();
     ~MediaRecorder();
 
-    ErrorCode open(std::string &video_src, std::string &audio_src);
+    ErrorCode open(std::string &video_src, bool audio_src);
     ErrorCode setOutputFile(std::string &path);
     ErrorCode setOutputFormat(std::string &format);
     ErrorCode setVideoFormat(std::string &videoCodec, unsigned int bitRate);

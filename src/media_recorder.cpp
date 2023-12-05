@@ -105,11 +105,11 @@ MediaRecorder::~MediaRecorder()
     }
 }
 
-ErrorCode MediaRecorder::open(std::string &video_src, std::string &audio_src)
+ErrorCode MediaRecorder::open(std::string &video_src, bool audio_src)
 {
     PLOGI("");
 
-    if (video_src.empty() && audio_src.empty())
+    if (video_src.empty() && !audio_src)
     {
         PLOGE("Source must be specified");
         return ERR_SOURCE_NOT_SPECIFIED;
@@ -221,7 +221,7 @@ ErrorCode MediaRecorder::start()
               mVideoFormat.fps, mVideoFormat.bitRate);
     }
 
-    if (!audioSrc.empty())
+    if (audioSrc)
     {
         auto audio            = json::object();
         audio["codec"]        = mAudioFormat.audioCodec;
@@ -241,7 +241,7 @@ ErrorCode MediaRecorder::start()
     }
     else
     {
-        if (!audioSrc.empty())
+        if (audioSrc)
         {
             mRecordPath = createRecordFileName(mRecordPath, "Audio");
         }
