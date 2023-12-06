@@ -50,9 +50,9 @@ protected:
     GstElement *pipeline_{nullptr};
     std::string pipelineType;
 
-    video_format_t mVideoFormat = {"H264", 1280, 720, 30, 200000};
-    audio_format_t mAudioFormat = {"AAC", 44100, 2, 0};
-    image_format_t mImageFormat = {"JPEG", 1280, 720, 90};
+    video_format_t mVideoFormat;
+    audio_format_t mAudioFormat;
+    image_format_t mImageFormat;
 };
 
 #endif // _BASE_RECORD_PIPELINE_H_

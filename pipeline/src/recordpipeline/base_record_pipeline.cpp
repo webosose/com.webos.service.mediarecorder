@@ -469,7 +469,9 @@ void BaseRecordPipeline::ParseOptionString(const std::string &options)
     pbnjson::JValue video = parsed["options"]["option"]["video"];
     if (video.isObject())
     {
-        video_src_              = video["videoSrc"].asString();
+        video_src_ = video["videoSrc"].asString();
+
+        mVideoFormat            = {"H264", 1280, 720, 30, 200000};
         mVideoFormat.videoCodec = video["codec"].asString();
         mVideoFormat.width      = video["width"].asNumber<int>();
         mVideoFormat.height     = video["height"].asNumber<int>();
@@ -480,6 +482,7 @@ void BaseRecordPipeline::ParseOptionString(const std::string &options)
     pbnjson::JValue audio = parsed["options"]["option"]["audio"];
     if (audio.isObject())
     {
+        mAudioFormat            = {"AAC", 44100, 2, 0};
         mAudioFormat.audioCodec = audio["codec"].asString();
         mAudioFormat.sampleRate = audio["sampleRate"].asNumber<int>();
         mAudioFormat.channels   = audio["channelCount"].asNumber<int>();
@@ -489,7 +492,9 @@ void BaseRecordPipeline::ParseOptionString(const std::string &options)
     pbnjson::JValue image = parsed["options"]["option"]["image"];
     if (image.isObject())
     {
-        video_src_              = image["videoSrc"].asString();
+        video_src_ = image["videoSrc"].asString();
+
+        mImageFormat            = {"JPEG", 1280, 720, 90};
         mImageFormat.imageCodec = image["codec"].asString();
         mImageFormat.width      = image["width"].asNumber<int>();
         mImageFormat.height     = image["height"].asNumber<int>();

@@ -29,29 +29,33 @@ bool VideoRecordPipeline::launch()
         pipeline_desc += " ! filesink sync=true location=" + path_;
 
         // for audio
-        pipeline_desc += " pulsesrc do_timestamp=false ! queue";
-
-        std::string element =
-            ElementFactory::GetPreferredElementName(pipelineType, "audio-converter");
-        if (!element.empty())
-            pipeline_desc += " ! " + element + " ! capsfilter name=audioCaps";
-        else
-            pipeline_desc += " ! audioconvert ! capsfilter name=audioCaps";
-
-        if (mAudioFormat.audioCodec == "AAC")
+        if (!mAudioFormat.empty())
         {
-            element = ElementFactory::GetPreferredElementName(pipelineType, "audio-encoder-aac");
+            pipeline_desc += " pulsesrc do_timestamp=false ! queue";
+
+            std::string element =
+                ElementFactory::GetPreferredElementName(pipelineType, "audio-converter");
             if (!element.empty())
-                pipeline_desc += " ! " + element + " name=audioEnc";
+                pipeline_desc += " ! " + element + " ! capsfilter name=audioCaps";
             else
-                pipeline_desc += " ! avenc_aac name=audioEnc";
-        }
-        else
-        {
-            pipeline_desc += " ! avenc_aac name=audioEnc";
-        }
+                pipeline_desc += " ! audioconvert ! capsfilter name=audioCaps";
 
-        pipeline_desc += " ! mux.";
+            if (mAudioFormat.audioCodec == "AAC")
+            {
+                element =
+                    ElementFactory::GetPreferredElementName(pipelineType, "audio-encoder-aac");
+                if (!element.empty())
+                    pipeline_desc += " ! " + element + " name=audioEnc";
+                else
+                    pipeline_desc += " ! avenc_aac name=audioEnc";
+            }
+            else
+            {
+                pipeline_desc += " ! avenc_aac name=audioEnc";
+            }
+
+            pipeline_desc += " ! mux.";
+        }
     }
 
     LOGI("pipeline : %s", pipeline_desc.c_str());

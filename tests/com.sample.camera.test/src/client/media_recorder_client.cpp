@@ -29,10 +29,10 @@ bool MediaRecorderClient::open(std::string &video_src)
     std::string uri = mUri + __func__;
 
     json j;
-    j["videoSrc"] = video_src;
+    j["video"] = video_src;
     if (appParm.disable_audio == false)
     {
-        j["audioSrc"] = "usb_mic0";
+        j["audio"] = true;
     }
     DEBUG_LOG("%s '%s'", uri.c_str(), to_string(j).c_str());
 

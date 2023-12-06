@@ -21,27 +21,32 @@
 
 struct video_format_t
 {
-    std::string videoCodec;
-    unsigned int width;
-    unsigned int height;
-    unsigned int fps;
-    unsigned int bitRate;
+    std::string videoCodec = "";
+    unsigned int width     = 0;
+    unsigned int height    = 0;
+    unsigned int fps       = 0;
+    unsigned int bitRate   = 0;
 };
 
 struct audio_format_t
 {
-    std::string audioCodec;
-    uint32_t sampleRate;
-    uint32_t channels;
-    uint32_t bitRate;
+    std::string audioCodec = "";
+    uint32_t sampleRate    = 0;
+    uint32_t channels      = 0;
+    uint32_t bitRate       = 0;
+
+    bool empty() const
+    {
+        return audioCodec.empty() && sampleRate == 0 && channels == 0 && bitRate == 0;
+    }
 };
 
 struct image_format_t
 {
-    std::string imageCodec;
-    unsigned int width;
-    unsigned int height;
-    unsigned int quality;
+    std::string imageCodec = "";
+    unsigned int width     = 0;
+    unsigned int height    = 0;
+    unsigned int quality   = 0;
 };
 
 struct audio_support_list_t
