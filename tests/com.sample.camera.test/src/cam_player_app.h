@@ -1,12 +1,12 @@
 #ifndef _CAM_PLAYER_APP_
 #define _CAM_PLAYER_APP_
 
+#include "window/window_manager.h"
 #include <memory>
 
 class CameraClient;
 class MediaClient;
 class MediaRecorderClient;
-class WindowManager;
 class Button;
 class Image;
 class CamPlayerApp
@@ -39,6 +39,7 @@ class CamPlayerApp
     void CreateImageBox();
     void drawButtons();
     void drawImage();
+    bool isFullScreen() { return mWindowManager->isFullScreen(); }
 
     bool mDone = false;
 
@@ -70,9 +71,9 @@ public:
 
     bool initialize();
     bool execute();
-    void setExporterRegion(int exporter_number, int x, int y, int w, int h);
 
     bool mFullScreen = false;
+    void handleInput(int x, int y);
 };
 
 #endif // _CAM_PLAYER_APP_

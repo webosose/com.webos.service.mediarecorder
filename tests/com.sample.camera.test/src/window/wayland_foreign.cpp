@@ -55,28 +55,7 @@ static void pointer_handle_button(void *data, struct wl_pointer *wl_pointer, uin
     if (state == 0)
     {
         // printf("[%s] x => %d, y => %d\n", __func__, mSx, mSy);
-        if (miCameraApp->mFullScreen == false)
-        {
-            if (mSx > appParm.x1 && mSx < appParm.x2 && mSy < 720)
-            {
-                printf("full screen\n");
-
-                // adjust video ratio
-                int h = 1080;
-                int w = h * appParm.width / appParm.height;
-                int x = (1920 - w) / 2;
-                int y = 0;
-
-                miCameraApp->setExporterRegion(1, x, y, w, h);
-                miCameraApp->mFullScreen = true;
-            }
-        }
-        else
-        {
-            printf("normal\n");
-            miCameraApp->setExporterRegion(1, appParm.x1, 0, appParm.x2 - appParm.x1, 720);
-            miCameraApp->mFullScreen = false;
-        }
+        miCameraApp->handleInput(mSx, mSy);
     }
 }
 

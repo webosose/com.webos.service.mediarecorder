@@ -8,7 +8,6 @@
 #include "opengl/button.h"
 #include "opengl/image.h"
 #include "opengl/init_opengl.h"
-#include "window/window_manager.h"
 #include <iostream>
 #include <nlohmann/json.hpp>
 #include <string>
@@ -39,6 +38,7 @@ CamPlayerApp::~CamPlayerApp()
     DEBUG_LOG("");
 
     stopVideo();
+    stopRecord();
     stopCamera();
 
     mWindowManager->finalize();
@@ -78,7 +78,7 @@ bool CamPlayerApp::execute()
     while ((wl_display_dispatch_pending(mWindowManager->foreign.getDisplay()) != -1) &&
            (!mDone)) // Dispatch main queue events without reading from the display fd
     {
-        if (miCameraApp->mFullScreen)
+        if (isFullScreen())
         {
             // Clear the color buffer
             glClear(GL_COLOR_BUFFER_BIT);
@@ -220,7 +220,8 @@ void CamPlayerApp::startCamera()
         }
         else
         {
-            mCameraClient->startPreview(mWindowManager->exporter1.getWindowID());
+            mCameraClient->startPreview(mWindowManager->exporter[0].getWindowID());
+            mWindowManager->setRect(0);
             return;
         }
     }
@@ -241,7 +242,7 @@ void CamPlayerApp::startCamera()
 
     json option;
     option["appId"]            = "com.webos.app.mediaevents-test";
-    option["windowId"]         = mWindowManager->exporter1.getWindowID();
+    option["windowId"]         = mWindowManager->exporter[0].getWindowID();
     option["videoDisplayMode"] = "Textured";
     option["width"]            = appParm.width;
     option["height"]           = appParm.height;
@@ -256,6 +257,7 @@ void CamPlayerApp::startCamera()
     }
 
     mCameraPlayer->load(option);
+    mWindowManager->setRect(0);
 }
 
 void CamPlayerApp::stopCamera()
@@ -289,6 +291,8 @@ void CamPlayerApp::stopCamera()
         }
     }
 
+    mWindowManager->clearRect(0);
+
     imageBox->deleteTexture();
 }
 
@@ -318,6 +322,11 @@ void CamPlayerApp::startRecord()
 void CamPlayerApp::stopRecord()
 {
     DEBUG_LOG("start");
+    if (mMediaRecorder->state == RecordingState::Stopped)
+    {
+        DEBUG_LOG("Already stopped");
+        return;
+    }
 
     if (appParm.use_ums)
     {
@@ -466,8 +475,17 @@ void CamPlayerApp::playVideo()
 
     if (mMediaPlayer->state == MediaClient::STOP)
     {
-        mMediaPlayer->load(mWindowManager->exporter2.getWindowID(),
-                           getLastFile("/media/internal/", "mp4"));
+        std::string video_name = getLastFile("/media/internal/", "mp4");
+
+        if (video_name.empty())
+        {
+            DEBUG_LOG("no video");
+        }
+        else
+        {
+            mMediaPlayer->load(mWindowManager->exporter[1].getWindowID(), video_name);
+            mWindowManager->setRect(1);
+        }
     }
     else if (mMediaPlayer->state == MediaClient::PAUSE)
     {
@@ -500,6 +518,7 @@ void CamPlayerApp::stopVideo()
     if (mMediaPlayer->state != MediaClient::STOP)
     {
         mMediaPlayer->unload();
+        mWindowManager->clearRect(1);
     }
 
     DEBUG_LOG("end");
@@ -606,7 +625,13 @@ void CamPlayerApp::drawButtons()
 
 void CamPlayerApp::drawImage() { imageBox->draw(); }
 
-void CamPlayerApp::setExporterRegion(int exporter_number, int x, int y, int w, int h)
+void CamPlayerApp::handleInput(int x, int y)
 {
-    mWindowManager->setExporterRegion(exporter_number, x, y, w, h);
+    if (!isFullScreen())
+    {
+        if (imageBox->handleInput(x, y))
+            return;
+    }
+
+    mWindowManager->handleInput(x, y);
 }
