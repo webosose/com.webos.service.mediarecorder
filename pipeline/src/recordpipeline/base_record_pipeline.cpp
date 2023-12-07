@@ -64,19 +64,16 @@ bool BaseRecordPipeline::Load(const std::string &msg)
 
     ParseOptionString(msg);
 
-    if (!GetSourceInfo())
+    if (GetSourceInfo())
     {
-        LOGI("get source information failed!");
-        return false;
-    }
+        if (!acquireResource())
+        {
+            LOGE("resouce acquire failed!");
+            return false;
+        }
 
-    if (!acquireResource())
-    {
-        LOGE("resouce acquire failed!");
-        return false;
+        NotifySourceInfo();
     }
-
-    NotifySourceInfo();
 
     // 0. Check sanity.
     if (pipeline_ != nullptr)
@@ -277,12 +274,28 @@ bool BaseRecordPipeline::GetSourceInfo()
 {
     base::video_info_t video_stream_info = {};
 
-    video_stream_info.width          = mVideoFormat.width;
-    video_stream_info.height         = mVideoFormat.height;
-    video_stream_info.decode         = VIDEO_CODEC_MJPEG;
-    video_stream_info.encode         = VIDEO_CODEC_H264;
-    video_stream_info.frame_rate.num = mVideoFormat.fps;
-    video_stream_info.frame_rate.den = 1;
+    if (!mVideoFormat.empty())
+    {
+        video_stream_info.width          = mVideoFormat.width;
+        video_stream_info.height         = mVideoFormat.height;
+        video_stream_info.encode         = VIDEO_CODEC_H264;
+        video_stream_info.frame_rate.num = mVideoFormat.fps;
+        video_stream_info.frame_rate.den = 1;
+    }
+    else if (!mImageFormat.empty())
+    {
+        video_stream_info.width          = mImageFormat.width;
+        video_stream_info.height         = mImageFormat.height;
+        video_stream_info.encode         = VIDEO_CODEC_MJPEG;
+        video_stream_info.frame_rate.num = 1;
+        video_stream_info.frame_rate.den = 1;
+    }
+    else
+    {
+        //[ToDo] No audio info provided currently.
+        return false;
+    }
+
     LOGI("[video info] width: %d, height: %d, frameRate: %d/%d", video_stream_info.width,
          video_stream_info.height, video_stream_info.frame_rate.num,
          video_stream_info.frame_rate.den);
