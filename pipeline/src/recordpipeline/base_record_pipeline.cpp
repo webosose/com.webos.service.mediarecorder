@@ -63,14 +63,6 @@ bool BaseRecordPipeline::Load(const std::string &msg)
     gst_init(NULL, NULL);
 
     ParseOptionString(msg);
-    LOGI("video_src_ : %s", video_src_.c_str());
-    LOGI("width : %d", mVideoFormat.width);
-    LOGI("height : %d", mVideoFormat.height);
-    LOGI("fps: %d", mVideoFormat.fps);
-    LOGI("sampleRate : %d", mAudioFormat.sampleRate);
-    LOGI("channelCount : %d", mAudioFormat.channels);
-    LOGI("format_ : %s", format_.c_str());
-    LOGI("path_ : %s", path_.c_str());
 
     if (!GetSourceInfo())
     {
@@ -262,6 +254,7 @@ bool BaseRecordPipeline::remBus()
 
 bool BaseRecordPipeline::acquireResource()
 {
+    LOGI("start");
     ACQUIRE_RESOURCE_INFO_T resource_info;
     resource_info.sourceInfo  = &source_info_;
     resource_info.displayMode = const_cast<char *>(display_mode_.c_str());
@@ -305,6 +298,8 @@ bool BaseRecordPipeline::GetSourceInfo()
 
 void BaseRecordPipeline::NotifySourceInfo()
 {
+    LOGI("start");
+
     // TODO(anonymous): Support multiple video/audio stream case
     if (cbFunction_)
         cbFunction_(GRP_NOTIFY_SOURCE_INFO, 0, nullptr, &source_info_);
@@ -477,6 +472,14 @@ void BaseRecordPipeline::ParseOptionString(const std::string &options)
         mVideoFormat.height  = video["height"].asNumber<int>();
         mVideoFormat.fps     = video["fps"].asNumber<int>();
         mVideoFormat.bitRate = video["bitRate"].asNumber<int>();
+
+        LOGI("=== video ===");
+        LOGI("videoSrc : %s", video_src_.c_str());
+        LOGI("width : %d", mVideoFormat.width);
+        LOGI("height : %d", mVideoFormat.height);
+        LOGI("codec : %s", mVideoFormat.codec.c_str());
+        LOGI("fps: %d", mVideoFormat.fps);
+        LOGI("bitRate : %d", mVideoFormat.bitRate);
     }
 
     pbnjson::JValue audio = parsed["options"]["option"]["audio"];
@@ -487,6 +490,12 @@ void BaseRecordPipeline::ParseOptionString(const std::string &options)
         mAudioFormat.sampleRate = audio["sampleRate"].asNumber<int>();
         mAudioFormat.channels   = audio["channelCount"].asNumber<int>();
         mAudioFormat.bitRate    = audio["bitRate"].asNumber<int>();
+
+        LOGI("=== audio ===");
+        LOGI("codec : %s", mAudioFormat.codec.c_str());
+        LOGI("sampleRate : %d", mAudioFormat.sampleRate);
+        LOGI("channelCount : %d", mAudioFormat.channels);
+        LOGI("bitRate : %d", mAudioFormat.bitRate);
     }
 
     pbnjson::JValue image = parsed["options"]["option"]["image"];
@@ -499,10 +508,19 @@ void BaseRecordPipeline::ParseOptionString(const std::string &options)
         mImageFormat.width   = image["width"].asNumber<int>();
         mImageFormat.height  = image["height"].asNumber<int>();
         mImageFormat.quality = image["quality"].asNumber<int>();
+
+        LOGI("=== image ===");
+        LOGI("videoSrc : %s", video_src_.c_str());
+        LOGI("codec : %s", mImageFormat.codec.c_str());
+        LOGI("width : %d", mImageFormat.width);
+        LOGI("height : %d", mImageFormat.height);
+        LOGI("quality: %d", mImageFormat.quality);
     }
 
-    LOGI("uri: %s, display-path: %d,  display_mode: %s", uri_.c_str(), display_path_,
-         display_mode_.c_str());
+    LOGI("=== file ===");
+    if (!format_.empty())
+        LOGI("format : %s", format_.c_str());
+    LOGI("path : %s", path_.c_str());
 }
 
 void BaseRecordPipeline::SetGstreamerDebug()
