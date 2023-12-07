@@ -28,7 +28,7 @@ bool AudioRecordPipeline::launch()
         else
             pipeline_desc += " ! audioconvert ! capsfilter name=audioCaps";
 
-        if (mAudioFormat.audioCodec == "AAC")
+        if (mAudioFormat.codec == "AAC")
         {
             element = ElementFactory::GetPreferredElementName(pipelineType, "audio-encoder-aac");
             if (!element.empty())

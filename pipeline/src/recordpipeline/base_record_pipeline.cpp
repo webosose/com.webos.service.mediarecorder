@@ -471,19 +471,19 @@ void BaseRecordPipeline::ParseOptionString(const std::string &options)
     {
         video_src_ = video["videoSrc"].asString();
 
-        mVideoFormat            = {"H264", 1280, 720, 30, 200000};
-        mVideoFormat.videoCodec = video["codec"].asString();
-        mVideoFormat.width      = video["width"].asNumber<int>();
-        mVideoFormat.height     = video["height"].asNumber<int>();
-        mVideoFormat.fps        = video["fps"].asNumber<int>();
-        mVideoFormat.bitRate    = video["bitRate"].asNumber<int>();
+        mVideoFormat         = {"H264", 1280, 720, 30, 200000};
+        mVideoFormat.codec   = video["codec"].asString();
+        mVideoFormat.width   = video["width"].asNumber<int>();
+        mVideoFormat.height  = video["height"].asNumber<int>();
+        mVideoFormat.fps     = video["fps"].asNumber<int>();
+        mVideoFormat.bitRate = video["bitRate"].asNumber<int>();
     }
 
     pbnjson::JValue audio = parsed["options"]["option"]["audio"];
     if (audio.isObject())
     {
         mAudioFormat            = {"AAC", 44100, 2, 0};
-        mAudioFormat.audioCodec = audio["codec"].asString();
+        mAudioFormat.codec      = audio["codec"].asString();
         mAudioFormat.sampleRate = audio["sampleRate"].asNumber<int>();
         mAudioFormat.channels   = audio["channelCount"].asNumber<int>();
         mAudioFormat.bitRate    = audio["bitRate"].asNumber<int>();
@@ -494,11 +494,11 @@ void BaseRecordPipeline::ParseOptionString(const std::string &options)
     {
         video_src_ = image["videoSrc"].asString();
 
-        mImageFormat            = {"JPEG", 1280, 720, 90};
-        mImageFormat.imageCodec = image["codec"].asString();
-        mImageFormat.width      = image["width"].asNumber<int>();
-        mImageFormat.height     = image["height"].asNumber<int>();
-        mImageFormat.quality    = image["quality"].asNumber<int>();
+        mImageFormat         = {"JPEG", 1280, 720, 90};
+        mImageFormat.codec   = image["codec"].asString();
+        mImageFormat.width   = image["width"].asNumber<int>();
+        mImageFormat.height  = image["height"].asNumber<int>();
+        mImageFormat.quality = image["quality"].asNumber<int>();
     }
 
     LOGI("uri: %s, display-path: %d,  display_mode: %s", uri_.c_str(), display_path_,

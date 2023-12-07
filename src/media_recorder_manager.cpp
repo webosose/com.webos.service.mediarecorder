@@ -399,9 +399,8 @@ bool MediaRecorderManager::setAudioFormat(LSMessage &message)
         }
 
         // audio format
-        std::string audioCodec =
-            get_optional<std::string>(j, "codec")
-                .value_or(recorders[recorder_id]->mAudioFormatDefault.audioCodec);
+        std::string audioCodec = get_optional<std::string>(j, "codec")
+                                     .value_or(recorders[recorder_id]->mAudioFormatDefault.codec);
         uint32_t sampleRate = get_optional<uint32_t>(j, "sampleRate")
                                   .value_or(recorders[recorder_id]->mAudioFormatDefault.sampleRate);
         uint32_t audioChannel = get_optional<uint32_t>(j, "channelCount")

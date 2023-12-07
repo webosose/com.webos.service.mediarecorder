@@ -200,8 +200,8 @@ ErrorCode MediaRecorder::open(std::string &video_src, bool audio_src)
     {
         mAudioFormat = mAudioFormatDefault;
 
-        PLOGI("mAudioFormat: %s, %u, %u, %u", mAudioFormat.audioCodec.c_str(),
-              mAudioFormat.sampleRate, mAudioFormat.channels, mAudioFormat.bitRate);
+        PLOGI("mAudioFormat: %s, %u, %u, %u", mAudioFormat.codec.c_str(), mAudioFormat.sampleRate,
+              mAudioFormat.channels, mAudioFormat.bitRate);
     }
     std::string service_name = "com.webos.service.mediarecorder-" + std::to_string(recorderId);
     record_client            = std::make_unique<LSConnector>(service_name, "record");
@@ -295,27 +295,27 @@ ErrorCode MediaRecorder::start()
         video["videoSrc"] = videoSrc;
         video["width"]    = mVideoFormat.width;
         video["height"]   = mVideoFormat.height;
-        video["codec"]    = mVideoFormat.videoCodec;
+        video["codec"]    = mVideoFormat.codec;
         video["fps"]      = mVideoFormat.fps;
         video["bitRate"]  = mVideoFormat.bitRate;
         json_obj["video"] = video;
 
         PLOGI("Video Format: codec=%s, width=%d, height=%d, fps=%d, bitRate=%d",
-              mVideoFormat.videoCodec.c_str(), mVideoFormat.width, mVideoFormat.height,
-              mVideoFormat.fps, mVideoFormat.bitRate);
+              mVideoFormat.codec.c_str(), mVideoFormat.width, mVideoFormat.height, mVideoFormat.fps,
+              mVideoFormat.bitRate);
     }
 
     if (audioSrc)
     {
         auto audio            = json::object();
-        audio["codec"]        = mAudioFormat.audioCodec;
+        audio["codec"]        = mAudioFormat.codec;
         audio["sampleRate"]   = mAudioFormat.sampleRate;
         audio["channelCount"] = mAudioFormat.channels;
         audio["bitRate"]      = mAudioFormat.bitRate;
         json_obj["audio"]     = audio;
 
         PLOGI("Audio Format: codec=%s, sampleRate=%d, channels=%d, bitRate=%d",
-              mAudioFormat.audioCodec.c_str(), mAudioFormat.sampleRate, mAudioFormat.channels,
+              mAudioFormat.codec.c_str(), mAudioFormat.sampleRate, mAudioFormat.channels,
               mAudioFormat.bitRate);
     }
 
@@ -582,7 +582,7 @@ ErrorCode MediaRecorder::setAudioFormat(std::string &audioCodec, uint32_t sample
         return ERR_UNSUPPORTED_FORMAT;
     }
 
-    mAudioFormat.audioCodec = audioCodec;
+    mAudioFormat.codec      = audioCodec;
     mAudioFormat.sampleRate = sampleRate;
     mAudioFormat.channels   = channels;
 
@@ -596,7 +596,7 @@ ErrorCode MediaRecorder::setAudioFormat(std::string &audioCodec, uint32_t sample
         mAudioFormat.bitRate = bitRate;
     }
 
-    PLOGI("mAudioFormat: %s, %u, %u, %u", mAudioFormat.audioCodec.c_str(), mAudioFormat.sampleRate,
+    PLOGI("mAudioFormat: %s, %u, %u, %u", mAudioFormat.codec.c_str(), mAudioFormat.sampleRate,
           mAudioFormat.channels, mAudioFormat.bitRate);
 
     return ERR_NONE;
@@ -618,11 +618,11 @@ ErrorCode MediaRecorder::setVideoFormat(std::string &videoCodec, unsigned int bi
     }
 
     if (!videoCodec.empty())
-        mVideoFormat.videoCodec = videoCodec;
+        mVideoFormat.codec = videoCodec;
     if (bitRate != 0)
         mVideoFormat.bitRate = bitRate;
 
-    PLOGI("mVideoFormat: %s,  %d", mVideoFormat.videoCodec.c_str(), mVideoFormat.bitRate);
+    PLOGI("mVideoFormat: %s,  %d", mVideoFormat.codec.c_str(), mVideoFormat.bitRate);
 
     return ERR_NONE;
 }
