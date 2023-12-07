@@ -94,7 +94,7 @@ bool MediaRecorderClient::setOutputFormat()
 
     json j;
     j["recorderId"] = recorderId;
-    j["format"]     = "MPEG4";
+    j["format"]     = "MP4";
     DEBUG_LOG("%s '%s'", uri.c_str(), to_string(j).c_str());
 
     std::string resp;

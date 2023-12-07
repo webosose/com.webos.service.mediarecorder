@@ -28,6 +28,9 @@ using namespace nlohmann;
 const char *const mediaIdStr     = "mediaId";
 const char *const returnValueStr = "returnValue";
 
+const std::string mp4Format = "MP4";
+const std::string m4aFormat = "M4A";
+
 #define LUNA_CALLBACK(NAME)                                                                        \
     +[](const char *m, void *c) -> bool { return ((MediaRecorder *)c)->NAME(m); }
 
@@ -44,11 +47,29 @@ static int getRandomNumber()
 static bool isSupportedVideoFileFormat(const std::string &input)
 {
     std::vector<std::string> videoFileTypes = {
-        "MPEG4"
-        // Additional video file types can be added here.
+        mp4Format
+        // You can add additional file formats here.
     };
 
     for (const std::string &fileType : videoFileTypes)
+    {
+        if (input == fileType)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+static bool isSupportedAudioFileFormat(const std::string &input)
+{
+    std::vector<std::string> audioFileTypes = {
+        m4aFormat
+        // You can add additional file formats here.
+    };
+
+    for (const std::string &fileType : audioFileTypes)
     {
         if (input == fileType)
         {
@@ -250,25 +271,15 @@ ErrorCode MediaRecorder::setOutputFormat(std::string &format)
         return ERR_INVALID_STATE;
     }
 
-    // If setOutputFile method is not invoked
-    if (mRecordPath.empty())
-    {
-        PLOGI("Using default path : /media/internal/");
-        mRecordPath = "/media/internal/";
-    }
+    mFormat = format;
 
-    if (isSupportedVideoFileFormat(format))
+    if (!videoSrc.empty())
     {
-        if (format == "MPEG4")
-        {
-            mFormat = "MP4";
-        }
-
-        return ERR_NONE;
+        return isSupportedVideoFileFormat(format) ? ERR_NONE : ERR_UNSUPPORTED_FORMAT;
     }
     else
     {
-        return ERR_UNSUPPORTED_FORMAT;
+        return isSupportedAudioFileFormat(format) ? ERR_NONE : ERR_UNSUPPORTED_FORMAT;
     }
 }
 
@@ -319,20 +330,39 @@ ErrorCode MediaRecorder::start()
               mAudioFormat.bitRate);
     }
 
+    // If setOutputFormat method is not invoked
+    if (!videoSrc.empty())
+    {
+        if (mFormat.empty())
+            mFormat = mp4Format;
+        else if (!isSupportedVideoFileFormat(mFormat))
+            return ERR_UNSUPPORTED_FORMAT;
+    }
+    else if (audioSrc)
+    {
+        if (mFormat.empty())
+            mFormat = m4aFormat;
+        else if (!isSupportedAudioFileFormat(mFormat))
+            return ERR_UNSUPPORTED_FORMAT;
+    }
+
+    // If setOutputFile method is not invoked
+    if (mRecordPath.empty())
+    {
+        PLOGI("Using default path : /media/internal/");
+        mRecordPath = "/media/internal/";
+    }
     if (!videoSrc.empty())
     {
         mRecordPath = createRecordFileName(mRecordPath, "Record");
     }
-    else
+    else if (audioSrc)
     {
-        if (audioSrc)
-        {
-            mRecordPath = createRecordFileName(mRecordPath, "Audio");
-        }
+        mRecordPath = createRecordFileName(mRecordPath, "Audio");
     }
 
-    json_obj["path"]   = mRecordPath;
     json_obj["format"] = mFormat;
+    json_obj["path"]   = mRecordPath;
 
     auto json_obj_option      = json::object();
     json_obj_option["option"] = json_obj;
@@ -807,6 +837,6 @@ bool MediaRecorder::getCameraFormat()
         }
     }
 
-    PLOGE("get camera format fail");
+    PLOGE("Failed to get camera format");
     return false;
 }
