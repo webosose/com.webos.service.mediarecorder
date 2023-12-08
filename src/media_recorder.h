@@ -47,7 +47,7 @@ class MediaRecorder
 
     video_format_t mVideoFormat{
         "H264", 1280, 720, 30,
-        200000}; // default vidoe format (video codec, width, height, fps, bitRate)
+        0}; // default vidoe format (video codec, width, height, fps, bitRate)
 
     audio_format_t mAudioFormat;
     std::string mMediaId;

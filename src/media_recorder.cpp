@@ -635,6 +635,7 @@ ErrorCode MediaRecorder::setAudioFormat(std::string &audioCodec, uint32_t sample
 ErrorCode MediaRecorder::setVideoFormat(std::string &videoCodec, unsigned int bitRate)
 {
     PLOGI("");
+    ErrorCode err = ERR_NONE;
     if (state != OPEN)
     {
         PLOGE("Invalid state %d", state);
@@ -648,13 +649,22 @@ ErrorCode MediaRecorder::setVideoFormat(std::string &videoCodec, unsigned int bi
     }
 
     if (!videoCodec.empty())
+    {
         mVideoFormat.codec = videoCodec;
-    if (bitRate != 0)
+    }
+
+    if (bitRate >= 25000 && bitRate <= 25000000)
+    {
         mVideoFormat.bitRate = bitRate;
+    }
+    else
+    {
+        err = ERR_VIDEO_BITRATE_OUT_OF_RANGE;
+    }
 
     PLOGI("mVideoFormat: %s,  %d", mVideoFormat.codec.c_str(), mVideoFormat.bitRate);
 
-    return ERR_NONE;
+    return err;
 }
 
 ErrorCode MediaRecorder::pause()

@@ -34,7 +34,6 @@ void ErrorManager::registerErrors()
 
     // 200
     addError(ERR_SOURCE_NOT_SPECIFIED, "Source must be specified");
-    addError(ERR_NOT_SUPPORT_AUDIO_ONLY_RECORDING, "Audio only recording is not supported");
 
     // 300
     addError(ERR_RECORDER_ID_NOT_SPECIFIED, "Recorder ID must be specified");
@@ -47,6 +46,7 @@ void ErrorManager::registerErrors()
     addError(ERR_FORMAT_NOT_SPECIFIED, "Format must be specified");
     addError(ERR_UNSUPPORTED_FORMAT, "Unsupported format");
     addError(ERR_CAMERA_OPEN_FAIL, "Failed to open camera");
+    addError(ERR_VIDEO_BITRATE_OUT_OF_RANGE, "Video bitrate is out of range");
 
     // 600
     addError(ERR_FAILED_TO_START_RECORDING, "Failed to start recording");

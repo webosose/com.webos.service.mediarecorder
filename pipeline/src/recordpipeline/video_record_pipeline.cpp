@@ -23,9 +23,16 @@ bool VideoRecordPipeline::launch()
 
         pipeline_desc += " ! video/x-raw, width=" + std::to_string(mVideoFormat.width) +
                          ", height=" + std::to_string(mVideoFormat.height) +
-                         ", format=RGB16, framerate=0/1, colorimetry=1:1:5:1";
-        pipeline_desc +=
-            " ! v4l2h264enc ! capsfilter name=videoEnc ! h264parse ! queue ! qtmux name=mux";
+                         ", format=RGB16, framerate=0/1, colorimetry=1:1:5:1 ! v4l2h264enc";
+
+        if (mVideoFormat.bitRate)
+        {
+            pipeline_desc +=
+                " extra-controls=\"encode, video_bitrate=" + std::to_string(mVideoFormat.bitRate) +
+                ";\"";
+        }
+
+        pipeline_desc += " ! capsfilter name=videoEnc ! h264parse ! queue ! qtmux name=mux";
         pipeline_desc += " ! filesink sync=true location=" + path_;
 
         // for audio
