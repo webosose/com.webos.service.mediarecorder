@@ -26,11 +26,9 @@
 #include "resourcefacilitator/requestor.h"
 #include "serializer.h"
 
-namespace service
-{
-Service *Service::instance_ = nullptr;
+RecordService *RecordService::instance_ = nullptr;
 
-Service::Service(const char *service_name)
+RecordService::RecordService(const char *service_name)
     : media_id_(""), app_id_(""), umc_(nullptr), recorder_(nullptr), resourceRequestor_(nullptr),
       isLoaded_(false)
 {
@@ -41,39 +39,39 @@ Service::Service(const char *service_name)
 
     static UMSConnectorEventHandler event_handlers[] = {
         // uMediaserver public API
-        {"load", Service::LoadEvent},
-        {"attach", Service::AttachEvent},
-        {"unload", Service::UnloadEvent},
+        {"load", RecordService::LoadEvent},
+        {"attach", RecordService::AttachEvent},
+        {"unload", RecordService::UnloadEvent},
 
         // media operations
-        {"play", Service::PlayEvent},
-        {"pause", Service::PauseEvent},
-        {"stateChange", Service::StateChangeEvent},
-        {"unsubscribe", Service::UnsubscribeEvent},
-        {"setUri", Service::SetUriEvent},
-        {"setPlane", Service::SetPlaneEvent},
+        {"play", RecordService::PlayEvent},
+        {"pause", RecordService::PauseEvent},
+        {"stateChange", RecordService::StateChangeEvent},
+        {"unsubscribe", RecordService::UnsubscribeEvent},
+        {"setUri", RecordService::SetUriEvent},
+        {"setPlane", RecordService::SetPlaneEvent},
 
         // Resource Manager API
-        {"getPipelineState", Service::GetPipelineStateEvent},
-        {"logPipelineState", Service::LogPipelineStateEvent},
-        {"getActivePipelines", Service::GetActivePipelinesEvent},
-        {"setPipelineDebugState", Service::SetPipelineDebugStateEvent},
+        {"getPipelineState", RecordService::GetPipelineStateEvent},
+        {"logPipelineState", RecordService::LogPipelineStateEvent},
+        {"getActivePipelines", RecordService::GetActivePipelinesEvent},
+        {"setPipelineDebugState", RecordService::SetPipelineDebugStateEvent},
 
         // exit
-        {"exit", Service::ExitEvent},
+        {"exit", RecordService::ExitEvent},
         {NULL, NULL}};
 
     umc_->addEventHandlers(reinterpret_cast<UMSConnectorEventHandler *>(event_handlers));
 }
 
-Service *Service::GetInstance(const char *service_name)
+RecordService *RecordService::GetInstance(const char *service_name)
 {
     if (!instance_)
-        instance_ = new Service(service_name);
+        instance_ = new RecordService(service_name);
     return instance_;
 }
 
-Service::~Service()
+RecordService::~RecordService()
 {
     if (isLoaded_)
     {
@@ -82,8 +80,8 @@ Service::~Service()
     }
 }
 
-void Service::Notify(const gint notification, const gint64 numValue, const gchar *strValue,
-                     void *payload)
+void RecordService::Notify(const gint notification, const gint64 numValue, const gchar *strValue,
+                           void *payload)
 {
     parser::Composer composer;
     base::media_info_t mediaInfo = {media_id_};
@@ -169,12 +167,12 @@ void Service::Notify(const gint notification, const gint64 numValue, const gchar
         umc_->sendChangeNotificationJsonString(composer.result());
 }
 
-bool Service::Wait() { return umc_->wait(); }
+bool RecordService::Wait() { return umc_->wait(); }
 
-bool Service::Stop() { return umc_->stop(); }
+bool RecordService::Stop() { return umc_->stop(); }
 
 // uMediaserver public API
-bool Service::LoadEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message, void *ctxt)
+bool RecordService::LoadEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message, void *ctxt)
 {
     std::string msg = instance_->umc_->getMessageText(message);
     LOGI("message : %s", msg.c_str());
@@ -238,13 +236,15 @@ bool Service::LoadEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message
     return false;
 }
 
-bool Service::AttachEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message, void *ctxt)
+bool RecordService::AttachEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message,
+                                void *ctxt)
 {
     LOGI("AttachEvent");
     return true;
 }
 
-bool Service::UnloadEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message, void *ctxt)
+bool RecordService::UnloadEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message,
+                                void *ctxt)
 {
     bool ret = false;
     base::error_t error;
@@ -291,7 +291,7 @@ bool Service::UnloadEvent(UMSConnectorHandle *handle, UMSConnectorMessage *messa
 }
 
 // media operations
-bool Service::PlayEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message, void *ctxt)
+bool RecordService::PlayEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message, void *ctxt)
 {
     std::string msg = instance_->umc_->getMessageText(message);
     LOGI("message : %s", msg.c_str());
@@ -305,7 +305,7 @@ bool Service::PlayEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message
     return instance_->recorder_->Play();
 }
 
-bool Service::PauseEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message, void *ctxt)
+bool RecordService::PauseEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message, void *ctxt)
 {
     std::string msg = instance_->umc_->getMessageText(message);
     LOGI("message : %s", msg.c_str());
@@ -319,66 +319,70 @@ bool Service::PauseEvent(UMSConnectorHandle *handle, UMSConnectorMessage *messag
     return instance_->recorder_->Pause();
 }
 
-bool Service::StateChangeEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message, void *ctxt)
+bool RecordService::StateChangeEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message,
+                                     void *ctxt)
 {
     return instance_->umc_->addSubscriber(handle, message);
 }
 
-bool Service::UnsubscribeEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message, void *ctxt)
+bool RecordService::UnsubscribeEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message,
+                                     void *ctxt)
 {
     return true;
 }
 
-bool Service::SetUriEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message, void *ctxt)
+bool RecordService::SetUriEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message,
+                                void *ctxt)
 {
     return true;
 }
 
-bool Service::SetPlaneEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message, void *ctxt)
+bool RecordService::SetPlaneEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message,
+                                  void *ctxt)
 {
     return true;
 }
 
 // Resource Manager API
-bool Service::GetPipelineStateEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message,
-                                    void *ctxt)
+bool RecordService::GetPipelineStateEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message,
+                                          void *ctxt)
 {
     return true;
 }
 
-bool Service::LogPipelineStateEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message,
-                                    void *ctxt)
+bool RecordService::LogPipelineStateEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message,
+                                          void *ctxt)
 {
     return true;
 }
 
-bool Service::GetActivePipelinesEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message,
-                                      void *ctxt)
+bool RecordService::GetActivePipelinesEvent(UMSConnectorHandle *handle,
+                                            UMSConnectorMessage *message, void *ctxt)
 {
     return true;
 }
 
-bool Service::SetPipelineDebugStateEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message,
-                                         void *ctxt)
+bool RecordService::SetPipelineDebugStateEvent(UMSConnectorHandle *handle,
+                                               UMSConnectorMessage *message, void *ctxt)
 {
     return true;
 }
 // exit
-bool Service::ExitEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message, void *ctxt)
+bool RecordService::ExitEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message, void *ctxt)
 {
     return instance_->umc_->stop();
 }
 
-void Service::LoadCommon()
+void RecordService::LoadCommon()
 {
     if (!resourceRequestor_)
         LOGE("NotifyForeground fails");
     else
         resourceRequestor_->notifyForeground();
 
-    recorder_->RegisterCbFunction(std::bind(&Service::Notify, instance_, std::placeholders::_1,
-                                            std::placeholders::_2, std::placeholders::_3,
-                                            std::placeholders::_4));
+    recorder_->RegisterCbFunction(std::bind(&RecordService::Notify, instance_,
+                                            std::placeholders::_1, std::placeholders::_2,
+                                            std::placeholders::_3, std::placeholders::_4));
 
     if (resourceRequestor_)
     {
@@ -397,10 +401,10 @@ void Service::LoadCommon()
     }
 }
 
-bool Service::AcquireResources(const base::source_info_t &sourceInfo,
-                               const std::string &display_mode, uint32_t display_path)
+bool RecordService::AcquireResources(const base::source_info_t &sourceInfo,
+                                     const std::string &display_mode, uint32_t display_path)
 {
-    LOGI("Service::AcquireResources");
+    LOGI("RecordService::AcquireResources");
     resource::PortResource_t resourceMMap;
 
     if (resourceRequestor_)
@@ -420,5 +424,3 @@ bool Service::AcquireResources(const base::source_info_t &sourceInfo,
 
     return true;
 }
-
-} // namespace service

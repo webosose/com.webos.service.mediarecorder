@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
     if (!service_name_specified)
         return 1;
 
-    service::Service *service = service::Service::GetInstance(service_name);
+    RecordService *service = RecordService::GetInstance(service_name);
 
     service->Wait();
 

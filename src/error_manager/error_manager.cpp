@@ -8,20 +8,23 @@ ErrorManager &ErrorManager::getInstance()
     return instance;
 }
 
-void ErrorManager::addError(int code, const std::string &message) { errors[code] = message; }
+void ErrorManager::addError(int code, const std::string &message)
+{
+    errors.push_back({code, message});
+}
 
 const std::string &ErrorManager::getErrorMessage(int code) const
 {
-    auto it = errors.find(code);
-    if (it != errors.end())
+    for (auto it = errors.begin(); it != errors.end(); ++it)
     {
-        return it->second;
+        if (it->getCode() == code)
+        {
+            return it->getMessage();
+        }
     }
-    else
-    {
-        static const std::string defaultError = "Unknown error";
-        return defaultError;
-    }
+
+    static const std::string defaultError = "Unknown error";
+    return defaultError;
 }
 
 Error ErrorManager::getError(int code) const { return Error(code, getErrorMessage(code)); }

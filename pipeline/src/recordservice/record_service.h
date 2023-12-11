@@ -35,15 +35,12 @@ namespace resource
 class ResourceRequestor;
 }
 
-namespace service
-{
-
-class Service
+class RecordService
 {
 public:
-    static Service *GetInstance(const char *service_name);
+    static RecordService *GetInstance(const char *service_name);
 
-    ~Service();
+    ~RecordService();
 
     void Notify(const gint notification, const gint64 numValue, const gchar *strValue,
                 void *payload = nullptr);
@@ -78,7 +75,7 @@ public:
     static bool ExitEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message, void *ctxt);
 
 private:
-    explicit Service(const char *service_name);
+    explicit RecordService(const char *service_name);
     void LoadCommon();
     bool AcquireResources(const base::source_info_t &sourceInfo,
                           const std::string &display_mode = "Default", uint32_t display_path = 0);
@@ -90,12 +87,10 @@ private:
     std::unique_ptr<resource::ResourceRequestor> resourceRequestor_;
     bool isLoaded_;
 
-    static Service *instance_;
+    static RecordService *instance_;
 
-    Service(const Service &s)        = delete;
-    void operator=(const Service &s) = delete;
+    RecordService(const RecordService &s)  = delete;
+    void operator=(const RecordService &s) = delete;
 };
-
-} // namespace service
 
 #endif // _RECORD_SERVICE_H_

@@ -114,8 +114,11 @@ bool MediaRecorderManager::open(LSMessage &message)
         PLOGE("%d %s", error.getCode(), error.getMessage().c_str());
     }
 
+    std::string respStr = to_string(resp);
+    PLOGI("reply %s", respStr.c_str());
+
     LS::Message request(&message);
-    request.respond(to_string(resp).c_str());
+    request.respond(respStr.c_str());
 
     return true;
 }
@@ -175,8 +178,11 @@ bool MediaRecorderManager::close(LSMessage &message)
         PLOGE("%d %s", error.getCode(), error.getMessage().c_str());
     }
 
+    std::string respStr = to_string(resp);
+    PLOGI("reply %s", respStr.c_str());
+
     LS::Message request(&message);
-    request.respond(to_string(resp).c_str());
+    request.respond(respStr.c_str());
 
     return true;
 }
@@ -240,8 +246,11 @@ bool MediaRecorderManager::setOutputFile(LSMessage &message)
         PLOGE("%d %s", error.getCode(), error.getMessage().c_str());
     }
 
+    std::string respStr = to_string(resp);
+    PLOGI("reply %s", respStr.c_str());
+
     LS::Message request(&message);
-    request.respond(to_string(resp).c_str());
+    request.respond(respStr.c_str());
 
     return true;
 }
@@ -305,8 +314,11 @@ bool MediaRecorderManager::setOutputFormat(LSMessage &message)
         PLOGE("%d %s", error.getCode(), error.getMessage().c_str());
     }
 
+    std::string respStr = to_string(resp);
+    PLOGI("reply %s", respStr.c_str());
+
     LS::Message request(&message);
-    request.respond(to_string(resp).c_str());
+    request.respond(respStr.c_str());
 
     return true;
 }
@@ -365,8 +377,11 @@ bool MediaRecorderManager::setVideoFormat(LSMessage &message)
         PLOGE("%d %s", error.getCode(), error.getMessage().c_str());
     }
 
+    std::string respStr = to_string(resp);
+    PLOGI("reply %s", respStr.c_str());
+
     LS::Message request(&message);
-    request.respond(to_string(resp).c_str());
+    request.respond(respStr.c_str());
 
     return true;
 }
@@ -432,8 +447,11 @@ bool MediaRecorderManager::setAudioFormat(LSMessage &message)
         PLOGE("%d %s", error.getCode(), error.getMessage().c_str());
     }
 
+    std::string respStr = to_string(resp);
+    PLOGI("reply %s", respStr.c_str());
+
     LS::Message request(&message);
-    request.respond(to_string(resp).c_str());
+    request.respond(respStr.c_str());
 
     return true;
 }
@@ -488,8 +506,11 @@ bool MediaRecorderManager::start(LSMessage &message)
         PLOGE("%d %s", error.getCode(), error.getMessage().c_str());
     }
 
+    std::string respStr = to_string(resp);
+    PLOGI("reply %s", respStr.c_str());
+
     LS::Message request(&message);
-    request.respond(to_string(resp).c_str());
+    request.respond(respStr.c_str());
 
     return true;
 }
@@ -545,8 +566,11 @@ bool MediaRecorderManager::stop(LSMessage &message)
         PLOGE("%d %s", error.getCode(), error.getMessage().c_str());
     }
 
+    std::string respStr = to_string(resp);
+    PLOGI("reply %s", respStr.c_str());
+
     LS::Message request(&message);
-    request.respond(to_string(resp).c_str());
+    request.respond(respStr.c_str());
 
     return true;
 }
@@ -623,8 +647,11 @@ bool MediaRecorderManager::takeSnapshot(LSMessage &message)
         PLOGE("%d %s", error.getCode(), error.getMessage().c_str());
     }
 
+    std::string respStr = to_string(resp);
+    PLOGI("reply %s", respStr.c_str());
+
     LS::Message request(&message);
-    request.respond(to_string(resp).c_str());
+    request.respond(respStr.c_str());
 
     return true;
 }
@@ -679,8 +706,11 @@ bool MediaRecorderManager::pause(LSMessage &message)
         PLOGE("%d %s", error.getCode(), error.getMessage().c_str());
     }
 
+    std::string respStr = to_string(resp);
+    PLOGI("reply %s", respStr.c_str());
+
     LS::Message request(&message);
-    request.respond(to_string(resp).c_str());
+    request.respond(respStr.c_str());
 
     return true;
 }
@@ -735,8 +765,11 @@ bool MediaRecorderManager::resume(LSMessage &message)
         PLOGE("%d %s", error.getCode(), error.getMessage().c_str());
     }
 
+    std::string respStr = to_string(resp);
+    PLOGI("reply %s", respStr.c_str());
+
     LS::Message request(&message);
-    request.respond(to_string(resp).c_str());
+    request.respond(respStr.c_str());
 
     return true;
 }
