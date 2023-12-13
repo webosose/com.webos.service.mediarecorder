@@ -29,10 +29,14 @@ bool SnapshotPipeline::launch()
             ElementFactory::GetPreferredElementName(pipelineType, "snapshot-encoder");
         if (!element.empty())
             pipeline_desc += " ! " + element + " name=encoder";
+        else
+            pipeline_desc += " ! jpegenc";
 
         element = ElementFactory::GetPreferredElementName(pipelineType, "snapshot-sink");
         if (!element.empty())
             pipeline_desc += " ! " + element + " name=sink";
+        else
+            pipeline_desc += " ! filesink location=" + path_;
     }
 
     LOGI("pipeline : %s", pipeline_desc.c_str());
@@ -48,7 +52,8 @@ bool SnapshotPipeline::launch()
     auto encoder = gst_bin_get_by_name(GST_BIN(pipeline_), "encoder");
     if (encoder)
     {
-        g_object_set(encoder, "quality", mImageFormat.quality, nullptr);
+        if (g_strcmp0(G_OBJECT_TYPE_NAME(encoder), "jpegenc") == 0)
+            g_object_set(encoder, "quality", mImageFormat.quality, nullptr);
     }
 
     // 3. Setup sink
