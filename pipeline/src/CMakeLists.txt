@@ -20,21 +20,9 @@ pkg_check_modules(GLIB2 REQUIRED glib-2.0)
 include_directories(${GLIB2_INCLUDE_DIRS})
 link_directories(${GLIB2_LIBRARY_DIRS})
 
-pkg_check_modules(GSTPLAYER gstreamer-player-1.0 REQUIRED)
-include_directories(${GSTPLAYER_INCLUDE_DIRS})
-link_directories(${GSTPLAYER_LIBRARY_DIRS})
-
-pkg_check_modules(GSTAPP gstreamer-app-1.0 REQUIRED)
-include_directories(${GSTAPP_INCLUDE_DIRS})
-link_directories(${GSTAPP_LIBRARY_DIRS})
-
 pkg_check_modules(GSTREAMER gstreamer-1.0 REQUIRED)
 include_directories(${GSTREAMER_INCLUDE_DIRS})
 link_directories(${GSTREAMER_LIBRARY_DIRS})
-
-pkg_check_modules(GSTPBUTIL gstreamer-pbutils-1.0 REQUIRED)
-include_directories(${GSTPBUTIL_INCLUDE_DIRS})
-link_directories(${GSTPBUTIL_LIBRARY_DIRS})
 
 pkg_check_modules(LUNASERVICE luna-service2 REQUIRED)
 include_directories(${LUNASERVICE_INCLUDE_DIRS})
