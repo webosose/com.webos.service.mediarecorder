@@ -34,7 +34,7 @@ class MediaRecorder
     };
 
     int recorderId = 0;
-    std::string mPath;
+    std::string mRecordBasePath;
     std::string mRecordPath;
     std::string mCapturePath;
     std::string mFormat;

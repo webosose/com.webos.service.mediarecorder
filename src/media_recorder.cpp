@@ -258,7 +258,7 @@ ErrorCode MediaRecorder::setOutputFile(std::string &path)
         return ERR_CANNOT_WRITE;
     }
 
-    mRecordPath = path;
+    mRecordBasePath = path;
     return ERR_NONE;
 }
 
@@ -347,18 +347,18 @@ ErrorCode MediaRecorder::start()
     }
 
     // If setOutputFile method is not invoked
-    if (mRecordPath.empty())
+    if (mRecordBasePath.empty())
     {
         PLOGI("Using default path : /media/internal/");
-        mRecordPath = "/media/internal/";
+        mRecordBasePath = "/media/internal/";
     }
     if (!videoSrc.empty())
     {
-        mRecordPath = createRecordFileName(mRecordPath, "Record");
+        mRecordPath = createRecordFileName(mRecordBasePath, "Record");
     }
     else if (audioSrc)
     {
-        mRecordPath = createRecordFileName(mRecordPath, "Audio");
+        mRecordPath = createRecordFileName(mRecordBasePath, "Audio");
     }
 
     json_obj["format"] = mFormat;
