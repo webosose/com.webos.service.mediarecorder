@@ -5,9 +5,9 @@
 #include "client/media_recorder_client.h"
 #include "file_utils.h"
 #include "log_info.h"
-#include "opengl/button.h"
+#include "opengl/button_render.h"
 #include "opengl/image.h"
-#include "opengl/init_opengl.h"
+#include "window/window_manager.h"
 #include <iostream>
 #include <nlohmann/json.hpp>
 #include <string>
@@ -56,6 +56,8 @@ bool CamPlayerApp::initialize()
     mWindowManager = std::make_unique<WindowManager>();
     mWindowManager->initialize();
 
+    buttonRender = std::make_unique<ButtonRender>([&](int e) { handleEvent(e); });
+
     return true;
 }
 
@@ -64,32 +66,14 @@ bool CamPlayerApp::execute()
     DEBUG_LOG("");
 
     startCamera();
-
-    if (!InitOpenGL())
-    {
-        ERROR_LOG("GL Init error");
-        return GL_FALSE;
-    }
-
-    CreateButton();
     CreateImageBox();
 
     DEBUG_LOG("wl_display_dispatch_pending");
     while ((wl_display_dispatch_pending(mWindowManager->foreign.getDisplay()) != -1) &&
            (!mDone)) // Dispatch main queue events without reading from the display fd
     {
-        if (isFullScreen())
-        {
-            // Clear the color buffer
-            glClear(GL_COLOR_BUFFER_BIT);
-        }
-        else
-        {
-            drawButtons();
-            drawImage();
-        }
+        draw();
         g_usleep(100 * 1000); // 100 ms
-
         eglSwapBuffers(eglGetCurrentDisplay(), eglGetCurrentSurface(EGL_READ));
     }
 
@@ -206,6 +190,12 @@ void CamPlayerApp::startCamera()
         return;
     }
 
+    if (mCameraClient->state == CameraClient::START)
+    {
+        DEBUG_LOG("invalid state");
+        return;
+    }
+
     DEBUG_LOG("start");
 
     if (appParm.memType == "shmem" || appParm.memType == "posixshm")
@@ -262,6 +252,7 @@ void CamPlayerApp::startCamera()
 
 void CamPlayerApp::stopCamera()
 {
+    DEBUG_LOG("start");
 
     if (appParm.use_start_camera)
     {
@@ -284,6 +275,13 @@ void CamPlayerApp::stopCamera()
     }
     else
     {
+
+        if (mCameraClient->state == CameraClient::STOP)
+        {
+            DEBUG_LOG("invalid state");
+            return;
+        }
+
         if (appParm.memType == "shmem" || appParm.memType == "posixshm")
         {
             mCameraClient->stopPreview();
@@ -463,8 +461,9 @@ void CamPlayerApp::exitProgram()
 
 void CamPlayerApp::setSolutions()
 {
-    DEBUG_LOG("start %d", ptzButton->get());
-    mCameraClient->setSolutions(ptzButton->get());
+    bool enable = buttonRender->ptzButton->get();
+    DEBUG_LOG("ptz %d", enable);
+    mCameraClient->setSolutions(buttonRender->ptzButton->get());
 }
 
 void CamPlayerApp::playVideo()
@@ -524,106 +523,26 @@ void CamPlayerApp::stopVideo()
     DEBUG_LOG("end");
 }
 
-void CamPlayerApp::CreateButton()
-{
-    DEBUG_LOG("start");
-
-    const int PY1 = 200;
-    const int PY2 = (PY1 - 180);
-
-    startCameraButton =
-        std::make_unique<Button>(360, PY1, "start_cam", [this]() { startCamera(); });
-    stopCameraButton = std::make_unique<Button>(700, PY1, "stop_cam", [this]() { stopCamera(); });
-
-    startRecordButton  = std::make_unique<Button>(360, PY2, "record", [this]() { startRecord(); });
-    pauseRecordButton  = std::make_unique<Button>(360, PY2, "pause", [this]() { pauseRecord(); });
-    resumeRecordButton = std::make_unique<Button>(360, PY2, "play", [this]() { resumeRecord(); });
-
-    stopVideoButton =
-        std::make_unique<Button>(360 + 128 + 40, PY2, "stop", [this]() { stopVideo(); });
-    stopRecordButton =
-        std::make_unique<Button>(360 + 128 + 40, PY2, "stop", [this]() { stopRecord(); });
-
-    playVideoButton =
-        std::make_unique<Button>(360 + (128 + 40) * 2, PY2, "play", [this]() { playVideo(); });
-    pauseVideoButton =
-        std::make_unique<Button>(360 + (128 + 40) * 2, PY2, "pause", [this]() { pauseVideo(); });
-
-#if 0
-    if (appParm.use_start_camera)
-    {
-        startCaptureButton = std::make_unique<Button>(360 + (128 + 40) * 3, PY2, "take_picture",
-                                                      [this]() { startCapture(); });
-    }
-    else
-    {
-        startCaptureButton = std::make_unique<Button>(360 + (128 + 40) * 3, PY2, "take_picture",
-                                                      [this]() { capture(); });
-    }
-#else
-    if (appParm.use_start_camera)
-    {
-        startCaptureButton = std::make_unique<Button>(360 + (128 + 40) * 3, PY2, "take_picture",
-                                                      [this]() { takeCameraSnapshot(); });
-    }
-    else
-    {
-        startCaptureButton = std::make_unique<Button>(360 + (128 + 40) * 3, PY2, "take_picture",
-                                                      [this]() { takeSnapshot(); });
-    }
-#endif
-
-    exitButton =
-        std::make_unique<Button>(360 + (128 + 40) * 4, PY2, "exit", [this]() { exitProgram(); });
-
-    ptzButton = std::make_unique<Button>(360 + (128 + 40) * 4, PY1 - 4, "ptz",
-                                         [this]() { setSolutions(); });
-}
-
 void CamPlayerApp::CreateImageBox()
 {
     DEBUG_LOG("start");
     imageBox = std::make_unique<Image>();
 }
 
-void CamPlayerApp::drawButtons()
+bool CamPlayerApp::isFullScreen() { return mWindowManager->isFullScreen(); }
+
+void CamPlayerApp::draw()
 {
     // Clear the color buffer
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    startCameraButton->draw();
-    stopCameraButton->draw();
-
-    switch (mMediaRecorder->state)
+    if (!isFullScreen())
     {
-    case RecordingState::Stopped:
-        startRecordButton->draw();
-        stopVideoButton->draw();
-        break;
-    case RecordingState::Recording:
-        pauseRecordButton->draw();
-        stopRecordButton->draw();
-        break;
-    case RecordingState::Paused:
-        resumeRecordButton->draw();
-        stopRecordButton->draw();
-        break;
-    default:
-        break;
+        buttonRender->draw();
+        imageBox->draw();
     }
-
-    if (mMediaPlayer->state == MediaClient::PLAY)
-        pauseVideoButton->draw();
-    else
-        playVideoButton->draw();
-
-    startCaptureButton->draw();
-
-    exitButton->draw();
-    ptzButton->draw();
 }
-
-void CamPlayerApp::drawImage() { imageBox->draw(); }
 
 void CamPlayerApp::handleInput(int x, int y)
 {
@@ -631,7 +550,76 @@ void CamPlayerApp::handleInput(int x, int y)
     {
         if (imageBox->handleInput(x, y))
             return;
+        if (buttonRender->handleInput(x, y))
+            return;
     }
 
     mWindowManager->handleInput(x, y);
+}
+
+void CamPlayerApp::handleEvent(int eventType)
+{
+    // DEBUG_LOG("%s %d", __func__, eventType);
+
+    switch (eventType)
+    {
+    case EVENT_START_CAMERA:
+        DEBUG_LOG("EVENT_START_CAMERA");
+        startCamera();
+        break;
+    case EVENT_STOP_CAMERA:
+        DEBUG_LOG("EVENT_STOP_CAMERA");
+        stopCamera();
+        break;
+    case EVENT_START_RECORD:
+        DEBUG_LOG("EVENT_START_RECORD");
+        startRecord();
+        break;
+    case EVENT_PAUSE_RECORD:
+        DEBUG_LOG("EVENT_PAUSE_RECORD");
+        pauseRecord();
+        break;
+    case EVENT_RESUME_RECORD:
+        DEBUG_LOG("EVENT_RESUME_RECORD");
+        resumeRecord();
+        break;
+    case EVENT_STOP_RECORD:
+        DEBUG_LOG("EVENT_STOP_RECORD");
+        stopRecord();
+        break;
+    case EVENT_PLAY_VIDEO:
+        DEBUG_LOG("EVENT_PLAY_VIDEO");
+        playVideo();
+        break;
+    case EVENT_PAUSE_VIDEO:
+        DEBUG_LOG("EVENT_PAUSE_VIDEO");
+        pauseVideo();
+        break;
+    case EVENT_STOP_VIDEO:
+        DEBUG_LOG("EVENT_STOP_VIDEO");
+        stopVideo();
+        break;
+    case EVENT_START_CAPTURE:
+        DEBUG_LOG("EVENT_START_CAPTURE");
+        if (appParm.use_start_camera)
+        {
+            takeCameraSnapshot();
+        }
+        else
+        {
+            takeSnapshot();
+        }
+        break;
+    case EVENT_PTZ:
+        DEBUG_LOG("EVENT_PTZ");
+        setSolutions();
+        break;
+    case EVENT_EXIT:
+        DEBUG_LOG("EVENT_EXIT");
+        exitProgram();
+        break;
+    default:
+        DEBUG_LOG("Unknown Event Type");
+        break;
+    }
 }

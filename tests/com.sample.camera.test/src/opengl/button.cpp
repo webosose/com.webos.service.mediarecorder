@@ -1,158 +1,125 @@
 #include "button.h"
 #include "image_utils.h"
-#include "log_info.h"
 
 #define H 1080
-extern int mSx, mSy, mState;
+const std::string res_path = "/usr/palm/applications/com.sample.camera.test/";
 
-Button::Button(int px, int py, std::string name, void *cb)
+Button::Button(int px, int py, std::string name, std::function<void(int)> handler)
 {
-    x       = px;
-    y       = py;
-    w       = 300;
-    h       = 120;
-    pressed = 0;
-    funcPtr = (Callback)cb;
-
-    createTexture(name);
-}
-
-Button::Button(int px, int py, std::string name, std::function<void()> handler)
-{
-    x        = px;
-    y        = py;
-    w        = 300;
-    h        = 120;
-    pressed  = 0;
     handler_ = handler;
+    rect     = {px, py, 128, 128};
+    if (!name.empty())
+        createTextures(name);
 
-    createTexture(name);
+    if (name.find("start_cam") != std::string::npos)
+        et = EVENT_START_CAMERA;
+    else if (name.find("stop_cam") != std::string::npos)
+        et = EVENT_STOP_CAMERA;
+    else if (name.find("take_picture") != std::string::npos)
+        et = EVENT_START_CAPTURE;
+    else if (name.find("ptz") != std::string::npos)
+        et = EVENT_PTZ;
+    else if (name.find("exit") != std::string::npos)
+        et = EVENT_EXIT;
 }
 
 Button::~Button() {}
 
-void Button::createTexture(std::string name)
+void Button::createTextures(std::string &name)
 {
-    char file_name[128];
-    int width, height, channels;
-
-    sprintf(file_name, "%s%s.jpg", "/usr/palm/applications/com.sample.camera.test/", name.c_str());
-
-    // Texture object handle
-    GLuint textureId[3];
+    std::string path = res_path + name;
 
     // Use tightly packed data
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
     // Generate a texture object
-    glGenTextures(3, textureId);
+    glGenTextures(2, texID);
 
-    unsigned char *data = jpeg_load(file_name, &width, &height, &channels, 0);
-    // DEBUG_LOG("%d %d %d %s", width, height, channels, file_name);
+    int width, height, channels;
+    unsigned char *data = jpeg_load(path.c_str(), &width, &height, &channels, 0);
+    // DEBUG_LOG("%d %d %d %s", width, height, channels, path.c_str());
 
-    numPic = 3;
-    if (width == 128)
+    if (width < height)
         numPic = height / width;
 
     for (int i = 0; i < numPic; i++)
     {
-        glBindTexture(GL_TEXTURE_2D, textureId[i]);
+        glBindTexture(GL_TEXTURE_2D, texID[i]);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height / numPic, 0, GL_RGB, GL_UNSIGNED_BYTE,
                      data + width * height / numPic * channels * i);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     }
 
-    normal = textureId[0];
-    hover  = textureId[1];
-    yellow = textureId[2];
-
-    texID[0] = textureId[0];
-    texID[1] = textureId[1];
-
-    w = width;
-    h = height / numPic;
+    rect.w     = width;
+    rect.h     = height / numPic;
+    texture_id = texID[enable];
 
     delete[] data;
 }
 
-int Button::InRange() { return (mSx > x && mSx < (x + w) && mSy > (H - y - h) && mSy < (H - y)); }
-
-GLuint Button::getId()
+GLuint Button::createTexture(const std::string &name)
 {
-    GLuint id = normal;
+    std::string path = res_path + name;
 
-    if (InRange())
-    {
-        if (mState)
-            pressed = 1;
-        else
-        {
-            if (pressed)
-            {
-                handler_();
-            }
-            pressed = 0;
-        }
+    // Use tightly packed data
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-        id = pressed ? yellow : hover;
-    }
-    else
-    {
-        if (pressed)
-        {
-            if (mState)
-                id = yellow;
-            else
-            {
-                id      = normal;
-                pressed = 0;
-            }
-        }
-        else
-            id = normal;
-    }
+    GLuint textureID;
 
-    return id;
+    // Generate a texture object
+    glGenTextures(1, &textureID);
+
+    int width, height, channels;
+    unsigned char *data = jpeg_load(path.c_str(), &width, &height, &channels, 0);
+    // DEBUG_LOG("%d %d %d %s", width, height, channels, path.c_str());
+
+    glBindTexture(GL_TEXTURE_2D, textureID);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    rect.w = width;
+    rect.h = height;
+
+    delete[] data;
+
+    return textureID;
 }
 
-GLuint Button::getIdFromValue()
+bool Button::InRange(int x, int y)
 {
-
-    if (InRange())
-    {
-        if (mState)
-            pressed = 1;
-        else
-        {
-            if (pressed)
-            {
-                enable ^= true;
-                handler_();
-            }
-            pressed = 0;
-        }
-    }
-    else
-    {
-        if (pressed)
-        {
-            if (!mState)
-                pressed = 0;
-        }
-    }
-
-    return texID[enable];
+    // printf("%s : %d %d %d %d\n", __func__, rect.x, rect.y, rect.w, rect.h);
+    return (x > rect.x && x < (rect.x + rect.w) && y > (H - rect.y - rect.h) && y < (H - rect.y));
 }
 
 void Button::draw()
 {
     GLushort indices[] = {0, 1, 2, 0, 2, 3};
 
-    glViewport(x, y, w, h);
-    if (numPic == 2)
-        glBindTexture(GL_TEXTURE_2D, getIdFromValue());
-    else
-        glBindTexture(GL_TEXTURE_2D, getId());
+    glViewport(rect.x, rect.y, rect.w, rect.h);
+    glBindTexture(GL_TEXTURE_2D, texture_id);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
+}
+
+bool Button::handleInput(int x, int y)
+{
+    // printf("%s : %d %d\n", __func__, x, y);
+    if (InRange(x, y))
+    {
+        if (numPic > 1)
+        {
+            enable ^= true;
+            texture_id = texID[enable];
+            printf("%s Button event=%d enable=%d\n", __func__, et, enable);
+        }
+        else
+            printf("%s Button event=%d\n", __func__, et);
+
+        if (et != EVENT_NONE)
+            handler_(et);
+        return true;
+    }
+
+    return false;
 }

@@ -1,14 +1,14 @@
 #ifndef _CAM_PLAYER_APP_
 #define _CAM_PLAYER_APP_
 
-#include "window/window_manager.h"
 #include <memory>
 
 class CameraClient;
 class MediaClient;
 class MediaRecorderClient;
-class Button;
+class ButtonRender;
 class Image;
+class WindowManager;
 class CamPlayerApp
 {
     void startCamera();
@@ -35,34 +35,20 @@ class CamPlayerApp
     void printHelp();
     void printOption();
 
-    void CreateButton();
     void CreateImageBox();
-    void drawButtons();
-    void drawImage();
-    bool isFullScreen() { return mWindowManager->isFullScreen(); }
+    bool isFullScreen();
+    void handleEvent(int e);
+    void draw();
 
     bool mDone = false;
 
     std::unique_ptr<WindowManager> mWindowManager;
-
     std::unique_ptr<CameraClient> mCameraClient;
     std::unique_ptr<MediaClient> mCameraPlayer;
     std::unique_ptr<MediaClient> mMediaPlayer;
     std::unique_ptr<MediaRecorderClient> mMediaRecorder;
 
-    std::unique_ptr<Button> startCameraButton;
-    std::unique_ptr<Button> stopCameraButton;
-    std::unique_ptr<Button> startRecordButton;
-    std::unique_ptr<Button> stopRecordButton;
-    std::unique_ptr<Button> pauseRecordButton;
-    std::unique_ptr<Button> resumeRecordButton;
-    std::unique_ptr<Button> playVideoButton;
-    std::unique_ptr<Button> pauseVideoButton;
-    std::unique_ptr<Button> stopVideoButton;
-    std::unique_ptr<Button> startCaptureButton;
-    std::unique_ptr<Button> exitButton;
-    std::unique_ptr<Button> ptzButton;
-
+    std::unique_ptr<ButtonRender> buttonRender;
     std::unique_ptr<Image> imageBox;
 
 public:

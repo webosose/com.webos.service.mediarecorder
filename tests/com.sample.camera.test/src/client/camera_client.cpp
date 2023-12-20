@@ -238,6 +238,8 @@ bool CameraClient::startCamera()
     {
         key = get_optional<int>(jOut, "key").value_or(0);
         DEBUG_LOG("key : %d\n", key);
+
+        state = START;
     }
 
     return ret;
@@ -269,6 +271,7 @@ bool CameraClient::stopCamera()
     if (return_value)
     {
         DEBUG_LOG("ok\n");
+        state = STOP;
     }
 
     return ret;
@@ -310,6 +313,7 @@ bool CameraClient::startPreview(const std::string &window_id)
 
         mediaId = get_optional<std::string>(jOut, "mediaId").value_or("");
         DEBUG_LOG("mediaId = %s", mediaId.c_str());
+        state = START;
     }
 
     return ret;
@@ -347,7 +351,8 @@ bool CameraClient::stopPreview()
     if (return_value)
     {
         DEBUG_LOG("ok\n");
-        key = 0;
+        key   = 0;
+        state = STOP;
     }
 
     return ret;

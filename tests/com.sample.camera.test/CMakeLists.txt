@@ -58,14 +58,16 @@ set(SRC_LIST
     src/client/media_recorder_client.cpp
     ${CMAKE_SOURCE_DIR}/src/ls_connector/luna_client.cpp
     src/opengl/button.cpp
+    src/opengl/record_button.cpp
+    src/opengl/play_button.cpp
+    src/opengl/button_render.cpp
     src/opengl/image.cpp
-    src/opengl/init_opengl.cpp
+    src/opengl/opengl_utils.cpp
     src/utils/file_utils.cpp
     src/utils/image_utils.cpp
     src/window/window_manager.cpp
     src/window/wayland_exporter.cpp
     src/window/wayland_foreign.cpp
-    #src/window/wayland_surface.cpp
 )
 
 add_executable(${BIN_NAME} ${SRC_LIST})
@@ -97,5 +99,9 @@ install(FILES res/stop.jpg DESTINATION palm/applications/com.sample.camera.test)
 install(FILES res/exit.jpg DESTINATION palm/applications/com.sample.camera.test)
 install(FILES res/take_picture.jpg DESTINATION palm/applications/com.sample.camera.test)
 install(FILES res/ptz.jpg DESTINATION palm/applications/com.sample.camera.test)
+
+if(${WEBOS_TARGET_MACHINE} MATCHES "qemux86")
+    add_definitions(-DPLATFORM_QEMUX86)
+endif()
 
 add_subdirectory(files)

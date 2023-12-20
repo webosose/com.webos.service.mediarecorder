@@ -20,10 +20,10 @@
 #include <cstdio>
 #include <cstring>
 
-int mSx, mSy, mState;
-
 namespace Wayland
 {
+
+int mSx, mSy;
 
 static void pointer_handle_enter(void *data, struct wl_pointer *pointer, uint32_t serial,
                                  struct wl_surface *surface, wl_fixed_t sx, wl_fixed_t sy)
@@ -50,9 +50,7 @@ static void pointer_handle_button(void *data, struct wl_pointer *wl_pointer, uin
                                   uint32_t time, uint32_t button, uint32_t state)
 {
     // fprintf(stdout, "state => %d \n", state);
-    mState = state;
-
-    if (state == 0)
+    if (state == 1)
     {
         // printf("[%s] x => %d, y => %d\n", __func__, mSx, mSy);
         miCameraApp->handleInput(mSx, mSy);

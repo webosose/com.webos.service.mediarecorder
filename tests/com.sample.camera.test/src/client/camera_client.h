@@ -31,6 +31,12 @@ public:
     int preview_fps = 30;
     std::string mediaId;
     std::string cameraId;
+
+    enum State
+    {
+        STOP,
+        START,
+    } state{STOP};
 };
 
 #endif // __CAMERA_CLIENT__
