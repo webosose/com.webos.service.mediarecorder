@@ -117,6 +117,14 @@ bool BaseRecordPipeline::Unload()
 
     if (pipelineType != "Snapshot")
     {
+        GstState state;
+        gst_element_get_state(pipeline_, &state, nullptr, GST_CLOCK_TIME_NONE);
+        LOGI("state = %s", gst_element_state_get_name(state));
+        if (state == GST_STATE_PAUSED)
+        {
+            Play();
+        }
+
         LOGI("Send EOS");
         gst_element_send_event(pipeline_, gst_event_new_eos());
 

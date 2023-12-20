@@ -9,7 +9,6 @@ public:
     VideoRecordPipeline() { pipelineType = "VideoRecord"; }
     bool launch();
     bool Pause();
-    bool Unload();
 };
 
 #endif // _VIDEO_RECORD_PIPELINE_H_

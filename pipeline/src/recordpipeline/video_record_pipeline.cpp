@@ -119,21 +119,3 @@ bool VideoRecordPipeline::Pause()
     LOGI("end");
     return ret;
 }
-
-bool VideoRecordPipeline::Unload()
-{
-    LOGI("start");
-
-    GstState state;
-    gst_element_get_state(pipeline_, &state, nullptr, GST_CLOCK_TIME_NONE);
-    LOGI("state = %s", gst_element_state_get_name(state));
-    if (state == GST_STATE_PAUSED)
-    {
-        Play();
-    }
-
-    bool ret = BaseRecordPipeline::Unload();
-
-    LOGI("end");
-    return ret;
-}
