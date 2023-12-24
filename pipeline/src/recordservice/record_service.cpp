@@ -206,7 +206,7 @@ bool RecordService::LoadEvent(UMSConnectorHandle *handle, UMSConnectorMessage *m
         instance_->resourceRequestor_ =
             std::make_unique<resource::ResourceRequestor>(instance_->app_id_, instance_->media_id_);
 
-    instance_->recorder_ = PipelineFactory::CreateRecoder(parsed);
+    instance_->recorder_ = PipelineFactory::CreateRecorder(parsed);
 
     if (!instance_->recorder_)
     {

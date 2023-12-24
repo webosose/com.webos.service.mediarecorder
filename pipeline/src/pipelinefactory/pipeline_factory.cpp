@@ -4,7 +4,7 @@
 #include "snapshot_pipeline.h"
 #include "video_record_pipeline.h"
 
-std::shared_ptr<RecordPipeline> PipelineFactory::CreateRecoder(const pbnjson::JValue &parsed)
+std::shared_ptr<RecordPipeline> PipelineFactory::CreateRecorder(const pbnjson::JValue &parsed)
 {
     LOGI("start");
 

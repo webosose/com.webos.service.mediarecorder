@@ -8,6 +8,6 @@ class RecordPipeline;
 class PipelineFactory
 {
 public:
-    static std::shared_ptr<RecordPipeline> CreateRecoder(const pbnjson::JValue &parsed);
+    static std::shared_ptr<RecordPipeline> CreateRecorder(const pbnjson::JValue &parsed);
 };
 #endif // _PIPELINE_FACTORY_H_
