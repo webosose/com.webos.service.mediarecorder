@@ -284,9 +284,13 @@ bool BaseRecordPipeline::GetSourceInfo()
 
     if (!mVideoFormat.empty())
     {
-        video_stream_info.width          = mVideoFormat.width;
-        video_stream_info.height         = mVideoFormat.height;
-        video_stream_info.encode         = VIDEO_CODEC_H264;
+        video_stream_info.width  = mVideoFormat.width;
+        video_stream_info.height = mVideoFormat.height;
+#ifndef PLATFORM_QEMUX86
+        video_stream_info.encode = VIDEO_CODEC_H264;
+#else
+        video_stream_info.encode = VIDEO_CODEC_MJPEG;
+#endif
         video_stream_info.frame_rate.num = mVideoFormat.fps;
         video_stream_info.frame_rate.den = 1;
     }
