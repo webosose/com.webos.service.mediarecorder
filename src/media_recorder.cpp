@@ -98,6 +98,24 @@ static bool isSupportedImageFileFormat(const std::string &input)
     return false;
 }
 
+static bool isSupportedVideoCodec(const std::string &input)
+{
+    std::vector<std::string> videoCodecTypes = {
+        "H264"
+        // Additional video codec types can be added here.
+    };
+
+    for (const std::string &codecType : videoCodecTypes)
+    {
+        if (input == codecType)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 static ErrorCode isSupportedAudioFormat(const std::string &codec, const unsigned int sampleRate,
                                         const unsigned int channels, const unsigned int bitRate)
 {
@@ -646,6 +664,11 @@ ErrorCode MediaRecorder::setVideoFormat(std::string &videoCodec, unsigned int bi
     {
         PLOGE("video is not opened");
         return ERR_VIDEO_NOT_OPENED;
+    }
+
+    if (!isSupportedVideoCodec(videoCodec))
+    {
+        return ERR_UNSUPPORTED_FORMAT;
     }
 
     if (!videoCodec.empty())

@@ -351,8 +351,8 @@ bool MediaRecorderManager::setVideoFormat(LSMessage &message)
         }
 
         // Video format
-        std::string videoCodec = get_optional<std::string>(j, "codec").value_or("");
-        unsigned int bitRate   = get_optional<unsigned int>(j, "bitRate").value_or(0);
+        std::string videoCodec = get_optional<std::string>(j, "codec").value_or("H264");
+        unsigned int bitRate   = get_optional<unsigned int>(j, "bitRate").value_or(10000000);
 
         error_code = recorders[recorder_id]->setVideoFormat(videoCodec, bitRate);
     }
