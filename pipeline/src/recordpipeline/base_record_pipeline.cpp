@@ -117,6 +117,9 @@ bool BaseRecordPipeline::Unload()
 
     if (pipelineType != "Snapshot")
     {
+        LOGI("Send EOS");
+        gst_element_send_event(pipeline_, gst_event_new_eos());
+
         GstState state;
         gst_element_get_state(pipeline_, &state, nullptr, GST_CLOCK_TIME_NONE);
         LOGI("state = %s", gst_element_state_get_name(state));
@@ -124,9 +127,6 @@ bool BaseRecordPipeline::Unload()
         {
             Play();
         }
-
-        LOGI("Send EOS");
-        gst_element_send_event(pipeline_, gst_event_new_eos());
 
         if (bus != nullptr)
         {
