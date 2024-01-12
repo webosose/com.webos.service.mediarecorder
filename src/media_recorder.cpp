@@ -188,7 +188,7 @@ static ErrorCode isSupportedAudioFormat(const std::string &codec, const unsigned
     }
     else
     {
-        return ERR_UNSUPPORTED_FORMAT;
+        return ERR_UNSUPPORTED_AUDIO_FORMAT;
     }
 }
 
@@ -354,14 +354,14 @@ ErrorCode MediaRecorder::start()
         if (mFormat.empty())
             mFormat = mp4Format;
         else if (!isSupportedVideoFileFormat(mFormat))
-            return ERR_UNSUPPORTED_FORMAT;
+            return ERR_UNSUPPORTED_VIDEO_FORMAT;
     }
     else if (audioSrc)
     {
         if (mFormat.empty())
             mFormat = m4aFormat;
         else if (!isSupportedAudioFileFormat(mFormat))
-            return ERR_UNSUPPORTED_FORMAT;
+            return ERR_UNSUPPORTED_AUDIO_FORMAT;
     }
 
     // If setOutputFile method is not invoked
@@ -627,7 +627,7 @@ ErrorCode MediaRecorder::setAudioFormat(std::string &audioCodec, uint32_t sample
 
     if (isSupportedAudioFormat(audioCodec, sampleRate, channels, bitRate) != ERR_NONE)
     {
-        return ERR_UNSUPPORTED_FORMAT;
+        return ERR_UNSUPPORTED_AUDIO_FORMAT;
     }
 
     mAudioFormat.codec      = audioCodec;
@@ -668,7 +668,7 @@ ErrorCode MediaRecorder::setVideoFormat(std::string &videoCodec, unsigned int bi
 
     if (!isSupportedVideoCodec(videoCodec))
     {
-        return ERR_UNSUPPORTED_FORMAT;
+        return ERR_UNSUPPORTED_VIDEO_FORMAT;
     }
 
     if (!videoCodec.empty())

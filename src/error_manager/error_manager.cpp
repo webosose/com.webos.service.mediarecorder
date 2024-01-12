@@ -50,6 +50,8 @@ void ErrorManager::registerErrors()
     addError(ERR_UNSUPPORTED_FORMAT, "Unsupported format");
     addError(ERR_CAMERA_OPEN_FAIL, "Failed to open camera");
     addError(ERR_VIDEO_BITRATE_OUT_OF_RANGE, "Video bitrate is out of range");
+    addError(ERR_UNSUPPORTED_AUDIO_FORMAT, "Unsupported audio format");
+    addError(ERR_UNSUPPORTED_VIDEO_FORMAT, "Unsupported video format");
 
     // 600
     addError(ERR_FAILED_TO_START_RECORDING, "Failed to start recording");
