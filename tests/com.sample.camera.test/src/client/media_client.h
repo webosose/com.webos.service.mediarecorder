@@ -27,6 +27,7 @@ public:
     bool stopCameraRecord();
 
     std::string mediaId;
+    std::chrono::steady_clock::time_point startTime;
 
     enum State
     {

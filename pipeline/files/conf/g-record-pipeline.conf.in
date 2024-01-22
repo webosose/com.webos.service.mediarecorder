@@ -1,0 +1,23 @@
+{
+    "outputs" : [
+        {
+            "name" : "g-record-pipeline-log",
+            "file" : "@WEBOS_INSTALL_LOGDIR@/g-record-pipeline.log",
+            "maxSize" : 100000,
+            "rotations" : 1
+        }
+    ],
+
+    "contexts" : [
+        {
+            "name" : "g-record-pipeline",
+            "level" : "debug",
+            "logProcessIds" : false,
+            "logThreadIds" : false,
+            "logToConsole" : false,
+            "rules" : [
+                {"filter" : "*.*", "output" : "g-record-pipeline-log"}
+            ]
+        }
+    ]
+}

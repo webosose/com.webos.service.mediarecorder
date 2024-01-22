@@ -42,9 +42,13 @@ public:
     bool close(LSMessage &message);
     bool setOutputFile(LSMessage &message);
     bool setOutputFormat(LSMessage &message);
+    bool setVideoFormat(LSMessage &message);
+    bool setAudioFormat(LSMessage &message);
     bool start(LSMessage &message);
     bool stop(LSMessage &message);
     bool takeSnapshot(LSMessage &message);
+    bool pause(LSMessage &message);
+    bool resume(LSMessage &message);
 
     void printRecorders(); //[TODO] Remove this for debugging purpose.
 };

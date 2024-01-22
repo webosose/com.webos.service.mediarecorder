@@ -21,7 +21,7 @@ MediaRecorderClient::~MediaRecorderClient() { DEBUG_LOG("start"); }
  $ pactl list short sources | grep alsa-source
  http://clm.lge.com/issue/browse/QWO-702
 */
-bool MediaRecorderClient::open(std::string &mediaId)
+bool MediaRecorderClient::open(std::string &video_src)
 {
     bool ret = false;
 
@@ -29,10 +29,10 @@ bool MediaRecorderClient::open(std::string &mediaId)
     std::string uri = mUri + __func__;
 
     json j;
-    j["videoSrc"] = mediaId;
+    j["video"] = video_src;
     if (appParm.disable_audio == false)
     {
-        j["audioSrc"] = "usb_mic0";
+        j["audio"] = true;
     }
     DEBUG_LOG("%s '%s'", uri.c_str(), to_string(j).c_str());
 
@@ -94,7 +94,7 @@ bool MediaRecorderClient::setOutputFormat()
 
     json j;
     j["recorderId"] = recorderId;
-    j["format"]     = "MPEG4";
+    j["format"]     = "MP4";
     DEBUG_LOG("%s '%s'", uri.c_str(), to_string(j).c_str());
 
     std::string resp;
@@ -136,7 +136,8 @@ bool MediaRecorderClient::start()
         return false;
     }
 
-    ret = get_optional<bool>(jOut, returnValueStr.c_str()).value_or(false);
+    ret   = get_optional<bool>(jOut, returnValueStr.c_str()).value_or(false);
+    state = RecordingState::Recording;
     return ret;
 }
 
@@ -164,6 +165,13 @@ bool MediaRecorderClient::stop()
     }
 
     ret = get_optional<bool>(jOut, returnValueStr.c_str()).value_or(false);
+    if (ret)
+    {
+        mRecordPath = get_optional<std::string>(jOut, "path").value_or("");
+        DEBUG_LOG("mRecordPath = %s", mRecordPath.c_str());
+    }
+
+    state = RecordingState::Stopped;
     return ret;
 }
 
@@ -210,7 +218,7 @@ bool MediaRecorderClient::takeSnapshot()
     DEBUG_LOG("%s '%s'", uri.c_str(), to_string(j).c_str());
 
     std::string resp;
-    luna_client->callSync(uri.c_str(), to_string(j).c_str(), &resp);
+    luna_client->callSync(uri.c_str(), to_string(j).c_str(), &resp, 9000);
 
     json jOut = json::parse(resp);
     printf("%s\n", jOut.dump(4).c_str());
@@ -222,5 +230,66 @@ bool MediaRecorderClient::takeSnapshot()
     }
 
     ret = get_optional<bool>(jOut, returnValueStr.c_str()).value_or(false);
+    if (ret)
+    {
+        mCapturePath = get_optional<std::string>(jOut, "path").value_or("");
+        DEBUG_LOG("mCapturePath = %s", mCapturePath.c_str());
+    }
+    return ret;
+}
+
+bool MediaRecorderClient::pause()
+{
+    bool ret = false;
+
+    // send message
+    std::string uri = mUri + __func__;
+
+    json j;
+    j["recorderId"] = recorderId;
+    DEBUG_LOG("%s '%s'", uri.c_str(), to_string(j).c_str());
+
+    std::string resp;
+    luna_client->callSync(uri.c_str(), to_string(j).c_str(), &resp);
+
+    json jOut = json::parse(resp);
+    printf("%s\n", jOut.dump(4).c_str());
+
+    if (jOut.is_discarded())
+    {
+        DEBUG_LOG("payload parsing error!");
+        return false;
+    }
+
+    ret   = get_optional<bool>(jOut, returnValueStr.c_str()).value_or(false);
+    state = RecordingState::Paused;
+    return ret;
+}
+
+bool MediaRecorderClient::resume()
+{
+    bool ret = false;
+
+    // send message
+    std::string uri = mUri + __func__;
+
+    json j;
+    j["recorderId"] = recorderId;
+    DEBUG_LOG("%s '%s'", uri.c_str(), to_string(j).c_str());
+
+    std::string resp;
+    luna_client->callSync(uri.c_str(), to_string(j).c_str(), &resp);
+
+    json jOut = json::parse(resp);
+    printf("%s\n", jOut.dump(4).c_str());
+
+    if (jOut.is_discarded())
+    {
+        DEBUG_LOG("payload parsing error!");
+        return false;
+    }
+
+    ret   = get_optional<bool>(jOut, returnValueStr.c_str()).value_or(false);
+    state = RecordingState::Recording;
     return ret;
 }

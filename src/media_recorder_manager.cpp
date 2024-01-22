@@ -53,9 +53,13 @@ MediaRecorderManager::MediaRecorderManager() : LS::Handle(LS::registerService(se
     LS_CATEGORY_METHOD(close)
     LS_CATEGORY_METHOD(setOutputFile)
     LS_CATEGORY_METHOD(setOutputFormat)
+    LS_CATEGORY_METHOD(setVideoFormat)
+    LS_CATEGORY_METHOD(setAudioFormat)
     LS_CATEGORY_METHOD(start)
     LS_CATEGORY_METHOD(stop)
     LS_CATEGORY_METHOD(takeSnapshot)
+    LS_CATEGORY_METHOD(pause)
+    LS_CATEGORY_METHOD(resume)
     LS_CATEGORY_END;
 
     // attach to mainloop and run it
@@ -76,8 +80,8 @@ bool MediaRecorderManager::open(LSMessage &message)
     {
         json j = json::parse(payload);
 
-        std::string video_src = get_optional<std::string>(j, "videoSrc").value_or("");
-        std::string audio_src = get_optional<std::string>(j, "audioSrc").value_or("");
+        std::string video_src = get_optional<std::string>(j, "video").value_or("");
+        bool audio_src        = get_optional<bool>(j, "audio").value_or(false);
 
         std::unique_ptr<MediaRecorder> recorder = std::make_unique<MediaRecorder>();
         error_code                              = recorder->open(video_src, audio_src);
@@ -110,8 +114,11 @@ bool MediaRecorderManager::open(LSMessage &message)
         PLOGE("%d %s", error.getCode(), error.getMessage().c_str());
     }
 
+    std::string respStr = to_string(resp);
+    PLOGI("reply %s", respStr.c_str());
+
     LS::Message request(&message);
-    request.respond(to_string(resp).c_str());
+    request.respond(respStr.c_str());
 
     return true;
 }
@@ -171,8 +178,11 @@ bool MediaRecorderManager::close(LSMessage &message)
         PLOGE("%d %s", error.getCode(), error.getMessage().c_str());
     }
 
+    std::string respStr = to_string(resp);
+    PLOGI("reply %s", respStr.c_str());
+
     LS::Message request(&message);
-    request.respond(to_string(resp).c_str());
+    request.respond(respStr.c_str());
 
     return true;
 }
@@ -236,8 +246,11 @@ bool MediaRecorderManager::setOutputFile(LSMessage &message)
         PLOGE("%d %s", error.getCode(), error.getMessage().c_str());
     }
 
+    std::string respStr = to_string(resp);
+    PLOGI("reply %s", respStr.c_str());
+
     LS::Message request(&message);
-    request.respond(to_string(resp).c_str());
+    request.respond(respStr.c_str());
 
     return true;
 }
@@ -301,8 +314,144 @@ bool MediaRecorderManager::setOutputFormat(LSMessage &message)
         PLOGE("%d %s", error.getCode(), error.getMessage().c_str());
     }
 
+    std::string respStr = to_string(resp);
+    PLOGI("reply %s", respStr.c_str());
+
     LS::Message request(&message);
-    request.respond(to_string(resp).c_str());
+    request.respond(respStr.c_str());
+
+    return true;
+}
+
+bool MediaRecorderManager::setVideoFormat(LSMessage &message)
+{
+    ErrorCode error_code = ERR_LIST_END;
+    auto *payload        = LSMessageGetPayload(&message);
+    PLOGI("payload %s", payload);
+
+    try
+    {
+        json j = json::parse(payload);
+
+        int recorder_id = 0;
+        if (auto value = get_optional<int>(j, "recorderId"))
+        {
+            recorder_id = *value;
+        }
+        else
+        {
+            error_code = ERR_RECORDER_ID_NOT_SPECIFIED;
+            throw std::invalid_argument("Parameter is missing");
+        }
+
+        if (recorders.find(recorder_id) == recorders.end())
+        {
+            error_code = ERR_INVALID_RECORDER_ID;
+            throw std::invalid_argument("Parameter is invalid");
+        }
+
+        // Video format
+        std::string videoCodec = get_optional<std::string>(j, "codec").value_or("H264");
+        unsigned int bitRate   = get_optional<unsigned int>(j, "bitRate").value_or(10000000);
+
+        error_code = recorders[recorder_id]->setVideoFormat(videoCodec, bitRate);
+    }
+    catch (const std::exception &e)
+    {
+        handleJsonException(e, error_code);
+    }
+
+    json resp;
+    if (error_code == ERR_NONE)
+    {
+        resp["returnValue"] = true;
+    }
+    else
+    {
+        resp["returnValue"] = false;
+
+        Error error       = ErrorManager::getInstance().getError(error_code);
+        resp["errorCode"] = error.getCode();
+        resp["errorText"] = error.getMessage();
+
+        PLOGE("%d %s", error.getCode(), error.getMessage().c_str());
+    }
+
+    std::string respStr = to_string(resp);
+    PLOGI("reply %s", respStr.c_str());
+
+    LS::Message request(&message);
+    request.respond(respStr.c_str());
+
+    return true;
+}
+
+bool MediaRecorderManager::setAudioFormat(LSMessage &message)
+{
+    ErrorCode error_code = ERR_LIST_END;
+    auto *payload        = LSMessageGetPayload(&message);
+    PLOGI("payload %s", payload);
+
+    try
+    {
+        json j = json::parse(payload);
+
+        int recorder_id = 0;
+        if (auto value = get_optional<int>(j, "recorderId"))
+        {
+            recorder_id = *value;
+        }
+        else
+        {
+            error_code = ERR_RECORDER_ID_NOT_SPECIFIED;
+            throw std::invalid_argument("Parameter is missing");
+        }
+
+        if (recorders.find(recorder_id) == recorders.end())
+        {
+            error_code = ERR_INVALID_RECORDER_ID;
+            throw std::invalid_argument("Parameter is invalid");
+        }
+
+        // audio format
+        std::string audioCodec = get_optional<std::string>(j, "codec")
+                                     .value_or(recorders[recorder_id]->mAudioFormatDefault.codec);
+        uint32_t sampleRate = get_optional<uint32_t>(j, "sampleRate")
+                                  .value_or(recorders[recorder_id]->mAudioFormatDefault.sampleRate);
+        uint32_t audioChannel = get_optional<uint32_t>(j, "channelCount")
+                                    .value_or(recorders[recorder_id]->mAudioFormatDefault.channels);
+        uint32_t bitRate = get_optional<uint32_t>(j, "bitRate")
+                               .value_or(recorders[recorder_id]->mAudioFormatDefault.bitRate);
+
+        error_code =
+            recorders[recorder_id]->setAudioFormat(audioCodec, sampleRate, audioChannel, bitRate);
+    }
+    catch (const std::exception &e)
+    {
+        handleJsonException(e, error_code);
+    }
+
+    json resp;
+    if (error_code == ERR_NONE)
+    {
+        resp["returnValue"] = true;
+    }
+    else
+    {
+        resp["returnValue"] = false;
+
+        Error error       = ErrorManager::getInstance().getError(error_code);
+        resp["errorCode"] = error.getCode();
+        resp["errorText"] = error.getMessage();
+
+        PLOGE("%d %s", error.getCode(), error.getMessage().c_str());
+    }
+
+    std::string respStr = to_string(resp);
+    PLOGI("reply %s", respStr.c_str());
+
+    LS::Message request(&message);
+    request.respond(respStr.c_str());
 
     return true;
 }
@@ -357,8 +506,11 @@ bool MediaRecorderManager::start(LSMessage &message)
         PLOGE("%d %s", error.getCode(), error.getMessage().c_str());
     }
 
+    std::string respStr = to_string(resp);
+    PLOGI("reply %s", respStr.c_str());
+
     LS::Message request(&message);
-    request.respond(to_string(resp).c_str());
+    request.respond(respStr.c_str());
 
     return true;
 }
@@ -369,11 +521,11 @@ bool MediaRecorderManager::stop(LSMessage &message)
     auto *payload        = LSMessageGetPayload(&message);
     PLOGI("payload %s", payload);
 
+    int recorder_id = 0;
+
     try
     {
         json j = json::parse(payload);
-
-        int recorder_id = 0;
         if (auto value = get_optional<int>(j, "recorderId"))
         {
             recorder_id = *value;
@@ -401,6 +553,7 @@ bool MediaRecorderManager::stop(LSMessage &message)
     if (error_code == ERR_NONE)
     {
         resp["returnValue"] = true;
+        resp["path"]        = recorders[recorder_id]->getRecordPath();
     }
     else
     {
@@ -413,8 +566,11 @@ bool MediaRecorderManager::stop(LSMessage &message)
         PLOGE("%d %s", error.getCode(), error.getMessage().c_str());
     }
 
+    std::string respStr = to_string(resp);
+    PLOGI("reply %s", respStr.c_str());
+
     LS::Message request(&message);
-    request.respond(to_string(resp).c_str());
+    request.respond(respStr.c_str());
 
     return true;
 }
@@ -425,11 +581,11 @@ bool MediaRecorderManager::takeSnapshot(LSMessage &message)
     auto *payload        = LSMessageGetPayload(&message);
     PLOGI("payload %s", payload);
 
+    int recorder_id = 0;
+
     try
     {
         json j = json::parse(payload);
-
-        int recorder_id = 0;
         if (auto value = get_optional<int>(j, "recorderId"))
         {
             recorder_id = *value;
@@ -478,6 +634,7 @@ bool MediaRecorderManager::takeSnapshot(LSMessage &message)
     if (error_code == ERR_NONE)
     {
         resp["returnValue"] = true;
+        resp["path"]        = recorders[recorder_id]->getCapturePath();
     }
     else
     {
@@ -490,8 +647,129 @@ bool MediaRecorderManager::takeSnapshot(LSMessage &message)
         PLOGE("%d %s", error.getCode(), error.getMessage().c_str());
     }
 
+    std::string respStr = to_string(resp);
+    PLOGI("reply %s", respStr.c_str());
+
     LS::Message request(&message);
-    request.respond(to_string(resp).c_str());
+    request.respond(respStr.c_str());
+
+    return true;
+}
+
+bool MediaRecorderManager::pause(LSMessage &message)
+{
+    ErrorCode error_code = ERR_LIST_END;
+    auto *payload        = LSMessageGetPayload(&message);
+    PLOGI("payload %s", payload);
+
+    try
+    {
+        json j = json::parse(payload);
+
+        int recorder_id = 0;
+        if (auto value = get_optional<int>(j, "recorderId"))
+        {
+            recorder_id = *value;
+        }
+        else
+        {
+            error_code = ERR_RECORDER_ID_NOT_SPECIFIED;
+            throw std::invalid_argument("Parameter is missing");
+        }
+
+        if (recorders.find(recorder_id) == recorders.end())
+        {
+            error_code = ERR_INVALID_RECORDER_ID;
+            throw std::invalid_argument("Parameter is invalid");
+        }
+
+        error_code = recorders[recorder_id]->pause();
+    }
+    catch (const std::exception &e)
+    {
+        handleJsonException(e, error_code);
+    }
+
+    json resp;
+    if (error_code == ERR_NONE)
+    {
+        resp["returnValue"] = true;
+    }
+    else
+    {
+        resp["returnValue"] = false;
+
+        Error error       = ErrorManager::getInstance().getError(error_code);
+        resp["errorCode"] = error.getCode();
+        resp["errorText"] = error.getMessage();
+
+        PLOGE("%d %s", error.getCode(), error.getMessage().c_str());
+    }
+
+    std::string respStr = to_string(resp);
+    PLOGI("reply %s", respStr.c_str());
+
+    LS::Message request(&message);
+    request.respond(respStr.c_str());
+
+    return true;
+}
+
+bool MediaRecorderManager::resume(LSMessage &message)
+{
+    ErrorCode error_code = ERR_LIST_END;
+    auto *payload        = LSMessageGetPayload(&message);
+    PLOGI("payload %s", payload);
+
+    try
+    {
+        json j = json::parse(payload);
+
+        int recorder_id = 0;
+        if (auto value = get_optional<int>(j, "recorderId"))
+        {
+            recorder_id = *value;
+        }
+        else
+        {
+            error_code = ERR_RECORDER_ID_NOT_SPECIFIED;
+            throw std::invalid_argument("Parameter is missing");
+        }
+
+        if (recorders.find(recorder_id) == recorders.end())
+        {
+            error_code = ERR_INVALID_RECORDER_ID;
+            throw std::invalid_argument("Parameter is invalid");
+        }
+
+        error_code = recorders[recorder_id]->resume();
+    }
+    catch (const std::exception &e)
+    {
+        handleJsonException(e, error_code);
+    }
+
+    json resp;
+    if (error_code == ERR_NONE)
+    {
+        resp["returnValue"] = true;
+    }
+    else
+    {
+        resp["returnValue"] = false;
+
+        Error error       = ErrorManager::getInstance().getError(error_code);
+        resp["errorCode"] = error.getCode();
+        resp["errorText"] = error.getMessage();
+
+        PLOGE("%d %s", error.getCode(), error.getMessage().c_str());
+    }
+
+    std::string respStr = to_string(resp);
+    PLOGI("reply %s", respStr.c_str());
+
+    LS::Message request(&message);
+    request.respond(respStr.c_str());
 
     return true;
 }

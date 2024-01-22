@@ -1,8 +1,8 @@
 #pragma once
 
 #include "error.h"
-#include <map>
 #include <string>
+#include <vector>
 
 class ErrorManager
 {
@@ -19,5 +19,5 @@ private:
     const std::string &getErrorMessage(int code) const;
     void registerErrors();
 
-    std::map<int, std::string> errors;
+    std::vector<Error> errors;
 };

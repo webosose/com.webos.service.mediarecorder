@@ -39,32 +39,23 @@ bool WindowManager::initWaylandEGLSurface()
     surface.height = 1080;
 
     uint32_t exported_type = WL_WEBOS_FOREIGN_WEBOS_EXPORTED_TYPE_VIDEO_OBJECT;
-    bool result            = exporter1.initialize(foreign.getDisplay(), foreign.getWebosForeign(),
-                                                  surface.wlSurface, exported_type);
-    if (result == false)
-    {
-        std::cout << "exporter1.initialize error" << std::endl;
-    }
-    else
-    {
-        std::cout << "exporter1.initialize success" << std::endl;
-    }
 
-    result = exporter2.initialize(foreign.getDisplay(), foreign.getWebosForeign(),
-                                  surface.wlSurface, exported_type);
-    if (result == false)
+    for (int i = 0; i < 2; i++)
     {
-        std::cout << "exporter2.initialize error" << std::endl;
-    }
-    else
-    {
-        std::cout << "exporter2.initialize success" << std::endl;
-    }
+        if (exporter[i].initialize(foreign.getDisplay(), foreign.getWebosForeign(),
+                                   surface.wlSurface, exported_type))
+        {
+            std::cout << "exporter" << i << " initialize success" << std::endl;
+        }
+        else
+        {
+            std::cout << "exporter" << i << " initialize error" << std::endl;
+        }
 
+        std::cout << "exporter" << i << " window ID is : " << exporter[i].getWindowID()
+                  << std::endl;
+    }
     foreign.flush();
-
-    std::cout << "exporter1 window ID is : " << exporter1.getWindowID() << std::endl;
-    std::cout << "exporter2 window ID is : " << exporter2.getWindowID() << std::endl;
 
     return true;
 }
@@ -119,11 +110,13 @@ bool WindowManager::initEgl()
         attr[i++] = EGL_RENDERABLE_TYPE;
         attr[i++] = EGL_OPENGL_ES2_BIT;
 
+#ifndef PLATFORM_QEMUX86
         // multi sample
         attr[i++] = EGL_SAMPLE_BUFFERS;
         attr[i++] = 1;
         attr[i++] = EGL_SAMPLES;
         attr[i++] = 4;
+#endif
 
         attr[i++] = EGL_NONE;
 
@@ -190,21 +183,22 @@ bool WindowManager::initEgl()
 bool WindowManager::finalize()
 {
     foreign.flush();
-    exporter1.finalize();
-    exporter2.finalize();
+
+    for (int i = 0; i < 2; i++)
+        exporter[i].finalize();
+
     foreign.finalize();
 
     return true;
 }
 
-void WindowManager::setExporterRegion(int exporter_number, int x, int y, int w, int h)
+void WindowManager::setExporterRegion(int e, wl_Rect &rect)
 {
-    DEBUG_LOG("[%d] %d %d %d %d", exporter_number, x, y, w, h);
+    DEBUG_LOG("[%d] %d %d %d %d", e, rect.x, rect.y, rect.w, rect.h);
 
-    Wayland::Exporter *e         = (exporter_number == 1) ? &exporter1 : &exporter2;
     struct wl_region *region_src = foreign.createRegion(0, 0, 1920, 1080); // don't care
-    struct wl_region *region_dst = foreign.createRegion(x, y, w, h);
-    e->setRegion(region_src, region_dst);
+    struct wl_region *region_dst = foreign.createRegion(rect.x, rect.y, rect.w, rect.h);
+    exporter[e].setRegion(region_src, region_dst);
 }
 
 bool WindowManager::adjustVideoRatio()
@@ -222,12 +216,86 @@ bool WindowManager::adjustVideoRatio()
     DEBUG_LOG("Camera Play %d %d %d %d", x, y, w, h);
     struct wl_region *region_src  = foreign.createRegion(0, 0, 1920, 1080); // don't care
     struct wl_region *region_dst1 = foreign.createRegion(x, y, w, h);
-    exporter1.setRegion(region_src, region_dst1);
+    exporter[0].setRegion(region_src, region_dst1);
+    orgRect[0] = {x, y, w, h};
 
     // video play
     DEBUG_LOG("Video Play %d %d %d %d", x + w, y, w / 2, h / 2);
     struct wl_region *region_dst2 = foreign.createRegion(x + w, y, w / 2, h / 2);
-    exporter2.setRegion(region_src, region_dst2);
+    exporter[1].setRegion(region_src, region_dst2);
+    orgRect[1] = {x + w, y, w / 2, h / 2};
 
     return true;
+}
+
+bool WindowManager::isFullScreen()
+{
+    return (exporterState[0] == wl_State::FullScreen) || (exporterState[1] == wl_State::FullScreen);
+}
+
+void WindowManager::setFullscreen(int i)
+{
+    printf("[%d] %s\n", i, __func__);
+
+    // adjust video ratio
+    int h = 1080;
+    int w = h * appParm.width / appParm.height;
+    int x = (1920 - w) / 2;
+    int y = 0;
+
+    rect[i] = {x, y, w, h};
+    setExporterRegion(i, rect[i]);
+    exporterState[i] = wl_State::FullScreen;
+}
+
+void WindowManager::setNormalSize(int i)
+{
+    printf("[%d] %s\n", i, __func__);
+
+    rect[i] = orgRect[i];
+    setExporterRegion(i, rect[i]);
+    exporterState[i] = wl_State::Normal;
+}
+
+void WindowManager::setRect(int e)
+{
+    rect[e]          = orgRect[e];
+    exporterState[e] = wl_State::Normal;
+}
+void WindowManager::clearRect(int e) { exporterState[e] = wl_State::Idle; }
+
+bool WindowManager::handleInput(int x, int y)
+{
+    bool ret = false;
+
+    if (exporterState[0] <= wl_State::Normal && exporterState[1] <= wl_State::Normal)
+    {
+        for (int i = 0; i < 2; i++)
+        {
+            if (x > rect[i].x && x < rect[i].x + rect[i].w && y > 0 && y < rect[i].h)
+            {
+                setFullscreen(i);
+                ret = true;
+                break;
+            }
+        }
+    }
+    else if (exporterState[0] == wl_State::FullScreen)
+    {
+        if (x > rect[0].x && x < rect[0].x + rect[0].w && y > 0 && y < rect[0].h)
+        {
+            setNormalSize(0);
+            ret = true;
+        }
+    }
+    else if (exporterState[1] == wl_State::FullScreen)
+    {
+        if (x > rect[1].x && x < rect[1].x + rect[1].w && y > 0 && y < rect[1].h)
+        {
+            setNormalSize(1);
+            ret = true;
+        }
+    }
+
+    return ret;
 }

@@ -1,0 +1,16 @@
+{
+    "apiPermissionFiles": [
+        "/usr/share/luna-service2/api-permissions.d/com.webos.g-record-pipeline.api.json"
+    ],
+    "roleFiles": [
+       "/usr/share/luna-service2/roles.d/com.webos.g-record-pipeline.role.json"
+    ],
+    "id": "g-record-pipeline",
+    "clientPermissionFiles": [
+        "/usr/share/luna-service2/client-permissions.d/com.webos.g-record-pipeline.perm.json"
+    ],
+    "version": "1.0.0",
+    "serviceFiles": [
+        "/usr/share/luna-service2/services.d/com.webos.g-record-pipeline.service"
+    ]
+ }

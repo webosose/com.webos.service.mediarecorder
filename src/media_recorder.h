@@ -18,45 +18,69 @@
 #define __MEDIA_RECORDER__
 
 #include "error.h"
-#include "luna-service2/lunaservice.hpp"
+#include "format_utils.h"
 #include <memory>
 #include <vector>
 
-class LunaClient;
+class LSConnector;
 class MediaRecorder
 {
     enum State
     {
         CLOSE,
         OPEN,
-        PREPARED,
         RECORDING,
+        PAUSE
     };
 
     int recorderId = 0;
-    std::string mPath;
+    std::string mRecordBasePath;
+    std::string mRecordPath;
+    std::string mCapturePath;
     std::string mFormat;
     std::string videoSrc;
-    std::string audioSrc;
-    State state = CLOSE;
+    bool audioSrc = false;
+    State state   = CLOSE;
 
-    std::unique_ptr<LunaClient> luna_client{nullptr};
-    GMainLoop *loop_{nullptr};
-    std::unique_ptr<std::thread> loopThread_;
+    std::unique_ptr<LSConnector> record_client{nullptr};
+    std::unique_ptr<LSConnector> snapshot_client{nullptr};
+
+    video_format_t mVideoFormat{
+        "H264", 1280, 720, 30,
+        0}; // default vidoe format (video codec, width, height, fps, bitRate)
+
+    audio_format_t mAudioFormat;
+    std::string mMediaId;
+    bool mEos{false};
+
+    bool isSupportedExtension(const std::string &) const;
+    std::string createRecordFileName(const std::string &, const std::string &) const;
+    bool getCameraFormat();
 
 public:
     MediaRecorder();
     ~MediaRecorder();
 
-    ErrorCode open(std::string &video_src, std::string &audio_src);
+    ErrorCode open(std::string &video_src, bool audio_src);
     ErrorCode setOutputFile(std::string &path);
     ErrorCode setOutputFormat(std::string &format);
+    ErrorCode setVideoFormat(std::string &videoCodec, unsigned int bitRate);
+    ErrorCode setAudioFormat(std::string &audioCodec, unsigned int sampleRate,
+                             unsigned int channels, unsigned int bitRate);
     ErrorCode start();
     ErrorCode stop();
     ErrorCode takeSnapshot(std::string &path, std::string &format);
     ErrorCode close();
+    ErrorCode pause();
+    ErrorCode resume();
 
     int getRecorderId() { return recorderId; }
+    std::string &getRecordPath() { return mRecordPath; }
+    std::string &getCapturePath() { return mCapturePath; }
+    bool snapshotCb(const char *message);
+
+    audio_format_t const mAudioFormatDefault = {
+        "AAC", 44100, 2, 0}; // default audio format (audio codec, sampleRate, channels, bitRate)
 };
 
 #endif // __MEDIA_RECORDER__
