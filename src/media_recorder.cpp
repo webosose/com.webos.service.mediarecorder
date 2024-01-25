@@ -851,7 +851,7 @@ bool MediaRecorder::getCameraFormat()
     PLOGI("%s '%s'", uri.c_str(), to_string(j).c_str());
 
     std::string resp;
-    record_client->callSync(uri.c_str(), to_string(j).c_str(), &resp);
+    record_client->callSync(uri.c_str(), to_string(j).c_str(), &resp, 16000);
     PLOGI("resp %s", resp.c_str());
 
     json jOut = json::parse(resp);
