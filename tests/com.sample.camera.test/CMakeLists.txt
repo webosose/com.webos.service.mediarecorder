@@ -100,8 +100,4 @@ install(FILES res/exit.jpg DESTINATION palm/applications/com.sample.camera.test)
 install(FILES res/take_picture.jpg DESTINATION palm/applications/com.sample.camera.test)
 install(FILES res/ptz.jpg DESTINATION palm/applications/com.sample.camera.test)
 
-if(${WEBOS_TARGET_MACHINE} MATCHES "qemux86")
-    add_definitions(-DPLATFORM_QEMUX86)
-endif()
-
 add_subdirectory(files)
