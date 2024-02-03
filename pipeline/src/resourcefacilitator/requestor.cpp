@@ -105,7 +105,7 @@ bool ResourceRequestor::acquireResources(PortResource_t &resourceMMap,
     if (!VResource.empty())
     {
         mrc::concatResourceListOptions(&finalOptions, &VResource);
-        LOGI("VResource size:%lu, %s, %d", VResource.size(), VResource[0].front().type.c_str(),
+        LOGI("VResource size:%zd, %s, %d", VResource.size(), VResource[0].front().type.c_str(),
              VResource[0].front().quantity);
     }
 
@@ -113,7 +113,7 @@ bool ResourceRequestor::acquireResources(PortResource_t &resourceMMap,
     if (!VEncResource.empty())
     {
         mrc::concatResourceListOptions(&finalOptions, &VEncResource);
-        LOGI("VResource size:%lu, %s, %d", VEncResource.size(),
+        LOGI("VResource size:%zd, %s, %d", VEncResource.size(),
              VEncResource[0].front().type.c_str(), VEncResource[0].front().quantity);
     }
 
@@ -121,7 +121,7 @@ bool ResourceRequestor::acquireResources(PortResource_t &resourceMMap,
     if (!DisplayResource.empty())
     {
         mrc::concatResourceListOptions(&finalOptions, &DisplayResource);
-        LOGI("DisplayResource size:%lu, %s, %d", DisplayResource.size(),
+        LOGI("DisplayResource size:%zd, %s, %d", DisplayResource.size(),
              DisplayResource[0].front().type.c_str(), DisplayResource[0].front().quantity);
     }
 
