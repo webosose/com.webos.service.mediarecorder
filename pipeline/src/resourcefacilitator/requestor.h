@@ -18,7 +18,6 @@
 #define SRC_ResourceFacilitator_REQUESTOR_H_
 
 #include "message.h"
-#include <dto_types.h>
 #include <functional>
 #include <map>
 #include <memory>
@@ -81,7 +80,6 @@ public:
     bool notifyPipelineStatus(const std::string &status) const;
     void allowPolicyAction(const bool allow);
     void setAppId(std::string id);
-    int32_t getDisplayPath();
     const std::string getAcquiredResource() const { return acquiredResource_; }
 
 private:
