@@ -1,4 +1,5 @@
 #include "base_record_pipeline.h"
+#include "element_factory.h"
 #include "glog.h"
 #include "message.h"
 #include <iomanip>
@@ -284,15 +285,15 @@ bool BaseRecordPipeline::GetSourceInfo()
 
     if (!mVideoFormat.empty())
     {
-        video_stream_info.width  = mVideoFormat.width;
-        video_stream_info.height = mVideoFormat.height;
-#ifndef PLATFORM_QEMUX86
-        video_stream_info.encode = VIDEO_CODEC_H264;
-#else
-        video_stream_info.encode = VIDEO_CODEC_MJPEG;
-#endif
+        video_stream_info.width          = mVideoFormat.width;
+        video_stream_info.height         = mVideoFormat.height;
         video_stream_info.frame_rate.num = mVideoFormat.fps;
         video_stream_info.frame_rate.den = 1;
+
+        std::string element =
+            ElementFactory::GetPreferredElementName(pipelineType, "video-encoder");
+        video_stream_info.encode =
+            (element.find("jpeg") != std::string::npos) ? VIDEO_CODEC_MJPEG : VIDEO_CODEC_H264;
     }
     else if (!mImageFormat.empty())
     {

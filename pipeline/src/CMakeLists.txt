@@ -101,17 +101,16 @@ target_link_libraries(g-record-pipeline
     resource_mgr_client_c
     )
 
-if(${WEBOS_TARGET_MACHINE} STREQUAL "raspberrypi4" OR ${WEBOS_TARGET_MACHINE} STREQUAL "raspberrypi4-64" OR
-   ${WEBOS_TARGET_MACHINE} STREQUAL "raspberrypi3" OR ${WEBOS_TARGET_MACHINE} STREQUAL "raspberrypi3-64")
-  message(STATUS "Using config & debug file for raspberrypi4")
+if(USE_RPI)
+  message(STATUS "Using config & debug file for raspberrypi")
   install(FILES recordpipeline/raspberrypi/gst_debug.conf DESTINATION /etc/g-record-pipeline)
   install(FILES recordpipeline/raspberrypi/gst_elements.conf DESTINATION /etc/g-record-pipeline)
-elseif (${WEBOS_TARGET_MACHINE} STREQUAL "qemux86" OR ${WEBOS_TARGET_MACHINE} STREQUAL "qemux86-64")
-  message(STATUS "Using config & debug file for qemux86")
+# emulator or default
+else()
+  message(STATUS "Using config & debug file for software")
   install(FILES recordpipeline/qemux86/gst_debug.conf DESTINATION /etc/g-record-pipeline)
   install(FILES recordpipeline/qemux86/gst_elements.conf DESTINATION /etc/g-record-pipeline)
-else()
-  message(FATAL_ERROR the "Check WEBOS_TARGET_MACHINE: " ${WEBOS_TARGET_MACHINE})
+
 endif()
 
 install(TARGETS g-record-pipeline DESTINATION ${WEBOS_INSTALL_SBINDIR})

@@ -32,18 +32,20 @@ bool VideoRecordPipeline::launch()
 
         element = ElementFactory::GetPreferredElementName(pipelineType, "video-encoder");
         if (!element.empty())
+        {
             pipeline_desc += " ! " + element;
 
-#ifndef PLATFORM_QEMUX86
-        if (mVideoFormat.bitRate)
-        {
-            pipeline_desc +=
-                " extra-controls=\"encode, video_bitrate=" + std::to_string(mVideoFormat.bitRate) +
-                ";\"";
-        }
+            if (element == "v4l2h264enc")
+            {
+                if (mVideoFormat.bitRate)
+                {
+                    pipeline_desc += " extra-controls=\"encode, video_bitrate=" +
+                                     std::to_string(mVideoFormat.bitRate) + ";\"";
+                }
 
-        pipeline_desc += " ! capsfilter name=videoEnc ! h264parse";
-#endif
+                pipeline_desc += " ! capsfilter name=videoEnc ! h264parse";
+            }
+        }
 
         pipeline_desc += " ! queue ! qtmux name=mux";
         pipeline_desc += " ! filesink sync=true location=" + path_;

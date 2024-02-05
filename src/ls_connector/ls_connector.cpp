@@ -56,14 +56,14 @@ bool LSConnector::callSync(const char *uri, const char *param, std::string *resu
 bool LSConnector::subscribe(const char *uri, const char *param, Handler handler, void *data)
 {
     bool ret = luna_client->subscribe(uri, param, &subscribeKey_, handler, data);
-    PLOGI("subscribeKey %zd", subscribeKey_);
+    PLOGI("subscribeKey %ld", subscribeKey_);
     return ret;
 }
 bool LSConnector::unsubscribe()
 {
     if (subscribeKey_)
     {
-        PLOGI("subscribeKey %zd", subscribeKey_);
+        PLOGI("subscribeKey %ld", subscribeKey_);
         return luna_client->unsubscribe(subscribeKey_);
     }
 
