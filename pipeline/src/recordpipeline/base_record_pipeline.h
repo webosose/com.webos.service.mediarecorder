@@ -45,7 +45,7 @@ public:
 
 protected:
     int32_t display_path_{GRP_DEFAULT_DISPLAY};
-    std::string uri_, format_, video_src_, path_;
+    std::string format_, video_src_, path_;
 
     GstElement *pipeline_{nullptr};
     std::string pipelineType;

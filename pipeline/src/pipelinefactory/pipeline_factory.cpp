@@ -8,7 +8,7 @@ std::shared_ptr<RecordPipeline> PipelineFactory::CreateRecorder(const pbnjson::J
 {
     LOGI("start");
 
-    const pbnjson::JValue &video = parsed["options"]["option"]["video"];
+    const pbnjson::JValue &video = parsed["video"];
     if (video.isObject())
     {
 
@@ -17,14 +17,14 @@ std::shared_ptr<RecordPipeline> PipelineFactory::CreateRecorder(const pbnjson::J
     }
     else
     {
-        const pbnjson::JValue &audio = parsed["options"]["option"]["audio"];
+        const pbnjson::JValue &audio = parsed["audio"];
         if (audio.isObject())
         {
             LOGI("Create Audio Recorder");
             return std::make_shared<AudioRecordPipeline>();
         }
 
-        const pbnjson::JValue &image = parsed["options"]["option"]["image"];
+        const pbnjson::JValue &image = parsed["image"];
         if (image.isObject())
         {
             LOGI("Create Snapshot");

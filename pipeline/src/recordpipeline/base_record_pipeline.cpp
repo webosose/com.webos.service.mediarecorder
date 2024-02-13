@@ -458,36 +458,25 @@ void BaseRecordPipeline::ParseOptionString(const std::string &options)
     }
     pbnjson::JValue parsed = jdparser.getDom();
 
-    if (parsed.hasKey("uri"))
+    if (parsed.hasKey("displayPath"))
     {
-        uri_ = parsed["uri"].asString();
-    }
-    else
-    {
-        LOGI("UMS_INTERNAL_API_VERSION is not version 2.");
-        LOGI("Please check the UMS_INTERNAL_API_VERSION in ums.");
-        GRPASSERT(0);
-    }
-
-    if (parsed["options"]["option"].hasKey("displayPath"))
-    {
-        int32_t display_path = parsed["options"]["option"]["displayPath"].asNumber<int32_t>();
+        int32_t display_path = parsed["displayPath"].asNumber<int32_t>();
         display_path_        = (display_path > GRP_SECONDARY_DISPLAY ? 0 : display_path);
     }
-    if (parsed["options"]["option"].hasKey("videoDisplayMode"))
+    if (parsed.hasKey("videoDisplayMode"))
     {
-        display_mode_ = parsed["options"]["option"]["videoDisplayMode"].asString();
+        display_mode_ = parsed["videoDisplayMode"].asString();
     }
-    if (parsed["options"]["option"].hasKey("format"))
+    if (parsed.hasKey("format"))
     {
-        format_ = parsed["options"]["option"]["format"].asString();
+        format_ = parsed["format"].asString();
     }
-    if (parsed["options"]["option"].hasKey("path"))
+    if (parsed.hasKey("path"))
     {
-        path_ = parsed["options"]["option"]["path"].asString();
+        path_ = parsed["path"].asString();
     }
 
-    pbnjson::JValue video = parsed["options"]["option"]["video"];
+    pbnjson::JValue video = parsed["video"];
     if (video.isObject())
     {
         video_src_ = video["videoSrc"].asString();
@@ -508,7 +497,7 @@ void BaseRecordPipeline::ParseOptionString(const std::string &options)
         LOGI("bitRate : %d", mVideoFormat.bitRate);
     }
 
-    pbnjson::JValue audio = parsed["options"]["option"]["audio"];
+    pbnjson::JValue audio = parsed["audio"];
     if (audio.isObject())
     {
         mAudioFormat            = {"AAC", 44100, 2, 0};
@@ -524,7 +513,7 @@ void BaseRecordPipeline::ParseOptionString(const std::string &options)
         LOGI("bitRate : %d", mAudioFormat.bitRate);
     }
 
-    pbnjson::JValue image = parsed["options"]["option"]["image"];
+    pbnjson::JValue image = parsed["image"];
     if (image.isObject())
     {
         video_src_ = image["videoSrc"].asString();

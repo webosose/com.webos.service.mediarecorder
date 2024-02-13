@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
     };
     bool service_name_specified = false;
 
-    while ((c = getopt(argc, argv, "s:")) != -1)
+    while ((c = getopt(argc, argv, "c:s:r:d:v:a:")) != -1)
     {
         switch (c)
         {
