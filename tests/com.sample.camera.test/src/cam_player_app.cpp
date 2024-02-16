@@ -27,21 +27,20 @@ CustomData appParm = {
     false,   // use startCamera
 };
 
-CamPlayerApp::CamPlayerApp(int argc, char **argv)
-{
-    DEBUG_LOG("");
-    parseOption(argc, argv);
-}
+CamPlayerApp::CamPlayerApp() { INFO_LOG(""); }
 
 CamPlayerApp::~CamPlayerApp()
 {
-    DEBUG_LOG("");
+    INFO_LOG("");
 
     stopVideo();
     stopRecord();
     stopCamera();
 
-    mWindowManager->finalize();
+    if (mWindowManager)
+    {
+        mWindowManager->finalize();
+    }
 }
 
 bool CamPlayerApp::initialize()
@@ -119,7 +118,7 @@ bool CamPlayerApp::parseOption(int argc, char **argv)
         case '?':
         default:
             printHelp();
-            exit(0);
+            return 0;
 
         case -1:
             break;
@@ -130,7 +129,7 @@ bool CamPlayerApp::parseOption(int argc, char **argv)
 
     printOption();
 
-    return 0;
+    return 1;
 }
 
 void CamPlayerApp::printHelp()
@@ -252,6 +251,9 @@ void CamPlayerApp::startCamera()
 
 void CamPlayerApp::stopCamera()
 {
+    if (mCameraPlayer == nullptr)
+        return;
+
     DEBUG_LOG("start");
 
     if (appParm.use_start_camera)
@@ -317,6 +319,9 @@ void CamPlayerApp::startRecord()
 
 void CamPlayerApp::stopRecord()
 {
+    if (mMediaRecorder == nullptr)
+        return;
+
     DEBUG_LOG("start");
     if (mMediaRecorder->state == RecordingState::Stopped)
     {
@@ -512,6 +517,9 @@ void CamPlayerApp::pauseVideo()
 
 void CamPlayerApp::stopVideo()
 {
+    if (mMediaPlayer == nullptr)
+        return;
+
     DEBUG_LOG("state %d", mMediaPlayer->state);
 
     if (mMediaPlayer->state != MediaClient::STOP)
@@ -601,13 +609,20 @@ void CamPlayerApp::handleEvent(int eventType)
         break;
     case EVENT_START_CAPTURE:
         DEBUG_LOG("EVENT_START_CAPTURE");
-        if (appParm.use_start_camera)
+        if (mMediaRecorder->state == RecordingState::Recording)
         {
-            takeCameraSnapshot();
+            if (appParm.use_start_camera)
+            {
+                takeCameraSnapshot();
+            }
+            else
+            {
+                takeSnapshot();
+            }
         }
         else
         {
-            takeSnapshot();
+            capture();
         }
         break;
     case EVENT_PTZ:

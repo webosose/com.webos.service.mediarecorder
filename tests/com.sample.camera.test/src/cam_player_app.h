@@ -31,7 +31,6 @@ class CamPlayerApp
     void exitProgram();
     void setSolutions();
 
-    bool parseOption(int argc, char **argv);
     void printHelp();
     void printOption();
 
@@ -52,9 +51,10 @@ class CamPlayerApp
     std::unique_ptr<Image> imageBox;
 
 public:
-    CamPlayerApp(int argc, char **argv);
+    CamPlayerApp();
     ~CamPlayerApp();
 
+    bool parseOption(int argc, char **argv);
     bool initialize();
     bool execute();
 

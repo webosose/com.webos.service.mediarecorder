@@ -503,8 +503,13 @@ bool CameraClient::setSolutions(bool enable)
     j["id"]        = cameraId;
     j["solutions"] = json::array();
 
+    if (solutionName.empty())
+    {
+        getSolutionName(solutionName);
+    }
+
     json solution;
-    solution["name"]             = "FaceDetectionAIF";
+    solution["name"]             = solutionName;
     solution["params"]["enable"] = enable;
     j["solutions"].push_back(solution);
 
@@ -525,6 +530,47 @@ bool CameraClient::setSolutions(bool enable)
     if (return_value)
     {
         DEBUG_LOG("ok");
+    }
+
+    return ret;
+}
+
+bool CameraClient::getSolutionName(std::string &solution_name)
+{
+    bool ret = false;
+
+    // send message
+    std::string uri = mUri + "getSolutions";
+
+    json j;
+    j["id"] = cameraId;
+
+    DEBUG_LOG("%s '%s'", uri.c_str(), to_string(j).c_str());
+
+    std::string resp;
+    luna_client->callSync(uri.c_str(), to_string(j).c_str(), &resp);
+
+    json jOut = json::parse(resp);
+    printf("%s\n", jOut.dump(4).c_str());
+    if (jOut.is_discarded())
+    {
+        DEBUG_LOG("payload parsing error!");
+        return ret;
+    }
+
+    bool return_value = get_optional<bool>(jOut, returnValueStr.c_str()).value_or(false);
+    if (return_value)
+    {
+        DEBUG_LOG("ok");
+        for (const auto &solution : jOut["solutions"])
+        {
+            std::string name = solution["name"];
+            if (name.find("FaceDetection") != std::string::npos)
+            {
+                solution_name = name;
+                break;
+            }
+        }
     }
 
     return ret;

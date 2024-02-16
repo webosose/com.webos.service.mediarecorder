@@ -14,6 +14,15 @@ static PmLogContext getPmLogContext()
     return s_context;
 }
 
+#define INFO_LOG_(FORMAT__, ...)                                                                   \
+    do                                                                                             \
+    {                                                                                              \
+        PmLogInfo(getPmLogContext(), "MAIN", 0, FORMAT__, ##__VA_ARGS__);                          \
+    } while (0)
+
+#define INFO_LOG(FORMAT__, ...)                                                                    \
+    INFO_LOG_("[%d:%d][%s] " FORMAT__, getpid(), gettid(), __func__, ##__VA_ARGS__)
+
 #define DEBUG_LOG_(FORMAT__, ...)                                                                  \
     do                                                                                             \
     {                                                                                              \
