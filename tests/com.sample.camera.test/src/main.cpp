@@ -47,17 +47,21 @@ void singal_catcher(void (*handler)(int))
 
 int main(int argc, char **argv)
 {
-    DEBUG_LOG("start");
+    INFO_LOG("start");
 
-    singal_catcher(my_handler);
+    miCameraApp = new CamPlayerApp();
 
-    miCameraApp = new CamPlayerApp(argc, argv);
+    if (miCameraApp->parseOption(argc, argv))
+    {
 
-    miCameraApp->initialize();
-    miCameraApp->execute();
+        singal_catcher(my_handler);
+
+        miCameraApp->initialize();
+        miCameraApp->execute();
+    }
 
     delete miCameraApp;
 
-    DEBUG_LOG("end");
+    INFO_LOG("end");
     exit(0);
 }

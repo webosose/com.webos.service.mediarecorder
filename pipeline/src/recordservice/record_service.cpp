@@ -28,14 +28,89 @@
 
 RecordService *RecordService::instance_ = nullptr;
 
+pbnjson::JValue searchKey(const pbnjson::JValue &json, const std::string &key)
+{
+    pbnjson::JValue result;
+
+    if (json.isObject())
+    {
+        for (const auto &pair : json.children())
+        {
+            if (pair.first.asString() == key)
+            {
+                result = pair.second;
+                break;
+            }
+            else
+            {
+                result = searchKey(pair.second, key);
+                if (!result.isNull())
+                {
+                    break;
+                }
+            }
+        }
+    }
+    else if (json.isArray())
+    {
+        for (const auto &item : json.items())
+        {
+            result = searchKey(item, key);
+            if (!result.isNull())
+            {
+                break;
+            }
+        }
+    }
+
+    return result;
+}
+
+std::string searchValue(const pbnjson::JValue &json, const std::string &key)
+{
+    std::string result;
+
+    if (json.isObject())
+    {
+        for (const auto &pair : json.children())
+        {
+            if (pair.first.asString() == key)
+            {
+                result = pair.second.asString();
+                break;
+            }
+            else
+            {
+                result = searchValue(pair.second, key);
+                if (!result.empty())
+                {
+                    break;
+                }
+            }
+        }
+    }
+    else if (json.isArray())
+    {
+        for (const auto &item : json.items())
+        {
+            result = searchValue(item, key);
+            if (!result.empty())
+            {
+                break;
+            }
+        }
+    }
+
+    return result;
+}
+
 RecordService::RecordService(const char *service_name)
     : media_id_(""), app_id_(""), umc_(nullptr), recorder_(nullptr), resourceRequestor_(nullptr),
       isLoaded_(false)
 {
     LOGI(" this[%p]", this);
 
-    umc_ =
-        std::make_unique<UMSConnector>(service_name, nullptr, nullptr, UMS_CONNECTOR_PRIVATE_BUS);
+    umc_ = std::make_unique<UMSConnector>(service_name, nullptr, nullptr, UMS_CONNECTOR_ACG_BUS);
 
     static UMSConnectorEventHandler event_handlers[] = {
         // uMediaserver public API
@@ -185,16 +260,12 @@ bool RecordService::LoadEvent(UMSConnectorHandle *handle, UMSConnectorMessage *m
     }
 
     pbnjson::JValue parsed = jsonparser.getDom();
-    if (!parsed.hasKey("id") && parsed["id"].isString())
-    {
-        LOGE("id is invalid");
-        return false;
-    }
-
-    instance_->media_id_ = parsed["id"].asString();
-    instance_->app_id_   = parsed["options"]["option"]["appId"].asString();
-
+    instance_->media_id_   = searchValue(parsed, "id");
     LOGI("media_id_ : %s", instance_->media_id_.c_str());
+
+    pbnjson::JValue option = searchKey(parsed, "option");
+    LOGI("option : %s", option.stringify().c_str());
+    instance_->app_id_ = option["appId"].asString();
     LOGI("app_id_ : %s", instance_->app_id_.c_str());
 
     if (instance_->app_id_.empty())
@@ -206,7 +277,7 @@ bool RecordService::LoadEvent(UMSConnectorHandle *handle, UMSConnectorMessage *m
         instance_->resourceRequestor_ =
             std::make_unique<resource::ResourceRequestor>(instance_->app_id_, instance_->media_id_);
 
-    instance_->recorder_ = PipelineFactory::CreateRecorder(parsed);
+    instance_->recorder_ = PipelineFactory::CreateRecorder(option);
 
     if (!instance_->recorder_)
     {
@@ -216,7 +287,7 @@ bool RecordService::LoadEvent(UMSConnectorHandle *handle, UMSConnectorMessage *m
     {
         instance_->LoadCommon();
 
-        if (instance_->recorder_->Load(msg))
+        if (instance_->recorder_->Load(option.stringify()))
         {
             LOGI("Loaded Player");
             instance_->isLoaded_ = true;

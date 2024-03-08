@@ -214,13 +214,17 @@ mrc::ResourceListOptions ResourceRequestor::calcDisplayResource(const std::strin
         /* need to change display_mode type from string to enum */
         if (display_mode.compare("PunchThrough") == 0)
         {
+#ifndef DISABLE_DISPLAY_RESOURCE
             DisplayResource = rc_->calcDisplayPlaneResourceOptions(
                 mrc::ResourceCalculator::RenderMode::kModePunchThrough);
+#endif
         }
         else if (display_mode.compare("Textured") == 0)
         {
+#ifndef DISABLE_DISPLAY_RESOURCE
             DisplayResource = rc_->calcDisplayPlaneResourceOptions(
                 mrc::ResourceCalculator::RenderMode::kModeTexture);
+#endif
         }
         else
         {
@@ -452,7 +456,5 @@ void ResourceRequestor::planeIdHandler(int32_t planePortIdx)
 }
 
 void ResourceRequestor::setAppId(std::string id) { appId_ = id; }
-
-int32_t ResourceRequestor::getDisplayPath() { return umsRMC_->getDisplayID(); }
 
 } // namespace resource

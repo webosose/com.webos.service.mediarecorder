@@ -6,6 +6,10 @@
 
 class CameraClient : public Client
 {
+    bool getSolutionName(std::string &solution_name);
+
+    std::string solutionName;
+
 public:
     CameraClient();
     ~CameraClient();

@@ -59,6 +59,10 @@ set(GSTAPP_LIB gstapp-1.0)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
 
+if(DISABLE_DISPLAY_RESOURCE)
+    add_definitions(-DDISABLE_DISPLAY_RESOURCE)
+endif()
+
 set(G-RECORD-PIPELINE_SRC
     main.cpp
     recordpipeline/base_record_pipeline.cpp
