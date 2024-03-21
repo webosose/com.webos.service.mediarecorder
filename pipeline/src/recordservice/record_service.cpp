@@ -110,7 +110,11 @@ RecordService::RecordService(const char *service_name)
 {
     LOGI(" this[%p]", this);
 
+#ifdef PRO_UMS
+    umc_ = std::make_unique<UMSConnector>(service_name, nullptr, nullptr, UMS_CONNECTOR_PRIVATE_BUS);
+#else
     umc_ = std::make_unique<UMSConnector>(service_name, nullptr, nullptr, UMS_CONNECTOR_ACG_BUS);
+#endif
 
     static UMSConnectorEventHandler event_handlers[] = {
         // uMediaserver public API

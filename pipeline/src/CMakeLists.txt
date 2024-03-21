@@ -63,6 +63,10 @@ if(USE_DISPLAY_RESOURCE)
     add_definitions(-DUSE_DISPLAY_RESOURCE)
 endif()
 
+if(PRO_UMS)
+  add_definitions(-DPRO_UMS)
+endif()
+
 set(G-RECORD-PIPELINE_SRC
     main.cpp
     recordpipeline/base_record_pipeline.cpp

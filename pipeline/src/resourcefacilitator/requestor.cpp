@@ -51,7 +51,9 @@ ResourceRequestor::ResourceRequestor(const std::string &appId, const std::string
             umsRMC_ = make_shared<uMediaServer::ResourceManagerClient>();
             LOGI("ResourceRequestor creation done");
 
+#ifndef PRO_UMS
             umsRMC_->registerPipeline("media", appId_); // only rmc case
+#endif
             connectionId_ = umsRMC_->getConnectionID() ? umsRMC_->getConnectionID()
                                                        : ""; // after registerPipeline
         }
@@ -263,7 +265,9 @@ bool ResourceRequestor::notifyActivity() const { return umsRMC_->notifyActivity(
 
 bool ResourceRequestor::notifyPipelineStatus(const std::string &status) const
 {
+#ifndef PRO_UMS
     umsRMC_->notifyPipelineStatus(status);
+#endif
     return true;
 }
 
