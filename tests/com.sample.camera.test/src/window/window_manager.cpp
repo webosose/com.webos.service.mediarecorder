@@ -35,6 +35,9 @@ bool WindowManager::initWaylandEGLSurface()
     wl_webos_shell_surface_set_property(surface.webosShellSurface, "displayAffinity",
                                         (getenv("DISPLAY_ID") ? getenv("DISPLAY_ID") : "0"));
 
+    wl_webos_shell_surface_set_property(surface.webosShellSurface, "appId",
+                                        "com.sample.camera.test");
+
     surface.width  = 1920;
     surface.height = 1080;
 

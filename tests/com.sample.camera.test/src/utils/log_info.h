@@ -45,6 +45,9 @@ static PmLogContext getPmLogContext()
 #define ERROR_LOG(FORMAT__, ...)                                                                   \
     ERROR_LOG_("[%d:%d][%s] " FORMAT__, getpid(), gettid(), __func__, ##__VA_ARGS__)
 
+#define WARNING_LOG(FORMAT__, ...)                                                                 \
+    PmLogWarning(getPmLogContext(), "MAIN", 0, FORMAT__, ##__VA_ARGS__);
+
 //#define SHM_SYNC_TEST
 
 #endif //_LOG_H_

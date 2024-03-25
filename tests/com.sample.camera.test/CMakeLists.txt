@@ -38,6 +38,18 @@ include_directories(${PMLOG_INCLUDE_DIRS})
 pkg_check_modules(GLIB2 REQUIRED glib-2.0)
 include_directories(${GLIB2_INCLUDE_DIRS})
 
+pkg_check_modules(GSTPLAYER gstreamer-player-1.0 REQUIRED)
+include_directories(${GSTPLAYER_INCLUDE_DIRS})
+link_directories(${GSTPLAYER_LIBRARY_DIRS})
+
+pkg_check_modules(GSTAPP gstreamer-app-1.0 REQUIRED)
+include_directories(${GSTAPP_INCLUDE_DIRS})
+link_directories(${GSTAPP_LIBRARY_DIRS})
+
+pkg_check_modules(GSTREAMER gstreamer-1.0 REQUIRED)
+include_directories(${GSTREAMER_INCLUDE_DIRS})
+link_directories(${GSTREAMER_LIBRARY_DIRS})
+
 pkg_check_modules(LS2 REQUIRED luna-service2)
 include_directories(${LS2_INCLUDE_DIRS})
 
@@ -49,6 +61,10 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -g -lrt -Wno-unused-function"
 
 set(BIN_NAME camera_test)
 
+#if(USE_MEDIA_PLAYER)
+  add_definitions(-DUSE_MEDIA_PLAYER)
+#endif()
+
 set(SRC_LIST
     src/main.cpp
     src/cam_player_app.cpp
@@ -56,6 +72,7 @@ set(SRC_LIST
     src/client/media_client.cpp
     src/client/camera_client.cpp
     src/client/media_recorder_client.cpp
+    src/player/media_player.cpp
     ${CMAKE_SOURCE_DIR}/src/ls_connector/luna_client.cpp
     src/opengl/button.cpp
     src/opengl/record_button.cpp
@@ -66,8 +83,11 @@ set(SRC_LIST
     src/utils/file_utils.cpp
     src/utils/image_utils.cpp
     src/window/window_manager.cpp
-    src/window/wayland_exporter.cpp
-    src/window/wayland_foreign.cpp
+    src/wayland/wayland_exporter.cpp
+    src/wayland/wayland_foreign.cpp
+    src/wayland/wayland_importer.cpp
+    src/wayland/wayland_surface.cpp
+    src/wayland/camera_window_manager.cpp
 )
 
 add_executable(${BIN_NAME} ${SRC_LIST})
@@ -76,12 +96,17 @@ set_target_properties(${BIN_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 target_link_libraries (${BIN_NAME}
     ${WLCLIENT_LDFLAGS}
     ${WLEGL_LDFLAGS}
+    ${GSTREAMER_LIBRARIES}
     ${GLESV2_LDFLAGS}
     ${LS2_LDFLAGS}
     ${GLIB2_LDFLAGS}
     -lEGL
     ${PMLOG_LDFLAGS}
     ${JPEG_LDFLAGS}
+    ${GSTPLAYER_LIBRARIES}
+    ${GSTREAMER_LIBRARIES}
+    ${GSTPBUTIL_LIBRARIES}
+    ${GSTAPP_LIBRARIES}
 )
 
 INSTALL ( TARGETS ${BIN_NAME}
