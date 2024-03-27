@@ -28,7 +28,7 @@
 
 RecordService *RecordService::instance_ = nullptr;
 
-pbnjson::JValue searchKey(const pbnjson::JValue &json, const std::string &key)
+pbnjson::JValue find_key(const pbnjson::JValue &json, const std::string &key)
 {
     pbnjson::JValue result;
 
@@ -43,7 +43,7 @@ pbnjson::JValue searchKey(const pbnjson::JValue &json, const std::string &key)
             }
             else
             {
-                result = searchKey(pair.second, key);
+                result = find_key(pair.second, key);
                 if (!result.isNull())
                 {
                     break;
@@ -55,46 +55,8 @@ pbnjson::JValue searchKey(const pbnjson::JValue &json, const std::string &key)
     {
         for (const auto &item : json.items())
         {
-            result = searchKey(item, key);
+            result = find_key(item, key);
             if (!result.isNull())
-            {
-                break;
-            }
-        }
-    }
-
-    return result;
-}
-
-std::string searchValue(const pbnjson::JValue &json, const std::string &key)
-{
-    std::string result;
-
-    if (json.isObject())
-    {
-        for (const auto &pair : json.children())
-        {
-            if (pair.first.asString() == key)
-            {
-                result = pair.second.asString();
-                break;
-            }
-            else
-            {
-                result = searchValue(pair.second, key);
-                if (!result.empty())
-                {
-                    break;
-                }
-            }
-        }
-    }
-    else if (json.isArray())
-    {
-        for (const auto &item : json.items())
-        {
-            result = searchValue(item, key);
-            if (!result.empty())
             {
                 break;
             }
@@ -264,11 +226,12 @@ bool RecordService::LoadEvent(UMSConnectorHandle *handle, UMSConnectorMessage *m
         return false;
     }
 
-    pbnjson::JValue parsed = jsonparser.getDom();
-    instance_->media_id_   = searchValue(parsed, "id");
+    auto parsed          = jsonparser.getDom();
+    auto id              = find_key(parsed, "id");
+    instance_->media_id_ = id.asString();
     LOGI("media_id_ : %s", instance_->media_id_.c_str());
 
-    pbnjson::JValue option = searchKey(parsed, "option");
+    auto option = find_key(parsed, "option");
     LOGI("option : %s", option.stringify().c_str());
     instance_->app_id_ = option["appId"].asString();
     LOGI("app_id_ : %s", instance_->app_id_.c_str());
