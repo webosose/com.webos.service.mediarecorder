@@ -70,7 +70,6 @@ target_link_libraries(${PROJECT_NAME} ${EXT_LIBS})
 install(TARGETS ${PROJECT_NAME} DESTINATION ${WEBOS_INSTALL_SBINDIR})
 
 webos_build_system_bus_files()
-webos_build_configured_file(files/systemd/com.webos.service.mediarecorder.service SYSCONFDIR systemd/system)
 
 add_subdirectory(tests)
 add_subdirectory(pipeline)
