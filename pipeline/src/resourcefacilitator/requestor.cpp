@@ -459,6 +459,6 @@ void ResourceRequestor::planeIdHandler(int32_t planePortIdx)
     }
 }
 
-void ResourceRequestor::setAppId(std::string id) { appId_ = id; }
+void ResourceRequestor::setAppId(std::string id) { appId_ = std::move(id); }
 
 } // namespace resource

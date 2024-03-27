@@ -67,8 +67,8 @@ public:
     virtual ~ResourceRequestor();
 
     const std::string getConnectionId() const { return connectionId_; }
-    void registerUMSPolicyActionCallback(Functor callback) { cb_ = callback; }
-    void registerPlaneIdCallback(PlaneIDFunctor callback) { planeIdCb_ = callback; }
+    void registerUMSPolicyActionCallback(Functor callback) { cb_ = std::move(callback); }
+    void registerPlaneIdCallback(PlaneIDFunctor callback) { planeIdCb_ = std::move(callback); }
     bool acquireResources(PortResource_t &resourceMMap, const base::source_info_t &sourceInfo,
                           const std::string &display_mode, const int32_t display_path = 0);
 
