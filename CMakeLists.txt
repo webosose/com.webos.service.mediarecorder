@@ -1,4 +1,4 @@
-# Copyright (c) 2023 LG Electronics, Inc.
+# Copyright (c) 2024 LG Electronics, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -69,7 +69,12 @@ target_link_libraries(${PROJECT_NAME} ${EXT_LIBS})
 
 install(TARGETS ${PROJECT_NAME} DESTINATION ${WEBOS_INSTALL_SBINDIR})
 
-webos_build_system_bus_files()
+if(USE_NEW_ACG)
+    message("USE_NEW_ACG is ${USE_NEW_ACG}")
+    webos_build_system_bus_files(files/sysbus_new)
+else()
+    webos_build_system_bus_files(files/sysbus)
+endif()
 
 add_subdirectory(tests)
 add_subdirectory(pipeline)

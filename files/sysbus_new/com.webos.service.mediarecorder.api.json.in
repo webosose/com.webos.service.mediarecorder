@@ -1,0 +1,15 @@
+{
+    "mediarecorder.operation":[
+        "com.webos.service.mediarecorder/open",
+        "com.webos.service.mediarecorder/close",
+        "com.webos.service.mediarecorder/setOutputFile",
+        "com.webos.service.mediarecorder/setOutputFormat",
+        "com.webos.service.mediarecorder/setVideoFormat",
+        "com.webos.service.mediarecorder/setAudioFormat",
+        "com.webos.service.mediarecorder/start",
+        "com.webos.service.mediarecorder/stop",
+        "com.webos.service.mediarecorder/takeSnapshot",
+        "com.webos.service.mediarecorder/pause",
+        "com.webos.service.mediarecorder/resume"
+    ]
+}
