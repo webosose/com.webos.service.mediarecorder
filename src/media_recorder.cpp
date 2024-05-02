@@ -388,7 +388,11 @@ ErrorCode MediaRecorder::start()
     json j;
     j["uri"]     = "record://com.webos.service.mediarecorder";
     j["payload"] = std::move(json_obj_option);
+#ifdef USE_TYPE_G_RECORD
+    j["type"]    = "g-record";
+#else
     j["type"]    = "record";
+#endif
 
     // send message for load
     std::string uri = "luna://com.webos.media/load";
@@ -514,7 +518,11 @@ ErrorCode MediaRecorder::takeSnapshot(std::string &path, std::string &format)
     json j;
     j["uri"]     = "record://com.webos.service.mediarecorder";
     j["payload"] = std::move(json_obj_option);
+#ifdef USE_TYPE_G_RECORD
+    j["type"]    = "g-record";
+#else
     j["type"]    = "record";
+#endif
 
     // send message for load
     std::string uri = "luna://com.webos.media/load";
