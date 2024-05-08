@@ -9,6 +9,7 @@ class MediaRecorderClient;
 class ButtonRender;
 class Image;
 class WindowManager;
+class MediaPlayer;
 class CamPlayerApp
 {
     void startCamera();
@@ -44,8 +45,12 @@ class CamPlayerApp
     std::unique_ptr<WindowManager> mWindowManager;
     std::unique_ptr<CameraClient> mCameraClient;
     std::unique_ptr<MediaClient> mCameraPlayer;
-    std::unique_ptr<MediaClient> mMediaPlayer;
     std::unique_ptr<MediaRecorderClient> mMediaRecorder;
+#ifdef USE_MEDIA_PLAYER
+    std::unique_ptr<MediaPlayer> mMediaPlayer;
+#else
+    std::unique_ptr<MediaClient> mMediaPlayer;
+#endif
 
     std::unique_ptr<ButtonRender> buttonRender;
     std::unique_ptr<Image> imageBox;

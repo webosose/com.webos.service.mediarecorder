@@ -51,7 +51,9 @@ ResourceRequestor::ResourceRequestor(const std::string &appId, const std::string
             umsRMC_ = make_shared<uMediaServer::ResourceManagerClient>();
             LOGI("ResourceRequestor creation done");
 
+#ifndef PRO_UMS
             umsRMC_->registerPipeline("media", appId_); // only rmc case
+#endif
             connectionId_ = umsRMC_->getConnectionID() ? umsRMC_->getConnectionID()
                                                        : ""; // after registerPipeline
         }
@@ -214,14 +216,14 @@ mrc::ResourceListOptions ResourceRequestor::calcDisplayResource(const std::strin
         /* need to change display_mode type from string to enum */
         if (display_mode.compare("PunchThrough") == 0)
         {
-#ifndef DISABLE_DISPLAY_RESOURCE
+#ifdef USE_DISPLAY_RESOURCE
             DisplayResource = rc_->calcDisplayPlaneResourceOptions(
                 mrc::ResourceCalculator::RenderMode::kModePunchThrough);
 #endif
         }
         else if (display_mode.compare("Textured") == 0)
         {
-#ifndef DISABLE_DISPLAY_RESOURCE
+#ifdef USE_DISPLAY_RESOURCE
             DisplayResource = rc_->calcDisplayPlaneResourceOptions(
                 mrc::ResourceCalculator::RenderMode::kModeTexture);
 #endif
@@ -263,7 +265,9 @@ bool ResourceRequestor::notifyActivity() const { return umsRMC_->notifyActivity(
 
 bool ResourceRequestor::notifyPipelineStatus(const std::string &status) const
 {
+#ifndef PRO_UMS
     umsRMC_->notifyPipelineStatus(status);
+#endif
     return true;
 }
 
@@ -455,6 +459,6 @@ void ResourceRequestor::planeIdHandler(int32_t planePortIdx)
     }
 }
 
-void ResourceRequestor::setAppId(std::string id) { appId_ = id; }
+void ResourceRequestor::setAppId(std::string id) { appId_ = std::move(id); }
 
 } // namespace resource

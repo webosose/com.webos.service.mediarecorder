@@ -18,4 +18,6 @@ install(FILES sysbus/perm/com.sample.camera.test.app.json DESTINATION /usr/share
 install(FILES sysbus/com.sample.camera.test.manifest.json DESTINATION /usr/share/luna-service2/manifests.d/)
 install(FILES sysbus/role/com.sample.camera.test.app.json DESTINATION /usr/share/luna-service2/roles.d/)
 
+install(FILES gst_debug.conf DESTINATION /etc/com.sample.camera.test)
+
 install(FILES camera_test DESTINATION ${WEBOS_INSTALL_SBINDIR})

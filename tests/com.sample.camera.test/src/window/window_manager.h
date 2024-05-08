@@ -1,8 +1,8 @@
 #ifndef _WIDOW_MANAGER_
 #define _WIDOW_MANAGER_
 
-#include "window/wayland_exporter.h"
-#include "window/wayland_foreign.h"
+#include "wayland/wayland_exporter.h"
+#include "wayland/wayland_foreign.h"
 #include <EGL/egl.h>
 
 struct wl_Rect

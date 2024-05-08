@@ -87,7 +87,7 @@ bool MediaClient::load(const std::string &windowId, const std::string &video_nam
 
     ret = luna_client->callAsync(uri.c_str(), to_string(j).c_str(), loadCb, this);
 
-    state = PLAY;
+    state = MediaState::PLAY;
     return ret;
 }
 
@@ -134,7 +134,7 @@ bool MediaClient::load(const json &option)
 
     ret = luna_client->callAsync(uri.c_str(), to_string(j).c_str(), loadCb, this);
 
-    state = PLAY;
+    state = MediaState::PLAY;
     return ret;
 }
 
@@ -187,7 +187,7 @@ bool MediaClient::unload()
     DEBUG_LOG("%s '%s'", uri.c_str(), to_string(j).c_str());
     ret = luna_client->callAsync(uri.c_str(), to_string(j).c_str(), funCb, (void *)__func__);
 
-    state = STOP;
+    state = MediaState::STOP;
     return ret;
 }
 
@@ -219,7 +219,7 @@ bool MediaClient::subscribe()
         const std::string currentTimeStr("currentTime");
         if (j.contains(currentTimeStr))
         {
-            if (client->state == PLAY)
+            if (client->state == MediaState::PLAY)
             {
                 auto currentTime = std::chrono::steady_clock::now();
                 auto elapsedTime = std::chrono::duration_cast<std::chrono::seconds>(
@@ -247,11 +247,11 @@ bool MediaClient::subscribe()
         }
         else if (j.contains(pausedStr))
         {
-            client->state = PAUSE;
+            client->state = MediaState::PAUSE;
         }
         else if (j.contains(playingStr))
         {
-            client->state = PLAY;
+            client->state = MediaState::PLAY;
         }
 
         return true;

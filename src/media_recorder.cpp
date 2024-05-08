@@ -327,7 +327,7 @@ ErrorCode MediaRecorder::start()
         video["codec"]    = mVideoFormat.codec;
         video["fps"]      = mVideoFormat.fps;
         video["bitRate"]  = mVideoFormat.bitRate;
-        json_obj["video"] = video;
+        json_obj["video"] = std::move(video);
 
         PLOGI("Video Format: codec=%s, width=%d, height=%d, fps=%d, bitRate=%d",
               mVideoFormat.codec.c_str(), mVideoFormat.width, mVideoFormat.height, mVideoFormat.fps,
@@ -341,7 +341,7 @@ ErrorCode MediaRecorder::start()
         audio["sampleRate"]   = mAudioFormat.sampleRate;
         audio["channelCount"] = mAudioFormat.channels;
         audio["bitRate"]      = mAudioFormat.bitRate;
-        json_obj["audio"]     = audio;
+        json_obj["audio"]     = std::move(audio);
 
         PLOGI("Audio Format: codec=%s, sampleRate=%d, channels=%d, bitRate=%d",
               mAudioFormat.codec.c_str(), mAudioFormat.sampleRate, mAudioFormat.channels,
@@ -383,12 +383,16 @@ ErrorCode MediaRecorder::start()
     json_obj["path"]   = mRecordPath;
 
     auto json_obj_option      = json::object();
-    json_obj_option["option"] = json_obj;
+    json_obj_option["option"] = std::move(json_obj);
 
     json j;
     j["uri"]     = "record://com.webos.service.mediarecorder";
-    j["payload"] = json_obj_option;
+    j["payload"] = std::move(json_obj_option);
+#ifdef USE_TYPE_G_RECORD
+    j["type"]    = "g-record";
+#else
     j["type"]    = "record";
+#endif
 
     // send message for load
     std::string uri = "luna://com.webos.media/load";
@@ -502,19 +506,23 @@ ErrorCode MediaRecorder::takeSnapshot(std::string &path, std::string &format)
         image["height"]   = mVideoFormat.height;
         image["codec"]    = format;
         image["quality"]  = 90;
-        json_obj["image"] = image;
+        json_obj["image"] = std::move(image);
     }
 
     mCapturePath     = createRecordFileName(path, "Capture");
     json_obj["path"] = mCapturePath;
 
     auto json_obj_option      = json::object();
-    json_obj_option["option"] = json_obj;
+    json_obj_option["option"] = std::move(json_obj);
 
     json j;
     j["uri"]     = "record://com.webos.service.mediarecorder";
-    j["payload"] = json_obj_option;
+    j["payload"] = std::move(json_obj_option);
+#ifdef USE_TYPE_G_RECORD
+    j["type"]    = "g-record";
+#else
     j["type"]    = "record";
+#endif
 
     // send message for load
     std::string uri = "luna://com.webos.media/load";

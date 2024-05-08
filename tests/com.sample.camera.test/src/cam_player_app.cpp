@@ -5,8 +5,10 @@
 #include "client/media_recorder_client.h"
 #include "file_utils.h"
 #include "log_info.h"
+#include "media_state.h"
 #include "opengl/button_render.h"
 #include "opengl/image.h"
+#include "player/media_player.h"
 #include "window/window_manager.h"
 #include <iostream>
 #include <nlohmann/json.hpp>
@@ -48,9 +50,13 @@ bool CamPlayerApp::initialize()
     DEBUG_LOG("");
 
     mCameraClient  = std::make_unique<CameraClient>();
-    mMediaPlayer   = std::make_unique<MediaClient>();
     mCameraPlayer  = std::make_unique<MediaClient>("camera-player");
     mMediaRecorder = std::make_unique<MediaRecorderClient>();
+#ifdef USE_MEDIA_PLAYER
+    mMediaPlayer = std::make_unique<MediaPlayer>();
+#else
+    mMediaPlayer = std::make_unique<MediaClient>();
+#endif
 
     mWindowManager = std::make_unique<WindowManager>();
     mWindowManager->initialize();
@@ -182,8 +188,8 @@ void CamPlayerApp::printOption()
 */
 void CamPlayerApp::startCamera()
 {
-    DEBUG_LOG("state %d", mCameraPlayer->state);
-    if (mCameraPlayer->state == MediaClient::PLAY)
+    DEBUG_LOG("state %d", static_cast<int>(mCameraPlayer->state));
+    if (mCameraPlayer->state == MediaState::PLAY)
     {
         DEBUG_LOG("invalid state");
         return;
@@ -258,8 +264,8 @@ void CamPlayerApp::stopCamera()
 
     if (appParm.use_start_camera)
     {
-        DEBUG_LOG("state %d", mCameraPlayer->state);
-        if (mCameraPlayer->state == MediaClient::STOP)
+        DEBUG_LOG("state %d", static_cast<int>(mCameraPlayer->state));
+        if (mCameraPlayer->state == MediaState::STOP)
         {
             DEBUG_LOG("invalid state");
             return;
@@ -473,9 +479,9 @@ void CamPlayerApp::setSolutions()
 
 void CamPlayerApp::playVideo()
 {
-    DEBUG_LOG("state %d", mMediaPlayer->state);
+    DEBUG_LOG("state %d", static_cast<int>(mMediaPlayer->state));
 
-    if (mMediaPlayer->state == MediaClient::STOP)
+    if (mMediaPlayer->state == MediaState::STOP)
     {
         std::string video_name = mMediaRecorder->getRecordPath();
         if (video_name.empty())
@@ -491,13 +497,13 @@ void CamPlayerApp::playVideo()
             mWindowManager->setRect(1);
         }
     }
-    else if (mMediaPlayer->state == MediaClient::PAUSE)
+    else if (mMediaPlayer->state == MediaState::PAUSE)
     {
         mMediaPlayer->play();
     }
     else
     {
-        DEBUG_LOG("Invalid state : %d", mMediaPlayer->state);
+        DEBUG_LOG("Invalid state : %d", static_cast<int>(mMediaPlayer->state));
     }
 
     DEBUG_LOG("end");
@@ -505,9 +511,9 @@ void CamPlayerApp::playVideo()
 
 void CamPlayerApp::pauseVideo()
 {
-    DEBUG_LOG("state %d", mMediaPlayer->state);
+    DEBUG_LOG("state %d", static_cast<int>(mMediaPlayer->state));
 
-    if (mMediaPlayer->state == MediaClient::PLAY)
+    if (mMediaPlayer->state == MediaState::PLAY)
     {
         mMediaPlayer->pause();
     }
@@ -520,9 +526,9 @@ void CamPlayerApp::stopVideo()
     if (mMediaPlayer == nullptr)
         return;
 
-    DEBUG_LOG("state %d", mMediaPlayer->state);
+    DEBUG_LOG("state %d", static_cast<int>(mMediaPlayer->state));
 
-    if (mMediaPlayer->state != MediaClient::STOP)
+    if (mMediaPlayer->state != MediaState::STOP)
     {
         mMediaPlayer->unload();
         mWindowManager->clearRect(1);

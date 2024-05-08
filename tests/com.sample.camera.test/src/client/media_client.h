@@ -2,6 +2,7 @@
 #define __MEDIA_CLIENT__
 
 #include "client.h"
+#include "media_state.h"
 #include <nlohmann/json.hpp>
 
 using namespace nlohmann;
@@ -29,12 +30,7 @@ public:
     std::string mediaId;
     std::chrono::steady_clock::time_point startTime;
 
-    enum State
-    {
-        STOP,
-        PAUSE,
-        PLAY
-    } state{STOP};
+    MediaState state = MediaState::STOP;
 };
 
 #endif // __MEDIA_CLIENT__
