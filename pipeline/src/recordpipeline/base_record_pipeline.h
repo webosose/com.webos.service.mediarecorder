@@ -1,5 +1,5 @@
-#ifndef _BASE_RECORD_PIPELINE_H_
-#define _BASE_RECORD_PIPELINE_H_
+#ifndef BASE_RECORD_PIPELINE_H_
+#define BASE_RECORD_PIPELINE_H_
 
 #include "base.h"
 #include "camera_types.h"
@@ -31,16 +31,18 @@ class BaseRecordPipeline : public RecordPipeline
     bool handleBusMessage(GstBus *bus, GstMessage *msg);
     bool addBus();
     bool remBus();
+    bool unloadImpl();
+    bool playImpl();
 
 public:
     BaseRecordPipeline();
     virtual ~BaseRecordPipeline();
 
-    bool Load(const std::string &msg);
-    bool Unload();
-    bool Play();
-    bool Pause();
-    void RegisterCbFunction(CALLBACK_T cbf);
+    bool Load(const std::string &msg) override;
+    bool Unload() override;
+    bool Play() override;
+    bool Pause() override;
+    void RegisterCbFunction(CALLBACK_T cbf) override;
     virtual bool launch() = 0;
 
 protected:
@@ -55,4 +57,4 @@ protected:
     image_format_t mImageFormat;
 };
 
-#endif // _BASE_RECORD_PIPELINE_H_
+#endif // BASE_RECORD_PIPELINE_H_

@@ -36,7 +36,7 @@ BaseRecordPipeline::~BaseRecordPipeline()
 {
     LOGI("start");
 
-    Unload();
+    unloadImpl();
 
     g_main_loop_quit(loop_);
     if (loopThread_->joinable())
@@ -104,7 +104,9 @@ bool BaseRecordPipeline::Load(const std::string &msg)
     return true;
 }
 
-bool BaseRecordPipeline::Unload()
+bool BaseRecordPipeline::Unload() { return unloadImpl(); }
+
+bool BaseRecordPipeline::unloadImpl()
 {
     LOGI("start");
 
@@ -126,7 +128,7 @@ bool BaseRecordPipeline::Unload()
         LOGI("state = %s", gst_element_state_get_name(state));
         if (state == GST_STATE_PAUSED)
         {
-            Play();
+            playImpl();
         }
 
         if (bus != nullptr)
@@ -176,7 +178,9 @@ bool BaseRecordPipeline::Unload()
     return true;
 }
 
-bool BaseRecordPipeline::Play()
+bool BaseRecordPipeline::Play() { return playImpl(); }
+
+bool BaseRecordPipeline::playImpl()
 {
     LOGI("start");
     if (pipeline_ != nullptr &&
@@ -263,7 +267,7 @@ bool BaseRecordPipeline::acquireResource()
     LOGI("start");
     ACQUIRE_RESOURCE_INFO_T resource_info;
     resource_info.sourceInfo  = &source_info_;
-    resource_info.displayMode = const_cast<char *>(display_mode_.c_str());
+    resource_info.displayMode = display_mode_.c_str();
     resource_info.result      = true;
 
     if (cbFunction_)

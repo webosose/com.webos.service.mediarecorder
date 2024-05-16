@@ -1,5 +1,5 @@
-#ifndef __LS_CONNECTOR__
-#define __LS_CONNECTOR__
+#ifndef LS_CONNECTOR_
+#define LS_CONNECTOR_
 
 #include "luna_client.h"
 #include <glib.h>
@@ -22,4 +22,4 @@ public:
     bool unsubscribe();
 };
 
-#endif // __LS_CONNECTOR__
+#endif // LS_CONNECTOR_

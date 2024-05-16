@@ -1,5 +1,5 @@
-#ifndef _RECORD_PIPELINE_H_
-#define _RECORD_PIPELINE_H_
+#ifndef RECORD_PIPELINE_H_
+#define RECORD_PIPELINE_H_
 
 #include <functional>
 #include <gst/gst.h>
@@ -18,4 +18,4 @@ public:
     virtual void RegisterCbFunction(CALLBACK_T cbf) = 0;
 };
 
-#endif // _RECORD_PIPELINE_H_
+#endif // RECORD_PIPELINE_H_

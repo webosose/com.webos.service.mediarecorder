@@ -796,5 +796,11 @@ int main(int argc, char *argv[])
         LSErrorPrint(err, stdout);
         return 1;
     }
+    catch (...)
+    {
+        std::cerr << "An unknown exception occurred." << std::endl;
+        return 1;
+    }
+
     return 0;
 }

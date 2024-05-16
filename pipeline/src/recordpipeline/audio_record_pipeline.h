@@ -1,5 +1,5 @@
-#ifndef _AUDIO_RECORD_PIPELINE_H_
-#define _AUDIO_RECORD_PIPELINE_H_
+#ifndef AUDIO_RECORD_PIPELINE_H_
+#define AUDIO_RECORD_PIPELINE_H_
 
 #include "base_record_pipeline.h"
 
@@ -7,7 +7,7 @@ class AudioRecordPipeline : public BaseRecordPipeline
 {
 public:
     AudioRecordPipeline() { pipelineType = "AudioRecord"; }
-    bool launch();
+    bool launch() override;
 };
 
-#endif // _AUDIO_RECORD_PIPELINE_H_
+#endif // AUDIO_RECORD_PIPELINE_H_

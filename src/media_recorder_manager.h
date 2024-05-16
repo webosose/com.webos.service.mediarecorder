@@ -14,8 +14,8 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#ifndef __MEDIA_RECORDER_MANAGER__
-#define __MEDIA_RECORDER_MANAGER__
+#ifndef MEDIA_RECORDER_MANAGER_
+#define MEDIA_RECORDER_MANAGER_
 
 #include "luna-service2/lunaservice.hpp"
 #include <glib.h>
@@ -53,4 +53,4 @@ public:
     void printRecorders(); //[TODO] Remove this for debugging purpose.
 };
 
-#endif // __MEDIA_RECORDER_MANAGER__
+#endif // MEDIA_RECORDER_MANAGER_

@@ -126,7 +126,7 @@ typedef enum
 } PIXEL_FMT;
 
 /* video codec */
-typedef enum
+enum VIDEO_CODEC : int32_t
 {
     VIDEO_CODEC_NONE,
     VIDEO_CODEC_H264,
@@ -139,7 +139,7 @@ typedef enum
     VIDEO_CODEC_H265,
     VIDEO_CODEC_MJPEG,
     VIDEO_CODEC_MAX = VIDEO_CODEC_MJPEG,
-} VIDEO_CODEC;
+};
 
 /**
  * Data structure for encoding parameters
@@ -210,7 +210,7 @@ using ENCODER_CALLBACK_T = std::function<void(const gint type, const void *cbDat
 typedef struct ACQUIRE_RESOURCE_INFO
 {
     base::source_info_t *sourceInfo;
-    char *displayMode;
+    const char *displayMode;
     gboolean result;
 } ACQUIRE_RESOURCE_INFO_T;
 
