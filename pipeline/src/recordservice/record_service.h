@@ -14,8 +14,8 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#ifndef _RECORD_SERVICE_H_
-#define _RECORD_SERVICE_H_
+#ifndef RECORD_SERVICE_H_
+#define RECORD_SERVICE_H_
 
 #include <glib.h>
 #include <memory>
@@ -93,4 +93,4 @@ private:
     void operator=(const RecordService &s) = delete;
 };
 
-#endif // _RECORD_SERVICE_H_
+#endif // RECORD_SERVICE_H_

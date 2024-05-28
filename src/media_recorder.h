@@ -14,8 +14,8 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#ifndef __MEDIA_RECORDER__
-#define __MEDIA_RECORDER__
+#ifndef MEDIA_RECORDER_
+#define MEDIA_RECORDER_
 
 #include "error.h"
 #include "format_utils.h"
@@ -83,4 +83,4 @@ public:
         "AAC", 44100, 2, 0}; // default audio format (audio codec, sampleRate, channels, bitRate)
 };
 
-#endif // __MEDIA_RECORDER__
+#endif // MEDIA_RECORDER_

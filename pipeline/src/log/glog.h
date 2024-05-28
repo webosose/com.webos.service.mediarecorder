@@ -14,8 +14,8 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#ifndef _GLOG_LOG_H_
-#define _GLOG_LOG_H_
+#ifndef GLOG_LOG_H_
+#define GLOG_LOG_H_
 
 #include <PmLogLib.h>
 #include <assert.h>
@@ -47,4 +47,4 @@ PmLogContext GetPmLogContext();
         }                                                                                          \
     }
 
-#endif // _GLOG_LOG_H_
+#endif // GLOG_LOG_H_

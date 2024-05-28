@@ -1,5 +1,5 @@
-#ifndef _PIPELINE_FACTORY_H_
-#define _PIPELINE_FACTORY_H_
+#ifndef PIPELINE_FACTORY_H_
+#define PIPELINE_FACTORY_H_
 
 #include <memory>
 #include <pbnjson.hpp>
@@ -10,4 +10,4 @@ class PipelineFactory
 public:
     static std::shared_ptr<RecordPipeline> CreateRecorder(const pbnjson::JValue &parsed);
 };
-#endif // _PIPELINE_FACTORY_H_
+#endif // PIPELINE_FACTORY_H_
