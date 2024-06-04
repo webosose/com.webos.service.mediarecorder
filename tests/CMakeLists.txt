@@ -14,6 +14,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-if(WITH_CAMERA_TEST)
-    add_subdirectory(com.sample.camera.test)
+if(WITH_RECORD_TEST)
+    add_subdirectory(com.sample.record.test)
 endif()

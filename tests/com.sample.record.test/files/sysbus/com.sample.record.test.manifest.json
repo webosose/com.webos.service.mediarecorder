@@ -1,0 +1,10 @@
+{
+    "id": "com.sample.record.test",
+    "version": "1.0.0",
+    "roleFiles": [
+        "/usr/share/luna-service2/roles.d/com.sample.record.test.app.json"
+    ],
+    "clientPermissionFiles": [
+        "/usr/share/luna-service2/client-permissions.d/com.sample.record.test.app.json"
+    ]
+}

@@ -36,7 +36,7 @@ bool WindowManager::initWaylandEGLSurface()
                                         (getenv("DISPLAY_ID") ? getenv("DISPLAY_ID") : "0"));
 
     wl_webos_shell_surface_set_property(surface.webosShellSurface, "appId",
-                                        "com.sample.camera.test");
+                                        "com.sample.record.test");
 
     surface.width  = 1920;
     surface.height = 1080;

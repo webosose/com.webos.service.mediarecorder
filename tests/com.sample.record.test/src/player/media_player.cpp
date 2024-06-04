@@ -454,7 +454,7 @@ drop:
 
 void MediaPlayer::SetGstreamerDebug()
 {
-    const std::string filename = "/etc/com.sample.camera.test/gst_debug.conf";
+    const std::string filename = "/etc/com.sample.record.test/gst_debug.conf";
     DEBUG_LOG("Read: %s", filename.c_str());
 
     std::ifstream i(filename);

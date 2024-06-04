@@ -15,7 +15,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 cmake_minimum_required(VERSION 2.8.7)
-project(camera_test C CXX)
+project(record_test C CXX)
 
 include_directories(src)
 include_directories(src/utils)
@@ -59,7 +59,7 @@ webos_add_compiler_flags(ALL ${JPEG_CFLAGS})
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -g -lrt -Wno-unused-function")
 
-set(BIN_NAME camera_test)
+set(BIN_NAME record_test)
 
 #if(USE_MEDIA_PLAYER)
   add_definitions(-DUSE_MEDIA_PLAYER)
@@ -110,19 +110,19 @@ target_link_libraries (${BIN_NAME}
 )
 
 INSTALL ( TARGETS ${BIN_NAME}
-    DESTINATION /usr/palm/applications/com.sample.camera.test
+    DESTINATION /usr/palm/applications/com.sample.record.test
 )
 
-install(FILES appinfo.json DESTINATION palm/applications/com.sample.camera.test)
-install(FILES icon.png DESTINATION palm/applications/com.sample.camera.test)
-install(FILES res/start_cam.jpg DESTINATION palm/applications/com.sample.camera.test)
-install(FILES res/stop_cam.jpg DESTINATION palm/applications/com.sample.camera.test)
-install(FILES res/record.jpg DESTINATION palm/applications/com.sample.camera.test)
-install(FILES res/play.jpg DESTINATION palm/applications/com.sample.camera.test)
-install(FILES res/pause.jpg DESTINATION palm/applications/com.sample.camera.test)
-install(FILES res/stop.jpg DESTINATION palm/applications/com.sample.camera.test)
-install(FILES res/exit.jpg DESTINATION palm/applications/com.sample.camera.test)
-install(FILES res/take_picture.jpg DESTINATION palm/applications/com.sample.camera.test)
-install(FILES res/ptz.jpg DESTINATION palm/applications/com.sample.camera.test)
+install(FILES appinfo.json DESTINATION palm/applications/com.sample.record.test)
+install(FILES icon.png DESTINATION palm/applications/com.sample.record.test)
+install(FILES res/start_cam.jpg DESTINATION palm/applications/com.sample.record.test)
+install(FILES res/stop_cam.jpg DESTINATION palm/applications/com.sample.record.test)
+install(FILES res/record.jpg DESTINATION palm/applications/com.sample.record.test)
+install(FILES res/play.jpg DESTINATION palm/applications/com.sample.record.test)
+install(FILES res/pause.jpg DESTINATION palm/applications/com.sample.record.test)
+install(FILES res/stop.jpg DESTINATION palm/applications/com.sample.record.test)
+install(FILES res/exit.jpg DESTINATION palm/applications/com.sample.record.test)
+install(FILES res/take_picture.jpg DESTINATION palm/applications/com.sample.record.test)
+install(FILES res/ptz.jpg DESTINATION palm/applications/com.sample.record.test)
 
 add_subdirectory(files)

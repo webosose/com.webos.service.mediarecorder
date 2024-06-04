@@ -25,7 +25,7 @@ Client::Client(const std::string &name)
     std::string handle_name = name + "_client";
     pthread_setname_np(loopThread_->native_handle(), handle_name.c_str());
 
-    std::string service_name = "com.sample.camera.test-" + name;
+    std::string service_name = "com.sample.record.test-" + name;
     luna_client              = std::make_unique<LunaClient>(service_name.c_str(), c);
     g_main_context_unref(c);
 }
