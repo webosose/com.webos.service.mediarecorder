@@ -1,12 +1,12 @@
 {
-    "exeName": "/usr/palm/applications/com.sample.camera.test/camera_test",
+    "exeName": "/usr/palm/applications/com.sample.record.test/record_test",
     "type": "regular",
     "allowedNames": [
-        "com.sample.camera.test*"
+        "com.sample.record.test*"
     ],
     "permissions": [
         {
-            "service": "com.sample.camera.test*",
+            "service": "com.sample.record.test*",
             "outbound": [
                 "*"
             ]

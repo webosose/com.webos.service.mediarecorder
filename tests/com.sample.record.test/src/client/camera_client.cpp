@@ -295,7 +295,7 @@ bool CameraClient::startPreview(const std::string &window_id)
     DEBUG_LOG("%s '%s'", uri.c_str(), to_string(j).c_str());
 
     std::string resp;
-    ret = luna_client->callSync(uri.c_str(), to_string(j).c_str(), &resp);
+    ret = luna_client->callSync(uri.c_str(), to_string(j).c_str(), &resp, 9000);
 
     json jOut = json::parse(resp);
     printf("%s\n", jOut.dump(4).c_str());

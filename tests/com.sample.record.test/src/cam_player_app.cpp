@@ -140,7 +140,7 @@ bool CamPlayerApp::parseOption(int argc, char **argv)
 
 void CamPlayerApp::printHelp()
 {
-    std::cout << "Usage: camera_test [OPTION]..." << std::endl;
+    std::cout << "Usage: record_test [OPTION]..." << std::endl;
     std::cout << "Options" << std::endl;
     std::cout << "  -u          use ums" << std::endl;
     std::cout << "  -m          mode (shmem, posixshm, device)" << std::endl;

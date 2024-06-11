@@ -2,7 +2,7 @@
 #include "image_utils.h"
 
 #define H 1080
-const std::string res_path = "/usr/palm/applications/com.sample.camera.test/";
+const std::string res_path = "/usr/palm/applications/com.sample.record.test/";
 
 Button::Button(int px, int py, std::string name, std::function<void(int)> handler)
 {
