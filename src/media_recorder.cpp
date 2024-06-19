@@ -395,34 +395,18 @@ ErrorCode MediaRecorder::start()
 
     // send message for load
     record_uri      = "luna://" + uid + "/";
-    std::string uri = record_uri + "load";
+    std::string uri = record_uri + __func__;
     PLOGI("%s '%s'", uri.c_str(), to_string(j).c_str());
 
     std::string resp;
     record_client->callSync(uri.c_str(), to_string(j).c_str(), &resp);
     PLOGI("resp %s", resp.c_str());
 
-    try
+    json jOut = json::parse(resp);
+    if (get_optional<bool>(jOut, returnValueStr).value_or(false))
     {
-        json jOut = json::parse(resp);
-        if (get_optional<bool>(jOut, returnValueStr).value_or(false))
-        {
-            std::string uri = record_uri + "play";
-            std::string resp;
-            record_client->callSync(uri.c_str(), emptyJson, &resp);
-            PLOGI("resp %s", resp.c_str());
-
-            json jOut = json::parse(resp);
-            if (get_optional<bool>(jOut, returnValueStr).value_or(false))
-            {
-                state = RECORDING;
-                return ERR_NONE;
-            }
-        }
-    }
-    catch (const json::exception &e)
-    {
-        PLOGE("Error occurred: %s", e.what());
+        state = RECORDING;
+        return ERR_NONE;
     }
 
     return ERR_FAILED_TO_START_RECORDING;
@@ -438,7 +422,7 @@ ErrorCode MediaRecorder::stop()
     }
 
     // send message
-    std::string uri = record_uri + "unload";
+    std::string uri = record_uri + __func__;
     PLOGI("%s '%s'", uri.c_str(), emptyJson);
 
     std::string resp;
@@ -489,6 +473,26 @@ ErrorCode MediaRecorder::takeSnapshot(std::string &path, std::string &format)
     std::string cmd  = "/usr/sbin/g-record-pipeline -s" + uid;
     Process snapshot_process(cmd);
 
+    // Prepare snapshot client
+    if (snapshot_client == nullptr)
+    {
+        std::string service_name =
+            "com.webos.service.mediarecorder-" + std::to_string(recorderId) + "-snapshot";
+        snapshot_client = std::make_unique<LSConnector>(service_name, "snapshot");
+    }
+
+    // send message for subscribe
+    std::string snapshot_uri = "luna://" + uid + "/";
+    std::string uri          = snapshot_uri + "subscribe";
+    PLOGI("%s '%s'", uri.c_str(), emptyJson);
+    bool retVal =
+        snapshot_client->subscribe(uri.c_str(), emptyJson, LUNA_CALLBACK(snapshotCb), this);
+    if (!retVal)
+    {
+        PLOGE("%s fail to subscribe", __func__);
+        return ERR_SNAPSHOT_CAPTURE_FAILED;
+    }
+
     // Make payload
     json j;
 
@@ -507,68 +511,22 @@ ErrorCode MediaRecorder::takeSnapshot(std::string &path, std::string &format)
     j["path"]    = mCapturePath;
 
     // send message for load
-    std::string snapshot_uri = "luna://" + uid + "/";
-    std::string uri          = snapshot_uri + "load";
+    uri = snapshot_uri + "start";
     PLOGI("%s '%s'", uri.c_str(), to_string(j).c_str());
-
-    if (snapshot_client == nullptr)
-    {
-        std::string service_name =
-            "com.webos.service.mediarecorder-" + std::to_string(recorderId) + "-snapshot";
-        snapshot_client = std::make_unique<LSConnector>(service_name, "snapshot");
-    }
 
     std::string resp;
     snapshot_client->callSync(uri.c_str(), to_string(j).c_str(), &resp);
     PLOGI("resp %s", resp.c_str());
 
-    try
+    mEos    = false;
+    int cnt = 0;
+    while (!mEos && cnt < 10000) // 10s
     {
-        json jOut = json::parse(resp);
-        if (get_optional<bool>(jOut, returnValueStr).value_or(false))
-        {
-            // send message for subscribe
-            std::string uri = snapshot_uri + "subscribe";
-            bool retVal =
-                snapshot_client->subscribe(uri.c_str(), emptyJson, LUNA_CALLBACK(snapshotCb), this);
-            PLOGI("%s '%s'", uri.c_str(), to_string(j).c_str());
-            if (!retVal)
-            {
-                PLOGE("%s fail to subscribe", __func__);
-            }
-
-            // send message for play
-            uri = snapshot_uri + "play";
-            PLOGI("%s '%s'", uri.c_str(), emptyJson);
-
-            std::string resp;
-            snapshot_client->callSync(uri.c_str(), emptyJson, &resp);
-            PLOGI("resp %s", resp.c_str());
-
-            json jOut = json::parse(resp);
-            if (get_optional<bool>(jOut, returnValueStr).value_or(false))
-            {
-                mEos = false;
-                {
-                    int cnt = 0;
-                    while (!mEos && cnt < 10000) // 10s
-                    {
-                        g_usleep(1000);
-                        cnt++;
-                    }
-                    PLOGI("capture done : %d ms", cnt);
-                }
-
-                return ERR_NONE;
-            }
-        }
+        g_usleep(1000);
+        cnt++;
     }
-    catch (const json::exception &e)
-    {
-        PLOGE("Error occurred: %s", e.what());
-    }
-
-    return ERR_SNAPSHOT_CAPTURE_FAILED;
+    PLOGI("capture done : %d ms", cnt);
+    return (cnt < 10000) ? ERR_NONE : ERR_SNAPSHOT_CAPTURE_FAILED;
 }
 
 bool MediaRecorder::snapshotCb(const char *message)
@@ -690,7 +648,7 @@ ErrorCode MediaRecorder::pause()
     }
 
     // send message
-    std::string uri = record_uri + "pause";
+    std::string uri = record_uri + __func__;
     PLOGI("%s '%s'", uri.c_str(), emptyJson);
 
     std::string resp;
@@ -725,7 +683,7 @@ ErrorCode MediaRecorder::resume()
     }
 
     // send message
-    std::string uri = record_uri + "play";
+    std::string uri = record_uri + __func__;
     PLOGI("%s '%s'", uri.c_str(), emptyJson);
 
     std::string resp;

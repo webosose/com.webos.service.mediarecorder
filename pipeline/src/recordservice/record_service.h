@@ -46,10 +46,10 @@ public:
     RecordService &operator=(RecordService const &) = delete;
     RecordService &operator=(RecordService &&)      = delete;
 
-    bool load(LSMessage &message);
-    bool unload(LSMessage &message);
-    bool play(LSMessage &message);
+    bool start(LSMessage &message);
+    bool stop(LSMessage &message);
     bool pause(LSMessage &message);
+    bool resume(LSMessage &message);
     bool subscribe(LSMessage &message);
 
 private:

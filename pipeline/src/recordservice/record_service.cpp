@@ -37,10 +37,10 @@ RecordService::RecordService(const char *service_name)
     LOGI("Start : %s", service_name);
 
     LS_CATEGORY_BEGIN(RecordService, "/")
-    LS_CATEGORY_METHOD(load)
-    LS_CATEGORY_METHOD(unload)
-    LS_CATEGORY_METHOD(play)
+    LS_CATEGORY_METHOD(start)
+    LS_CATEGORY_METHOD(stop)
     LS_CATEGORY_METHOD(pause)
+    LS_CATEGORY_METHOD(resume)
     LS_CATEGORY_METHOD(subscribe)
     LS_CATEGORY_END;
 
@@ -163,7 +163,7 @@ void RecordService::Notify(const gint notification, const gint64 numValue, const
     }
 }
 
-bool RecordService::load(LSMessage &message)
+bool RecordService::start(LSMessage &message)
 {
     jvalue_ref json_outobj = jobject_create();
     auto *payload          = LSMessageGetPayload(&message);
@@ -207,7 +207,7 @@ bool RecordService::load(LSMessage &message)
     return true;
 }
 
-bool RecordService::unload(LSMessage &message)
+bool RecordService::stop(LSMessage &message)
 {
     bool ret               = false;
     jvalue_ref json_outobj = jobject_create();
@@ -247,31 +247,6 @@ bool RecordService::unload(LSMessage &message)
     return true;
 }
 
-bool RecordService::play(LSMessage &message)
-{
-    jvalue_ref json_outobj = jobject_create();
-    auto *payload          = LSMessageGetPayload(&message);
-    LOGI("payload %s", payload);
-
-    if (!recorder_ || !isLoaded_)
-    {
-        LOGE("Invalid recorder state, recorder should be loaded");
-        return false;
-    }
-
-    bool ret = recorder_->Play();
-
-    jobject_put(json_outobj, J_CSTR_TO_JVAL("returnValue"), jboolean_create(ret));
-
-    LS::Message request(&message);
-    request.respond(jvalue_stringify(json_outobj));
-    LOGI("response message : %s", jvalue_stringify(json_outobj));
-
-    j_release(&json_outobj);
-
-    return true;
-}
-
 bool RecordService::pause(LSMessage &message)
 {
     jvalue_ref json_outobj = jobject_create();
@@ -285,6 +260,31 @@ bool RecordService::pause(LSMessage &message)
     }
 
     bool ret = recorder_->Pause();
+
+    jobject_put(json_outobj, J_CSTR_TO_JVAL("returnValue"), jboolean_create(ret));
+
+    LS::Message request(&message);
+    request.respond(jvalue_stringify(json_outobj));
+    LOGI("response message : %s", jvalue_stringify(json_outobj));
+
+    j_release(&json_outobj);
+
+    return true;
+}
+
+bool RecordService::resume(LSMessage &message)
+{
+    jvalue_ref json_outobj = jobject_create();
+    auto *payload          = LSMessageGetPayload(&message);
+    LOGI("payload %s", payload);
+
+    if (!recorder_ || !isLoaded_)
+    {
+        LOGE("Invalid recorder state, recorder should be loaded");
+        return false;
+    }
+
+    bool ret = recorder_->Play();
 
     jobject_put(json_outobj, J_CSTR_TO_JVAL("returnValue"), jboolean_create(ret));
 

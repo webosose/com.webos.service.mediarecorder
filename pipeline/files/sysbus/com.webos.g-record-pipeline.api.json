@@ -4,10 +4,10 @@
         "com.webos.rm.client._*/policyAction"
    ],
     "recordpipeline.operation": [
-        "com.webos.pipeline.*/load",
-        "com.webos.pipeline.*/unload",
-        "com.webos.pipeline.*/play",
+        "com.webos.pipeline.*/start",
+        "com.webos.pipeline.*/stop",
         "com.webos.pipeline.*/pause",
+        "com.webos.pipeline.*/resume",
         "com.webos.pipeline.*/subscribe"
     ]
 }
