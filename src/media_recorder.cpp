@@ -16,9 +16,11 @@
 
 #define LOG_TAG "MediaRecorder"
 #include "media_recorder.h"
+#include "generate_unique_id.h"
 #include "json_utils.h"
 #include "log.h"
 #include "ls_connector.h"
+#include "process.h"
 #include <nlohmann/json.hpp>
 #include <random>
 #include <sys/time.h>
@@ -27,6 +29,7 @@ using namespace nlohmann;
 
 const char *const mediaIdStr     = "mediaId";
 const char *const returnValueStr = "returnValue";
+const char *const emptyJson      = "{}";
 
 const std::string mp4Format = "MP4";
 const std::string m4aFormat = "M4A";
@@ -242,8 +245,6 @@ ErrorCode MediaRecorder::open(std::string &video_src, bool audio_src)
         PLOGI("mAudioFormat: %s, %u, %u, %u", mAudioFormat.codec.c_str(), mAudioFormat.sampleRate,
               mAudioFormat.channels, mAudioFormat.bitRate);
     }
-    std::string service_name = "com.webos.service.mediarecorder-" + std::to_string(recorderId);
-    record_client            = std::make_unique<LSConnector>(service_name, "record");
 
     state = OPEN;
     return ERR_NONE;
@@ -310,8 +311,18 @@ ErrorCode MediaRecorder::start()
         return ERR_INVALID_STATE;
     }
 
-    auto json_obj     = json::object();
-    json_obj["appId"] = "com.webos.app.mediaevents-test";
+    // Create record pipeline
+    std::string guid = GenerateUniqueID()();
+    std::string uid  = "com.webos.pipeline." + guid;
+    std::string cmd  = "/usr/sbin/g-record-pipeline -s" + uid;
+    record_process   = std::make_unique<Process>(cmd);
+
+    // Create record client
+    std::string service_name = "com.webos.service.mediarecorder-" + std::to_string(recorderId);
+    record_client            = std::make_unique<LSConnector>(service_name, "record");
+
+    // Make payload
+    auto j = json::object();
 
     if (!videoSrc.empty())
     {
@@ -327,7 +338,7 @@ ErrorCode MediaRecorder::start()
         video["codec"]    = mVideoFormat.codec;
         video["fps"]      = mVideoFormat.fps;
         video["bitRate"]  = mVideoFormat.bitRate;
-        json_obj["video"] = std::move(video);
+        j["video"]        = std::move(video);
 
         PLOGI("Video Format: codec=%s, width=%d, height=%d, fps=%d, bitRate=%d",
               mVideoFormat.codec.c_str(), mVideoFormat.width, mVideoFormat.height, mVideoFormat.fps,
@@ -341,7 +352,7 @@ ErrorCode MediaRecorder::start()
         audio["sampleRate"]   = mAudioFormat.sampleRate;
         audio["channelCount"] = mAudioFormat.channels;
         audio["bitRate"]      = mAudioFormat.bitRate;
-        json_obj["audio"]     = std::move(audio);
+        j["audio"]            = std::move(audio);
 
         PLOGI("Audio Format: codec=%s, sampleRate=%d, channels=%d, bitRate=%d",
               mAudioFormat.codec.c_str(), mAudioFormat.sampleRate, mAudioFormat.channels,
@@ -379,23 +390,12 @@ ErrorCode MediaRecorder::start()
         mRecordPath = createRecordFileName(mRecordBasePath, "Audio");
     }
 
-    json_obj["format"] = mFormat;
-    json_obj["path"]   = mRecordPath;
-
-    auto json_obj_option      = json::object();
-    json_obj_option["option"] = std::move(json_obj);
-
-    json j;
-    j["uri"]     = "record://com.webos.service.mediarecorder";
-    j["payload"] = std::move(json_obj_option);
-#ifdef USE_TYPE_G_RECORD
-    j["type"] = "g-record";
-#else
-    j["type"] = "record";
-#endif
+    j["format"] = mFormat;
+    j["path"]   = mRecordPath;
 
     // send message for load
-    std::string uri = "luna://com.webos.media/load";
+    record_uri      = "luna://" + uid + "/";
+    std::string uri = record_uri + "load";
     PLOGI("%s '%s'", uri.c_str(), to_string(j).c_str());
 
     std::string resp;
@@ -407,19 +407,9 @@ ErrorCode MediaRecorder::start()
         json jOut = json::parse(resp);
         if (get_optional<bool>(jOut, returnValueStr).value_or(false))
         {
-            mMediaId = get_optional<std::string>(jOut, mediaIdStr).value_or("");
-
-            // send message for play
-            if (mMediaId.empty())
-            {
-                throw std::invalid_argument("mMediaId is empty");
-            }
-
-            json j;
-            j[mediaIdStr]   = mMediaId;
-            std::string uri = "luna://com.webos.media/play";
+            std::string uri = record_uri + "play";
             std::string resp;
-            record_client->callSync(uri.c_str(), to_string(j).c_str(), &resp);
+            record_client->callSync(uri.c_str(), emptyJson, &resp);
             PLOGI("resp %s", resp.c_str());
 
             json jOut = json::parse(resp);
@@ -448,14 +438,11 @@ ErrorCode MediaRecorder::stop()
     }
 
     // send message
-    std::string uri = "luna://com.webos.media/unload";
-
-    json j;
-    j[mediaIdStr] = mMediaId;
-    PLOGI("%s '%s'", uri.c_str(), to_string(j).c_str());
+    std::string uri = record_uri + "unload";
+    PLOGI("%s '%s'", uri.c_str(), emptyJson);
 
     std::string resp;
-    record_client->callSync(uri.c_str(), to_string(j).c_str(), &resp);
+    record_client->callSync(uri.c_str(), emptyJson, &resp);
     PLOGI("resp %s", resp.c_str());
 
     try
@@ -464,6 +451,7 @@ ErrorCode MediaRecorder::stop()
         if (get_optional<bool>(jOut, returnValueStr).value_or(false))
         {
             state = OPEN;
+            record_process.reset();
             return ERR_NONE;
         }
     }
@@ -495,8 +483,14 @@ ErrorCode MediaRecorder::takeSnapshot(std::string &path, std::string &format)
         return ERR_UNSUPPORTED_FORMAT;
     }
 
-    auto json_obj     = json::object();
-    json_obj["appId"] = "com.webos.app.mediaevents-test";
+    // Create snapshot pipeline
+    std::string guid = GenerateUniqueID()();
+    std::string uid  = "com.webos.pipeline." + guid;
+    std::string cmd  = "/usr/sbin/g-record-pipeline -s" + uid;
+    Process snapshot_process(cmd);
+
+    // Make payload
+    json j;
 
     if (!videoSrc.empty())
     {
@@ -506,26 +500,15 @@ ErrorCode MediaRecorder::takeSnapshot(std::string &path, std::string &format)
         image["height"]   = mVideoFormat.height;
         image["codec"]    = format;
         image["quality"]  = 90;
-        json_obj["image"] = std::move(image);
+        j["image"]        = std::move(image);
     }
 
-    mCapturePath     = createRecordFileName(path, "Capture");
-    json_obj["path"] = mCapturePath;
-
-    auto json_obj_option      = json::object();
-    json_obj_option["option"] = std::move(json_obj);
-
-    json j;
-    j["uri"]     = "record://com.webos.service.mediarecorder";
-    j["payload"] = std::move(json_obj_option);
-#ifdef USE_TYPE_G_RECORD
-    j["type"] = "g-record";
-#else
-    j["type"] = "record";
-#endif
+    mCapturePath = createRecordFileName(path, "Capture");
+    j["path"]    = mCapturePath;
 
     // send message for load
-    std::string uri = "luna://com.webos.media/load";
+    std::string snapshot_uri = "luna://" + uid + "/";
+    std::string uri          = snapshot_uri + "load";
     PLOGI("%s '%s'", uri.c_str(), to_string(j).c_str());
 
     if (snapshot_client == nullptr)
@@ -545,12 +528,9 @@ ErrorCode MediaRecorder::takeSnapshot(std::string &path, std::string &format)
         if (get_optional<bool>(jOut, returnValueStr).value_or(false))
         {
             // send message for subscribe
-            json j;
-            j[mediaIdStr] = get_optional<std::string>(jOut, mediaIdStr).value_or("");
-
-            std::string uri = "luna://com.webos.media/subscribe";
-            bool retVal     = snapshot_client->subscribe(uri.c_str(), j.dump().c_str(),
-                                                         LUNA_CALLBACK(snapshotCb), this);
+            std::string uri = snapshot_uri + "subscribe";
+            bool retVal =
+                snapshot_client->subscribe(uri.c_str(), emptyJson, LUNA_CALLBACK(snapshotCb), this);
             PLOGI("%s '%s'", uri.c_str(), to_string(j).c_str());
             if (!retVal)
             {
@@ -558,11 +538,11 @@ ErrorCode MediaRecorder::takeSnapshot(std::string &path, std::string &format)
             }
 
             // send message for play
-            uri = "luna://com.webos.media/play";
-            PLOGI("%s '%s'", uri.c_str(), to_string(j).c_str());
+            uri = snapshot_uri + "play";
+            PLOGI("%s '%s'", uri.c_str(), emptyJson);
 
             std::string resp;
-            snapshot_client->callSync(uri.c_str(), to_string(j).c_str(), &resp);
+            snapshot_client->callSync(uri.c_str(), emptyJson, &resp);
             PLOGI("resp %s", resp.c_str());
 
             json jOut = json::parse(resp);
@@ -604,13 +584,14 @@ bool MediaRecorder::snapshotCb(const char *message)
 
     if (j.contains("endOfStream"))
     {
+        PLOGI("Got EOS");
         mEos = true;
 
         // send message for unsubscribe
         bool retVal = snapshot_client->unsubscribe();
         if (!retVal)
         {
-            PLOGE("%s fail to subscribe", __func__);
+            PLOGE("%s fail to unsubscribe", __func__);
         }
     }
 
@@ -709,14 +690,11 @@ ErrorCode MediaRecorder::pause()
     }
 
     // send message
-    std::string uri = "luna://com.webos.media/pause";
-
-    json j;
-    j[mediaIdStr] = mMediaId;
-    PLOGI("%s '%s'", uri.c_str(), to_string(j).c_str());
+    std::string uri = record_uri + "pause";
+    PLOGI("%s '%s'", uri.c_str(), emptyJson);
 
     std::string resp;
-    record_client->callSync(uri.c_str(), to_string(j).c_str(), &resp);
+    record_client->callSync(uri.c_str(), emptyJson, &resp);
     PLOGI("resp %s", resp.c_str());
 
     try
@@ -747,14 +725,11 @@ ErrorCode MediaRecorder::resume()
     }
 
     // send message
-    std::string uri = "luna://com.webos.media/play";
-
-    json j;
-    j[mediaIdStr] = mMediaId;
-    PLOGI("%s '%s'", uri.c_str(), to_string(j).c_str());
+    std::string uri = record_uri + "play";
+    PLOGI("%s '%s'", uri.c_str(), emptyJson);
 
     std::string resp;
-    record_client->callSync(uri.c_str(), to_string(j).c_str(), &resp);
+    record_client->callSync(uri.c_str(), emptyJson, &resp);
     PLOGI("resp %s", resp.c_str());
 
     try

@@ -45,13 +45,10 @@ if(MEDIA_RECORDER_BUILD)
 
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
 
-    if(USE_G_RECORD)
-        add_definitions(-DUSE_TYPE_G_RECORD)
-    endif()
-
     include_directories(${CMAKE_SOURCE_DIR}/include)
     include_directories(${CMAKE_SOURCE_DIR}/src/ls_connector)
     include_directories(${CMAKE_SOURCE_DIR}/src/error_manager)
+    include_directories(${CMAKE_SOURCE_DIR}/src/process)
 
     set(SRCS
         ${CMAKE_SOURCE_DIR}/src/media_recorder_manager.cpp
@@ -60,6 +57,7 @@ if(MEDIA_RECORDER_BUILD)
         ${CMAKE_SOURCE_DIR}/src/ls_connector/ls_connector.cpp
         ${CMAKE_SOURCE_DIR}/src/error_manager/error.cpp
         ${CMAKE_SOURCE_DIR}/src/error_manager/error_manager.cpp
+        ${CMAKE_SOURCE_DIR}/src/process/process.cpp
     )
 
     add_executable(${PROJECT_NAME} ${SRCS})

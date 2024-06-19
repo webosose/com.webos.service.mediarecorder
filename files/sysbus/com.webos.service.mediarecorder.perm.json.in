@@ -1,7 +1,6 @@
 {
     "com.webos.service.mediarecorder-*":[
-        "media",
-        "media.operation",
+        "recordpipeline.operation",
         "camera.operation"
     ]
 }

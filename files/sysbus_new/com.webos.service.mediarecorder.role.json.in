@@ -10,7 +10,7 @@
         {
             "service": "com.webos.service.mediarecorder-*",
             "outbound": [
-                "com.webos.media",
+                "com.webos.pipeline.*",
                 "com.webos.service.camera2"
             ]
         }

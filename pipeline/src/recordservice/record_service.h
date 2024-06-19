@@ -17,14 +17,8 @@
 #ifndef RECORD_SERVICE_H_
 #define RECORD_SERVICE_H_
 
+#include "luna-service2/lunaservice.hpp"
 #include <glib.h>
-#include <memory>
-#include <string>
-
-class UMSConnector;
-class UMSConnectorHandle;
-class UMSConnectorMessage;
-class RecordPipeline;
 
 namespace base
 {
@@ -35,62 +29,41 @@ namespace resource
 class ResourceRequestor;
 }
 
-class RecordService
+class RecordPipeline;
+class RecordService : public LS::Handle
 {
+    using mainloop          = std::unique_ptr<GMainLoop, void (*)(GMainLoop *)>;
+    mainloop main_loop_ptr_ = {g_main_loop_new(nullptr, false), g_main_loop_unref};
+
 public:
-    static RecordService *GetInstance(const char *service_name);
-
-    ~RecordService();
-
     void Notify(const gint notification, const gint64 numValue, const gchar *strValue,
                 void *payload = nullptr);
 
-    bool Wait();
-    bool Stop();
+    RecordService(const char *service_name);
 
-    // uMediaserver public API
-    static bool LoadEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message, void *ctxt);
-    static bool AttachEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message, void *ctxt);
-    static bool UnloadEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message, void *ctxt);
+    RecordService(RecordService const &)            = delete;
+    RecordService(RecordService &&)                 = delete;
+    RecordService &operator=(RecordService const &) = delete;
+    RecordService &operator=(RecordService &&)      = delete;
 
-    // media operations
-    static bool PlayEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message, void *ctxt);
-    static bool PauseEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message, void *ctxt);
-    static bool StateChangeEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message,
-                                 void *ctxt);
-    static bool UnsubscribeEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message,
-                                 void *ctxt);
-    static bool SetUriEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message, void *ctxt);
-    static bool SetPlaneEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message, void *ctxt);
-
-    // Resource Manager API
-    static bool GetPipelineStateEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message,
-                                      void *ctxt);
-    static bool LogPipelineStateEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message,
-                                      void *ctxt);
-    static bool GetActivePipelinesEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message,
-                                        void *ctxt);
-    static bool SetPipelineDebugStateEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message,
-                                           void *ctxt);
-    static bool ExitEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message, void *ctxt);
+    bool load(LSMessage &message);
+    bool unload(LSMessage &message);
+    bool play(LSMessage &message);
+    bool pause(LSMessage &message);
+    bool subscribe(LSMessage &message);
 
 private:
-    explicit RecordService(const char *service_name);
     void LoadCommon();
     bool AcquireResources(const base::source_info_t &sourceInfo,
                           const std::string &display_mode = "Default", uint32_t display_path = 0);
 
     std::string media_id_; // connection_id
     std::string app_id_;
-    std::unique_ptr<UMSConnector> umc_;
     std::shared_ptr<RecordPipeline> recorder_;
     std::unique_ptr<resource::ResourceRequestor> resourceRequestor_;
-    bool isLoaded_;
-
-    static RecordService *instance_;
-
-    RecordService(const RecordService &s)  = delete;
-    void operator=(const RecordService &s) = delete;
+    bool isLoaded_ = false;
 };
+
+std::string parseRecordServiceName(int argc, char *argv[]) noexcept;
 
 #endif // RECORD_SERVICE_H_

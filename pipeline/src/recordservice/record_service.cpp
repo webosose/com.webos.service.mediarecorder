@@ -14,11 +14,14 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+#define LOG_TAG "RecordService"
 #include "record_service.h"
-#include "UMSConnector.h"
+#include "glog.h"
+#include <pbnjson.hpp>
+#include <string>
+
 #include "base.h"
 #include "camera_types.h"
-#include "glog.h"
 #include "message.h"
 #include "parser.h"
 #include "pipeline_factory.h"
@@ -26,100 +29,28 @@
 #include "resourcefacilitator/requestor.h"
 #include "serializer.h"
 
-RecordService *RecordService::instance_ = nullptr;
-
-pbnjson::JValue find_key(const pbnjson::JValue &json, const std::string &key)
-{
-    pbnjson::JValue result;
-
-    if (json.isObject())
-    {
-        for (const auto &pair : json.children())
-        {
-            if (pair.first.asString() == key)
-            {
-                result = pair.second;
-                break;
-            }
-            else
-            {
-                result = find_key(pair.second, key);
-                if (!result.isNull())
-                {
-                    break;
-                }
-            }
-        }
-    }
-    else if (json.isArray())
-    {
-        for (const auto &item : json.items())
-        {
-            result = find_key(item, key);
-            if (!result.isNull())
-            {
-                break;
-            }
-        }
-    }
-
-    return result;
-}
+const char *const SUBSCRIPTION_KEY = "recordService";
 
 RecordService::RecordService(const char *service_name)
-    : media_id_(""), app_id_(""), umc_(nullptr), recorder_(nullptr), resourceRequestor_(nullptr),
-      isLoaded_(false)
+    : LS::Handle(LS::registerService(service_name))
 {
-    LOGI(" this[%p]", this);
+    LOGI("Start : %s", service_name);
 
-#ifdef PRO_UMS
-    umc_ =
-        std::make_unique<UMSConnector>(service_name, nullptr, nullptr, UMS_CONNECTOR_PRIVATE_BUS);
-#else
-    umc_ = std::make_unique<UMSConnector>(service_name, nullptr, nullptr, UMS_CONNECTOR_ACG_BUS);
-#endif
+    LS_CATEGORY_BEGIN(RecordService, "/")
+    LS_CATEGORY_METHOD(load)
+    LS_CATEGORY_METHOD(unload)
+    LS_CATEGORY_METHOD(play)
+    LS_CATEGORY_METHOD(pause)
+    LS_CATEGORY_METHOD(subscribe)
+    LS_CATEGORY_END;
 
-    static UMSConnectorEventHandler event_handlers[] = {
-        // uMediaserver public API
-        {"load", RecordService::LoadEvent},
-        {"attach", RecordService::AttachEvent},
-        {"unload", RecordService::UnloadEvent},
+    // attach to mainloop and run it
+    attachToLoop(main_loop_ptr_.get());
 
-        // media operations
-        {"play", RecordService::PlayEvent},
-        {"pause", RecordService::PauseEvent},
-        {"stateChange", RecordService::StateChangeEvent},
-        {"unsubscribe", RecordService::UnsubscribeEvent},
-        {"setUri", RecordService::SetUriEvent},
-        {"setPlane", RecordService::SetPlaneEvent},
+    // run the gmainloop
+    g_main_loop_run(main_loop_ptr_.get());
 
-        // Resource Manager API
-        {"getPipelineState", RecordService::GetPipelineStateEvent},
-        {"logPipelineState", RecordService::LogPipelineStateEvent},
-        {"getActivePipelines", RecordService::GetActivePipelinesEvent},
-        {"setPipelineDebugState", RecordService::SetPipelineDebugStateEvent},
-
-        // exit
-        {"exit", RecordService::ExitEvent},
-        {NULL, NULL}};
-
-    umc_->addEventHandlers(reinterpret_cast<UMSConnectorEventHandler *>(event_handlers));
-}
-
-RecordService *RecordService::GetInstance(const char *service_name)
-{
-    if (!instance_)
-        instance_ = new RecordService(service_name);
-    return instance_;
-}
-
-RecordService::~RecordService()
-{
-    if (isLoaded_)
-    {
-        LOGI("Unload() should be called if it is still loaded");
-        recorder_->Unload();
-    }
+    LOGI("end");
 }
 
 void RecordService::Notify(const gint notification, const gint64 numValue, const gchar *strValue,
@@ -164,6 +95,8 @@ void RecordService::Notify(const gint notification, const gint64 numValue, const
     case GRP_NOTIFY_UNLOAD_COMPLETED:
     {
         composer.put("unloadCompleted", mediaInfo);
+        LOGI("quit main loop");
+        g_main_loop_quit(main_loop_ptr_.get());
         break;
     }
 
@@ -206,60 +139,56 @@ void RecordService::Notify(const gint notification, const gint64 numValue, const
     }
 
     if (!composer.result().empty())
-        umc_->sendChangeNotificationJsonString(composer.result());
+    {
+        LOGI("%s", composer.result().c_str());
+
+        unsigned int num_subscribers =
+            LSSubscriptionGetHandleSubscribersCount(this->get(), SUBSCRIPTION_KEY);
+        if (num_subscribers > 0)
+        {
+            LOGI("num_subscribers = %u", num_subscribers);
+
+            LSError lserror;
+            LSErrorInit(&lserror);
+
+            LOGI("notifying");
+            if (!LSSubscriptionReply(this->get(), SUBSCRIPTION_KEY, composer.result().c_str(),
+                                     &lserror))
+            {
+                LSErrorPrint(&lserror, stderr);
+                LOGE("subscription reply failed");
+            }
+            LSErrorFree(&lserror);
+        }
+    }
 }
 
-bool RecordService::Wait() { return umc_->wait(); }
-
-bool RecordService::Stop() { return umc_->stop(); }
-
-// uMediaserver public API
-bool RecordService::LoadEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message, void *ctxt)
+bool RecordService::load(LSMessage &message)
 {
-    std::string msg = instance_->umc_->getMessageText(message);
-    LOGI("message : %s", msg.c_str());
+    jvalue_ref json_outobj = jobject_create();
+    auto *payload          = LSMessageGetPayload(&message);
+    LOGI("payload %s", payload);
 
-    pbnjson::JDomParser jsonparser;
-    if (!jsonparser.parse(msg, pbnjson::JSchema::AllSchema()))
-    {
-        LOGE("ERROR : JDomParser.parse Failed!!!");
-        return false;
-    }
+    pbnjson::JValue parsed = pbnjson::JDomParser::fromString(payload);
 
-    auto parsed          = jsonparser.getDom();
-    auto id              = find_key(parsed, "id");
-    instance_->media_id_ = id.asString();
-    LOGI("media_id_ : %s", instance_->media_id_.c_str());
+    app_id_            = "com.webos.app.mediaevents-test";
+    media_id_          = "";
+    resourceRequestor_ = std::make_unique<resource::ResourceRequestor>(app_id_, media_id_);
 
-    auto option = find_key(parsed, "option");
-    LOGI("option : %s", option.stringify().c_str());
-    instance_->app_id_ = option["appId"].asString();
-    LOGI("app_id_ : %s", instance_->app_id_.c_str());
+    recorder_ = PipelineFactory::CreateRecorder(parsed);
 
-    if (instance_->app_id_.empty())
-    {
-        LOGW("appId is empty! resourceRequestor is not created");
-        instance_->app_id_ = "EmptyAppId_" + instance_->media_id_;
-    }
-    else
-        instance_->resourceRequestor_ =
-            std::make_unique<resource::ResourceRequestor>(instance_->app_id_, instance_->media_id_);
-
-    instance_->recorder_ = PipelineFactory::CreateRecorder(option);
-
-    if (!instance_->recorder_)
+    if (!recorder_)
     {
         LOGE("Error: Player not created");
     }
     else
     {
-        instance_->LoadCommon();
+        LoadCommon();
 
-        if (instance_->recorder_->Load(option.stringify()))
+        if (recorder_->Load(parsed.stringify()))
         {
             LOGI("Loaded Player");
-            instance_->isLoaded_ = true;
-            return true;
+            isLoaded_ = true;
         }
         else
         {
@@ -267,161 +196,134 @@ bool RecordService::LoadEvent(UMSConnectorHandle *handle, UMSConnectorMessage *m
         }
     }
 
-    base::error_t error;
-    error.errorCode = MEDIA_MSG_ERR_LOAD;
-    error.errorText = "Load Failed";
-    instance_->Notify(GRP_NOTIFY_ERROR, 0, nullptr, static_cast<void *>(&error));
+    jobject_put(json_outobj, J_CSTR_TO_JVAL("returnValue"), jboolean_create(true));
 
-    return false;
-}
+    LS::Message request(&message);
+    request.respond(jvalue_stringify(json_outobj));
+    LOGI("response message : %s", jvalue_stringify(json_outobj));
 
-bool RecordService::AttachEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message,
-                                void *ctxt)
-{
-    LOGI("AttachEvent");
+    j_release(&json_outobj);
+
     return true;
 }
 
-bool RecordService::UnloadEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message,
-                                void *ctxt)
+bool RecordService::unload(LSMessage &message)
 {
-    bool ret = false;
-    base::error_t error;
-    std::string msg = instance_->umc_->getMessageText(message);
-    LOGI("%s", msg.c_str());
+    bool ret               = false;
+    jvalue_ref json_outobj = jobject_create();
+    auto *payload          = LSMessageGetPayload(&message);
+    LOGI("payload %s", payload);
 
-    if (!instance_->isLoaded_)
+    if (!isLoaded_)
     {
         LOGI("already unloaded");
         ret = true;
     }
     else
     {
-        if (!instance_->recorder_ || !instance_->recorder_->Unload())
+        if (!recorder_ || !recorder_->Unload())
             LOGE("fails to unload the player");
         else
         {
-            instance_->isLoaded_ = false;
-            ret                  = true;
-            if (instance_->resourceRequestor_)
+            isLoaded_ = false;
+            ret       = true;
+            if (resourceRequestor_)
             {
-                instance_->resourceRequestor_->notifyBackground();
-                instance_->resourceRequestor_->releaseResource();
+                resourceRequestor_->releaseResource();
             }
             else
-                LOGE("NotifyBackground & ReleaseResources fails");
+                LOGE("ReleaseResources fails");
         }
     }
 
-    if (!ret)
+    jobject_put(json_outobj, J_CSTR_TO_JVAL("returnValue"), jboolean_create(ret));
+
+    LS::Message request(&message);
+    request.respond(jvalue_stringify(json_outobj));
+    LOGI("response message : %s", jvalue_stringify(json_outobj));
+
+    j_release(&json_outobj);
+
+    return true;
+}
+
+bool RecordService::play(LSMessage &message)
+{
+    jvalue_ref json_outobj = jobject_create();
+    auto *payload          = LSMessageGetPayload(&message);
+    LOGI("payload %s", payload);
+
+    if (!recorder_ || !isLoaded_)
     {
-        base::error_t error;
-        error.errorCode = MEDIA_MSG_ERR_LOAD;
-        error.errorText = "Unload Failed";
-        error.mediaId   = instance_->media_id_;
-        instance_->Notify(GRP_NOTIFY_ERROR, 0, nullptr, static_cast<void *>(&error));
+        LOGE("Invalid recorder state, recorder should be loaded");
+        return false;
     }
 
-    instance_->recorder_.reset();
-    instance_->Notify(GRP_NOTIFY_UNLOAD_COMPLETED, 0, nullptr, nullptr);
+    bool ret = recorder_->Play();
 
-    LOGI("UnloadEvent Done");
+    jobject_put(json_outobj, J_CSTR_TO_JVAL("returnValue"), jboolean_create(ret));
+
+    LS::Message request(&message);
+    request.respond(jvalue_stringify(json_outobj));
+    LOGI("response message : %s", jvalue_stringify(json_outobj));
+
+    j_release(&json_outobj);
+
+    return true;
+}
+
+bool RecordService::pause(LSMessage &message)
+{
+    jvalue_ref json_outobj = jobject_create();
+    auto *payload          = LSMessageGetPayload(&message);
+    LOGI("payload %s", payload);
+
+    if (!recorder_ || !isLoaded_)
+    {
+        LOGE("Invalid recorder state, recorder should be loaded");
+        return false;
+    }
+
+    bool ret = recorder_->Pause();
+
+    jobject_put(json_outobj, J_CSTR_TO_JVAL("returnValue"), jboolean_create(ret));
+
+    LS::Message request(&message);
+    request.respond(jvalue_stringify(json_outobj));
+    LOGI("response message : %s", jvalue_stringify(json_outobj));
+
+    j_release(&json_outobj);
+
+    return true;
+}
+
+bool RecordService::subscribe(LSMessage &message)
+{
+    LOGI("start");
+    LSError error;
+    LSErrorInit(&error);
+
+    bool ret = LSSubscriptionAdd(this->get(), SUBSCRIPTION_KEY, &message, &error);
+    LOGI("LSSubscriptionAdd %s", ret ? "ok" : "failed");
+    LOGI("cnt %d", LSSubscriptionGetHandleSubscribersCount(this->get(), SUBSCRIPTION_KEY));
+    LSErrorFree(&error);
+
+    jvalue_ref json_outobj = jobject_create();
+    jobject_put(json_outobj, J_CSTR_TO_JVAL("returnValue"), jboolean_create(ret));
+    LS::Message request(&message);
+    request.respond(jvalue_stringify(json_outobj));
+    LOGI("response message : %s", jvalue_stringify(json_outobj));
+
+    j_release(&json_outobj);
+
     return ret;
-}
-
-// media operations
-bool RecordService::PlayEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message, void *ctxt)
-{
-    std::string msg = instance_->umc_->getMessageText(message);
-    LOGI("message : %s", msg.c_str());
-
-    if (!instance_->recorder_ || !instance_->isLoaded_)
-    {
-        LOGE("Invalid recorder state, recorder should be loaded");
-        return false;
-    }
-
-    return instance_->recorder_->Play();
-}
-
-bool RecordService::PauseEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message, void *ctxt)
-{
-    std::string msg = instance_->umc_->getMessageText(message);
-    LOGI("message : %s", msg.c_str());
-
-    if (!instance_->recorder_ || !instance_->isLoaded_)
-    {
-        LOGE("Invalid recorder state, recorder should be loaded");
-        return false;
-    }
-
-    return instance_->recorder_->Pause();
-}
-
-bool RecordService::StateChangeEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message,
-                                     void *ctxt)
-{
-    return instance_->umc_->addSubscriber(handle, message);
-}
-
-bool RecordService::UnsubscribeEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message,
-                                     void *ctxt)
-{
-    return true;
-}
-
-bool RecordService::SetUriEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message,
-                                void *ctxt)
-{
-    return true;
-}
-
-bool RecordService::SetPlaneEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message,
-                                  void *ctxt)
-{
-    return true;
-}
-
-// Resource Manager API
-bool RecordService::GetPipelineStateEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message,
-                                          void *ctxt)
-{
-    return true;
-}
-
-bool RecordService::LogPipelineStateEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message,
-                                          void *ctxt)
-{
-    return true;
-}
-
-bool RecordService::GetActivePipelinesEvent(UMSConnectorHandle *handle,
-                                            UMSConnectorMessage *message, void *ctxt)
-{
-    return true;
-}
-
-bool RecordService::SetPipelineDebugStateEvent(UMSConnectorHandle *handle,
-                                               UMSConnectorMessage *message, void *ctxt)
-{
-    return true;
-}
-// exit
-bool RecordService::ExitEvent(UMSConnectorHandle *handle, UMSConnectorMessage *message, void *ctxt)
-{
-    return instance_->umc_->stop();
 }
 
 void RecordService::LoadCommon()
 {
-    if (!resourceRequestor_)
-        LOGE("NotifyForeground fails");
-    else
-        resourceRequestor_->notifyForeground();
-
-    recorder_->RegisterCbFunction(std::bind(&RecordService::Notify, instance_,
-                                            std::placeholders::_1, std::placeholders::_2,
-                                            std::placeholders::_3, std::placeholders::_4));
+    recorder_->RegisterCbFunction(std::bind(&RecordService::Notify, this, std::placeholders::_1,
+                                            std::placeholders::_2, std::placeholders::_3,
+                                            std::placeholders::_4));
 
     if (resourceRequestor_)
     {
@@ -432,10 +334,6 @@ void RecordService::LoadCommon()
                 error.errorCode = MEDIA_MSG_ERR_POLICY;
                 error.errorText = "Policy Action";
                 Notify(GRP_NOTIFY_ERROR, GRP_ERROR_RES_ALLOC, nullptr, static_cast<void *>(&error));
-                if (!resourceRequestor_)
-                    LOGE("notifyBackground fails");
-                else
-                    resourceRequestor_->notifyBackground();
             });
     }
 }
@@ -462,4 +360,53 @@ bool RecordService::AcquireResources(const base::source_info_t &sourceInfo,
     }
 
     return true;
+}
+
+std::string parseRecordServiceName(int argc, char *argv[]) noexcept
+{
+    int c;
+    std::string serviceName;
+
+    while ((c = getopt(argc, argv, "s:")) != -1)
+    {
+        switch (c)
+        {
+        case 's':
+            serviceName = optarg ? optarg : "";
+            break;
+
+        case '?':
+            LOGE("unknown service name");
+            break;
+
+        default:
+            break;
+        }
+    }
+    if (serviceName.empty())
+    {
+        LOGE("service name is not specified");
+    }
+    return serviceName;
+}
+
+int main(int argc, char *argv[])
+{
+    LOGI("start");
+    try
+    {
+        std::string serviceName = parseRecordServiceName(argc, argv);
+        if (serviceName.empty())
+        {
+            return 1;
+        }
+        RecordService RecordServiceInstance(serviceName.c_str());
+    }
+    catch (...)
+    {
+        LOGE("An exception occurred.");
+        return 1;
+    }
+    LOGI("end");
+    return 0;
 }

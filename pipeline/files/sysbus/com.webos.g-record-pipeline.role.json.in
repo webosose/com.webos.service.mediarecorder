@@ -4,13 +4,16 @@
     "trustLevel" : "oem",
     "allowedNames": [
         "com.webos.pipeline*",
-        "com.webos.rm.client*",
-        "com.webos.pipeline.ipc*"
+        "com.webos.rm.client*"
     ],
     "permissions": [
         {
             "service":"com.webos.pipeline*",
             "outbound": ["com.webos.media"]
+        },
+        {
+            "service":"com.webos.pipeline.*",
+            "outbound": []
         },
         {
             "service":"com.webos.rm.client*",

@@ -20,6 +20,7 @@ class BaseRecordPipeline : public RecordPipeline
     std::string display_mode_;
     std::string window_id_;
     base::source_info_t source_info_;
+    bool isEos = false;
 
     bool acquireResource();
     bool GetSourceInfo();
@@ -33,6 +34,7 @@ class BaseRecordPipeline : public RecordPipeline
     bool remBus();
     bool unloadImpl();
     bool playImpl();
+    void sendEos();
 
 public:
     BaseRecordPipeline();

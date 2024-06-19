@@ -77,7 +77,6 @@ if(PRO_UMS)
 endif()
 
 set(G-RECORD-PIPELINE_SRC
-    main.cpp
     recordpipeline/base_record_pipeline.cpp
     recordpipeline/video_record_pipeline.cpp
     recordpipeline/audio_record_pipeline.cpp

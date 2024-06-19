@@ -56,6 +56,7 @@ ResourceRequestor::ResourceRequestor(const std::string &appId, const std::string
 #endif
             connectionId_ = umsRMC_->getConnectionID() ? umsRMC_->getConnectionID()
                                                        : ""; // after registerPipeline
+            LOGI("connection id : %s", connectionId_.c_str());
         }
         else
         {

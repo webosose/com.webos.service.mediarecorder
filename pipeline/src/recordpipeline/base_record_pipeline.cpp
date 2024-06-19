@@ -51,8 +51,6 @@ BaseRecordPipeline::~BaseRecordPipeline()
         }
     }
     g_main_loop_unref(loop_);
-
-    LOGI("end");
 }
 
 bool BaseRecordPipeline::Load(const std::string &msg)
@@ -104,44 +102,22 @@ bool BaseRecordPipeline::Load(const std::string &msg)
     return true;
 }
 
-bool BaseRecordPipeline::Unload() { return unloadImpl(); }
+bool BaseRecordPipeline::Unload()
+{
+    LOGI("");
+    return unloadImpl();
+}
 
 bool BaseRecordPipeline::unloadImpl()
 {
-    LOGI("start");
-
     if (pipeline_ == nullptr)
     {
-        LOGW("Pipeline is not loaded.");
         return false;
     }
 
-    auto bus = gst_pipeline_get_bus(GST_PIPELINE(pipeline_));
-
     if (pipelineType != "Snapshot")
     {
-        LOGI("Send EOS");
-        gst_element_send_event(pipeline_, gst_event_new_eos());
-
-        GstState state;
-        gst_element_get_state(pipeline_, &state, nullptr, GST_CLOCK_TIME_NONE);
-        LOGI("state = %s", gst_element_state_get_name(state));
-        if (state == GST_STATE_PAUSED)
-        {
-            playImpl();
-        }
-
-        if (bus != nullptr)
-        {
-            LOGI("Wait for EOS");
-            auto msg = gst_bus_timed_pop_filtered(
-                bus, GST_CLOCK_TIME_NONE,
-                static_cast<GstMessageType>(GST_MESSAGE_ERROR | GST_MESSAGE_EOS));
-            if (msg != NULL)
-            {
-                gst_message_unref(msg);
-            }
-        }
+        sendEos();
     }
 
     LOGI("Unload pipeline");
@@ -160,6 +136,7 @@ bool BaseRecordPipeline::unloadImpl()
         LOGI("Unload completed");
     }
 
+    auto bus = gst_pipeline_get_bus(GST_PIPELINE(pipeline_));
     if (remBus())
     {
         if (bus != nullptr)
@@ -174,8 +151,34 @@ bool BaseRecordPipeline::unloadImpl()
     gst_object_unref(pipeline_);
     pipeline_ = nullptr;
 
-    LOGI("end");
+    if (cbFunction_)
+        cbFunction_(GRP_NOTIFY_UNLOAD_COMPLETED, 0, nullptr, nullptr);
+
     return true;
+}
+
+void BaseRecordPipeline::sendEos()
+{
+    LOGI("Send EOS");
+    gst_element_send_event(pipeline_, gst_event_new_eos());
+
+    GstState state;
+    gst_element_get_state(pipeline_, &state, nullptr, GST_CLOCK_TIME_NONE);
+    LOGI("state = %s", gst_element_state_get_name(state));
+    if (state == GST_STATE_PAUSED)
+    {
+        playImpl();
+    }
+
+    LOGI("Wait for EOS");
+    int cnt = 0;
+    isEos   = false;
+    while (!isEos && cnt < 1000) // 1s
+    {
+        g_usleep(1000);
+        cnt++;
+    }
+    LOGI("Got EOS : %d ms", cnt);
 }
 
 bool BaseRecordPipeline::Play() { return playImpl(); }
@@ -242,7 +245,6 @@ bool BaseRecordPipeline::addBus()
 
     gst_object_unref(bus);
 
-    LOGI("end");
     return true;
 }
 
@@ -258,7 +260,6 @@ bool BaseRecordPipeline::remBus()
 
     busId_ = 0;
 
-    LOGI("end");
     return true;
 }
 
@@ -358,8 +359,17 @@ bool BaseRecordPipeline::handleBusMessage(GstBus *bus, GstMessage *msg)
     case GST_MESSAGE_EOS:
     {
         LOGI("Got EOS");
+
+        isEos = true;
+
         if (cbFunction_)
             cbFunction_(GRP_NOTIFY_END_OF_STREAM, 0, nullptr, nullptr);
+
+        if (pipelineType == "Snapshot")
+        {
+            unloadImpl();
+        }
+
         break;
     }
     case GST_MESSAGE_ASYNC_DONE:
@@ -396,13 +406,6 @@ bool BaseRecordPipeline::handleBusMessage(GstBus *bus, GstMessage *msg)
             LOGI("post paused event");
             if (cbFunction_)
                 cbFunction_(GRP_NOTIFY_PAUSED, 0, nullptr, nullptr);
-        }
-        //[TODO] Can not post this becaus UMS kills the process first.
-        else if (newState == GST_STATE_NULL && oldState >= GST_STATE_PAUSED)
-        {
-            LOGI("post unloadcompleted event");
-            if (cbFunction_)
-                cbFunction_(GRP_NOTIFY_UNLOAD_COMPLETED, 0, nullptr, nullptr);
         }
         break;
     }

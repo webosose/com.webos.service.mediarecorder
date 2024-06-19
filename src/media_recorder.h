@@ -23,6 +23,7 @@
 #include <vector>
 
 class LSConnector;
+class Process;
 class MediaRecorder
 {
     enum State
@@ -44,6 +45,8 @@ class MediaRecorder
 
     std::unique_ptr<LSConnector> record_client{nullptr};
     std::unique_ptr<LSConnector> snapshot_client{nullptr};
+    std::unique_ptr<Process> record_process{nullptr};
+    std::string record_uri;
 
     video_format_t mVideoFormat{
         "H264", 1280, 720, 30,
