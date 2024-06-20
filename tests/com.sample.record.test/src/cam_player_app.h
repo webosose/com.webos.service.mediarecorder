@@ -12,7 +12,7 @@ class WindowManager;
 class MediaPlayer;
 class CamPlayerApp
 {
-    void startCamera();
+    bool startCamera();
     void stopCamera();
     void startCapture();
     void stopCapture();

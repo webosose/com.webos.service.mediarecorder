@@ -70,7 +70,13 @@ bool CamPlayerApp::execute()
 {
     DEBUG_LOG("");
 
-    startCamera();
+    bool ret = startCamera();
+    DEBUG_LOG("ret=%d", ret);
+    if (!ret)
+    {
+        return false;
+    }
+
     CreateImageBox();
 
     DEBUG_LOG("wl_display_dispatch_pending");
@@ -186,26 +192,32 @@ void CamPlayerApp::printOption()
     "type": "camera"
 }'
 */
-void CamPlayerApp::startCamera()
+bool CamPlayerApp::startCamera()
 {
     DEBUG_LOG("state %d", static_cast<int>(mCameraPlayer->state));
     if (mCameraPlayer->state == MediaState::PLAY)
     {
         DEBUG_LOG("invalid state");
-        return;
+        return false;
     }
 
     if (mCameraClient->state == CameraClient::START)
     {
         DEBUG_LOG("invalid state");
-        return;
+        return false;
     }
 
     DEBUG_LOG("start");
 
     if (appParm.memType == "shmem" || appParm.memType == "posixshm")
     {
-        mCameraClient->getCameraList();
+        bool ret = mCameraClient->getCameraList();
+        DEBUG_LOG("ret=%d", ret);
+        if (!ret)
+        {
+            return false;
+        }
+
         mCameraClient->open();
         mCameraClient->setFormat();
 
@@ -217,7 +229,7 @@ void CamPlayerApp::startCamera()
         {
             mCameraClient->startPreview(mWindowManager->exporter[0].getWindowID());
             mWindowManager->setRect(0);
-            return;
+            return true;
         }
     }
 
@@ -253,6 +265,8 @@ void CamPlayerApp::startCamera()
 
     mCameraPlayer->load(option);
     mWindowManager->setRect(0);
+
+    return true;
 }
 
 void CamPlayerApp::stopCamera()
