@@ -74,6 +74,12 @@ bool CameraClient::getCameraList()
     std::string resp;
     ret = luna_client->callSync(uri.c_str(), payload.c_str(), &resp);
 
+    DEBUG_LOG("ret=%d", ret);
+    if (!ret)
+    {
+        return false;
+    }
+
     json jOut = json::parse(resp);
     printf("%s\n", jOut.dump(4).c_str());
     if (jOut.is_discarded())
