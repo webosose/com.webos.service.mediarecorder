@@ -30,7 +30,7 @@ class ResourceRequestor;
 }
 
 class RecordPipeline;
-class RecordService : public LS::Handle
+class RecordPipelineService : public LS::Handle
 {
     using mainloop          = std::unique_ptr<GMainLoop, void (*)(GMainLoop *)>;
     mainloop main_loop_ptr_ = {g_main_loop_new(nullptr, false), g_main_loop_unref};
@@ -39,12 +39,12 @@ public:
     void Notify(const gint notification, const gint64 numValue, const gchar *strValue,
                 void *payload = nullptr);
 
-    RecordService(const char *service_name);
+    RecordPipelineService(const char *service_name);
 
-    RecordService(RecordService const &)            = delete;
-    RecordService(RecordService &&)                 = delete;
-    RecordService &operator=(RecordService const &) = delete;
-    RecordService &operator=(RecordService &&)      = delete;
+    RecordPipelineService(RecordPipelineService const &)            = delete;
+    RecordPipelineService(RecordPipelineService &&)                 = delete;
+    RecordPipelineService &operator=(RecordPipelineService const &) = delete;
+    RecordPipelineService &operator=(RecordPipelineService &&)      = delete;
 
     bool start(LSMessage &message);
     bool stop(LSMessage &message);
@@ -64,6 +64,6 @@ private:
     bool isLoaded_ = false;
 };
 
-std::string parseRecordServiceName(int argc, char *argv[]) noexcept;
+std::string parseRecordPipelineServiceName(int argc, char *argv[]) noexcept;
 
 #endif // RECORD_SERVICE_H_

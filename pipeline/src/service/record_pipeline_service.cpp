@@ -14,8 +14,8 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#define LOG_TAG "RecordService"
-#include "record_service.h"
+#define LOG_TAG "RecordPipelineService"
+#include "record_pipeline_service.h"
 #include "glog.h"
 #include <pbnjson.hpp>
 #include <string>
@@ -29,14 +29,14 @@
 #include "resourcefacilitator/requestor.h"
 #include "serializer.h"
 
-const char *const SUBSCRIPTION_KEY = "recordService";
+const char *const SUBSCRIPTION_KEY = "RecordPipelineService";
 
-RecordService::RecordService(const char *service_name)
+RecordPipelineService::RecordPipelineService(const char *service_name)
     : LS::Handle(LS::registerService(service_name))
 {
     LOGI("Start : %s", service_name);
 
-    LS_CATEGORY_BEGIN(RecordService, "/")
+    LS_CATEGORY_BEGIN(RecordPipelineService, "/")
     LS_CATEGORY_METHOD(start)
     LS_CATEGORY_METHOD(stop)
     LS_CATEGORY_METHOD(pause)
@@ -53,8 +53,8 @@ RecordService::RecordService(const char *service_name)
     LOGI("end");
 }
 
-void RecordService::Notify(const gint notification, const gint64 numValue, const gchar *strValue,
-                           void *payload)
+void RecordPipelineService::Notify(const gint notification, const gint64 numValue,
+                                   const gchar *strValue, void *payload)
 {
     parser::Composer composer;
     base::media_info_t mediaInfo = {media_id_};
@@ -163,7 +163,7 @@ void RecordService::Notify(const gint notification, const gint64 numValue, const
     }
 }
 
-bool RecordService::start(LSMessage &message)
+bool RecordPipelineService::start(LSMessage &message)
 {
     jvalue_ref json_outobj = jobject_create();
     auto *payload          = LSMessageGetPayload(&message);
@@ -207,7 +207,7 @@ bool RecordService::start(LSMessage &message)
     return true;
 }
 
-bool RecordService::stop(LSMessage &message)
+bool RecordPipelineService::stop(LSMessage &message)
 {
     bool ret               = false;
     jvalue_ref json_outobj = jobject_create();
@@ -247,7 +247,7 @@ bool RecordService::stop(LSMessage &message)
     return true;
 }
 
-bool RecordService::pause(LSMessage &message)
+bool RecordPipelineService::pause(LSMessage &message)
 {
     jvalue_ref json_outobj = jobject_create();
     auto *payload          = LSMessageGetPayload(&message);
@@ -272,7 +272,7 @@ bool RecordService::pause(LSMessage &message)
     return true;
 }
 
-bool RecordService::resume(LSMessage &message)
+bool RecordPipelineService::resume(LSMessage &message)
 {
     jvalue_ref json_outobj = jobject_create();
     auto *payload          = LSMessageGetPayload(&message);
@@ -297,7 +297,7 @@ bool RecordService::resume(LSMessage &message)
     return true;
 }
 
-bool RecordService::subscribe(LSMessage &message)
+bool RecordPipelineService::subscribe(LSMessage &message)
 {
     LOGI("start");
     LSError error;
@@ -319,11 +319,11 @@ bool RecordService::subscribe(LSMessage &message)
     return ret;
 }
 
-void RecordService::LoadCommon()
+void RecordPipelineService::LoadCommon()
 {
-    recorder_->RegisterCbFunction(std::bind(&RecordService::Notify, this, std::placeholders::_1,
-                                            std::placeholders::_2, std::placeholders::_3,
-                                            std::placeholders::_4));
+    recorder_->RegisterCbFunction(std::bind(&RecordPipelineService::Notify, this,
+                                            std::placeholders::_1, std::placeholders::_2,
+                                            std::placeholders::_3, std::placeholders::_4));
 
     if (resourceRequestor_)
     {
@@ -338,10 +338,10 @@ void RecordService::LoadCommon()
     }
 }
 
-bool RecordService::AcquireResources(const base::source_info_t &sourceInfo,
-                                     const std::string &display_mode, uint32_t display_path)
+bool RecordPipelineService::AcquireResources(const base::source_info_t &sourceInfo,
+                                             const std::string &display_mode, uint32_t display_path)
 {
-    LOGI("RecordService::AcquireResources");
+    LOGI("RecordPipelineService::AcquireResources");
     resource::PortResource_t resourceMMap;
 
     if (resourceRequestor_)
@@ -362,7 +362,7 @@ bool RecordService::AcquireResources(const base::source_info_t &sourceInfo,
     return true;
 }
 
-std::string parseRecordServiceName(int argc, char *argv[]) noexcept
+std::string parseRecordPipelineServiceName(int argc, char *argv[]) noexcept
 {
     int c;
     std::string serviceName;
@@ -395,12 +395,12 @@ int main(int argc, char *argv[])
     LOGI("start");
     try
     {
-        std::string serviceName = parseRecordServiceName(argc, argv);
+        std::string serviceName = parseRecordPipelineServiceName(argc, argv);
         if (serviceName.empty())
         {
             return 1;
         }
-        RecordService RecordServiceInstance(serviceName.c_str());
+        RecordPipelineService RecordPipelineServiceInstance(serviceName.c_str());
     }
     catch (...)
     {

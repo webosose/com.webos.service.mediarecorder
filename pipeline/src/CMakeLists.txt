@@ -60,7 +60,7 @@ include_directories(.)
 include_directories(base)
 include_directories(log)
 include_directories(parser)
-include_directories(recordservice)
+include_directories(service)
 include_directories(recordpipeline)
 include_directories(pipelinefactory)
 
@@ -86,7 +86,7 @@ set(G-RECORD-PIPELINE_SRC
     parser/parser.cpp
     parser/serializer.cpp
     log/glog.cpp
-    recordservice/record_service.cpp
+    service/record_pipeline_service.cpp
     resourcefacilitator/requestor.cpp
     )
 
