@@ -82,3 +82,5 @@ endif()
 
 add_subdirectory(tests)
 add_subdirectory(pipeline)
+add_subdirectory(bufferencoder)
+
