@@ -40,7 +40,12 @@ pkg_check_modules(LUNASERVICE luna-service2 REQUIRED)
 include_directories(${LUNASERVICE_INCLUDE_DIRS})
 link_directories(${LUNASERVICE_LIBRARY_DIRS})
 
-pkg_check_modules(PBNJSON pbnjson_cpp REQUIRED)
+option(WEBOS_CLANG_BUILD "Build with clang" OFF)
+if(${WEBOS_CLANG_BUILD})
+  pkg_check_modules(PBNJSON pbnjson_cpp_clang REQUIRED)
+else()
+  pkg_check_modules(PBNJSON pbnjson_cpp REQUIRED)
+endif()
 include_directories(${PBNJSON_INCLUDE_DIRS})
 link_directories(${PBNJSON_LIBRARY_DIRS})
 

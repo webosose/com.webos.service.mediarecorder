@@ -39,12 +39,5 @@ add_custom_target(show_headers SOURCES ${HEADERS})
 
 find_package(PkgConfig REQUIRED)
 
-pkg_check_modules(MEDIA_RESOURE_CALCULATOR media-resource-calculator REQUIRED)
-set(MEDIA_RESOURE_CALCULATOR_INCLUDE_DIRS ${MEDIA_RESOURE_CALCULATOR_INCLUDE_DIRS})
-set(MEDIA_RESOURE_CALCULATOR_LIBRARIES ${MEDIA_RESOURE_CALCULATOR_LIBRARIES})
-
-include_directories(${MEDIA_RESOURE_CALCULATOR_INCLUDE_DIRS})
-link_directories(${MEDIA_RESOURE_CALCULATOR_LIBRARIES})
-
 add_subdirectory(src)
 add_subdirectory(files)
