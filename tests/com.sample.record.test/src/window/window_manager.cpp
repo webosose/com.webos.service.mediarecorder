@@ -13,9 +13,9 @@ bool WindowManager::initialize()
 {
     foreign.initialize();
     initWaylandEGLSurface();
-    adjustVideoRatio();
     initEgl();
 
+    adjustVideoRatio();
     return true;
 }
 
@@ -170,6 +170,7 @@ bool WindowManager::initEgl()
                                                 (EGLNativeWindowType)(surface.native), NULL);
 
     eglMakeCurrent(eglData.eglDisplay, surface.eglSurface, surface.eglSurface, eglData.eglContext);
+    eglSwapBuffers(eglGetCurrentDisplay(), eglGetCurrentSurface(EGL_READ));
 
     return true;
 }
@@ -193,10 +194,15 @@ void WindowManager::setExporterRegion(int e, wl_Rect &rect)
     struct wl_region *region_src = foreign.createRegion(0, 0, 1920, 1080); // don't care
     struct wl_region *region_dst = foreign.createRegion(rect.x, rect.y, rect.w, rect.h);
     exporter[e].setRegion(region_src, region_dst);
+
+    foreign.destroyRegion(region_src);
+    foreign.destroyRegion(region_dst);
 }
 
 bool WindowManager::adjustVideoRatio()
 {
+    DEBUG_LOG("%dx%d", appParm.width, appParm.height);
+
     // Camera Play
     // adjust video ratio
     int h = 720;
@@ -218,6 +224,10 @@ bool WindowManager::adjustVideoRatio()
     struct wl_region *region_dst2 = foreign.createRegion(x + w, y, w / 2, h / 2);
     exporter[1].setRegion(region_src, region_dst2);
     orgRect[1] = {x + w, y, w / 2, h / 2};
+
+    foreign.destroyRegion(region_src);
+    foreign.destroyRegion(region_dst1);
+    foreign.destroyRegion(region_dst2);
 
     return true;
 }
