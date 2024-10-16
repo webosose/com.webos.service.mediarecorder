@@ -17,14 +17,15 @@
 #ifndef BUFFER_ENCODER_H_
 #define BUFFER_ENCODER_H_
 
-#include "glog.h"
-#include "message.h"
+#define LOG_TAG "BufferEncoder"
+#include "log.h"
 #include <chrono>
+#include <functional>
 #include <gst/gst.h>
 
 using namespace std;
 
-namespace mrp
+namespace mrf
 {
 
 /**
@@ -162,7 +163,7 @@ public:
     using BufferCallback =
         std::function<void(const uint8_t *data, size_t size, uint64_t timestamp, bool is_keyframe)>;
 
-    bool Initialize(const mrp::EncoderConfig *config_data, BufferCallback buffer_callback);
+    bool Initialize(const mrf::EncoderConfig *config_data, BufferCallback buffer_callback);
     void Destroy();
     bool EncodeBuffer(const uint8_t *yBuf, size_t ySize, const uint8_t *uBuf, size_t uSize,
                       const uint8_t *vBuf, size_t vSize, uint64_t bufferTimestamp,
@@ -202,6 +203,6 @@ private:
     BufferCallback buffer_callback_;
 };
 
-} // namespace mrp
+} // namespace mrf
 
 #endif // BUFFER_ENCODER_H_

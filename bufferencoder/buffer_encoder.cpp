@@ -33,7 +33,7 @@
 
 #include <pbnjson.hpp>
 
-namespace mrp
+namespace mrf
 {
 
 BufferEncoder::BufferEncoder()
@@ -46,14 +46,14 @@ BufferEncoder::BufferEncoder()
 
 BufferEncoder::~BufferEncoder() { Destroy(); }
 
-bool BufferEncoder::Initialize(const mrp::EncoderConfig *config_data,
+bool BufferEncoder::Initialize(const mrf::EncoderConfig *config_data,
                                BufferCallback buffer_callback)
 {
-    LOGI(" ");
+    PLOGI(" ");
     buffer_callback_ = buffer_callback;
     if (!CreatePipeline(config_data))
     {
-        LOGE("CreatePipeline Failed");
+        PLOGE("CreatePipeline Failed");
         return false;
     }
     bitrate_ = 0;
@@ -75,7 +75,7 @@ bool BufferEncoder::EncodeBuffer(const uint8_t *yBuf, size_t ySize, const uint8_
 {
     if (!pipeline_)
     {
-        LOGE("Pipeline is null");
+        PLOGE("Pipeline is null");
         return false;
     }
 
@@ -83,7 +83,7 @@ bool BufferEncoder::EncodeBuffer(const uint8_t *yBuf, size_t ySize, const uint8_
     guint8 *feedBuffer = (guint8 *)g_malloc(bufferSize);
     if (feedBuffer == NULL)
     {
-        LOGE("memory allocation error!!!!!");
+        PLOGE("memory allocation error!!!!!");
         return false;
     }
 
@@ -94,14 +94,14 @@ bool BufferEncoder::EncodeBuffer(const uint8_t *yBuf, size_t ySize, const uint8_
     GstBuffer *gstBuffer = gst_buffer_new_wrapped(feedBuffer, bufferSize);
     if (!gstBuffer)
     {
-        LOGE("Buffer wrapping error");
+        PLOGE("Buffer wrapping error");
         return false;
     }
 
     GstFlowReturn gstReturn = gst_app_src_push_buffer((GstAppSrc *)source_, gstBuffer);
     if (gstReturn < GST_FLOW_OK)
     {
-        LOGE("gst_app_src_push_buffer errCode[ %d ]", gstReturn);
+        PLOGE("gst_app_src_push_buffer errCode[ %d ]", gstReturn);
         return false;
     }
     return true;
@@ -109,7 +109,7 @@ bool BufferEncoder::EncodeBuffer(const uint8_t *yBuf, size_t ySize, const uint8_
 
 bool BufferEncoder::UpdateEncodingParams(uint32_t bitrate, uint32_t framerate)
 {
-    LOGD(": bitrate=%d, framerate=%d", bitrate, framerate);
+    PLOGD(": bitrate=%d, framerate=%d", bitrate, framerate);
 
     if (encoder_ && bitrate > 0 && bitrate_ != bitrate)
     {
@@ -127,32 +127,32 @@ bool BufferEncoder::UpdateEncodingParams(uint32_t bitrate, uint32_t framerate)
 
 bool BufferEncoder::CreateEncoder(VideoCodecProfile profile)
 {
-    LOGD(" profile: %d", profile);
+    PLOGD(" profile: %d", profile);
 
     if (profile >= H264PROFILE_MIN && profile <= H264PROFILE_MAX)
     {
 #if defined(GST_V4L2_ENCODER)
         encoder_ = gst_element_factory_make("v4l2h264enc", "encoder");
-        LOGD("selected. encoder is v4l2h264enc");
+        PLOGD("selected. encoder is v4l2h264enc");
 #else
         encoder_ = gst_element_factory_make("omxh264enc", "encoder");
-        LOGD("selected. encoder is omxh264enc");
+        PLOGD("selected. encoder is omxh264enc");
 #endif
     }
     else if (profile >= VP8PROFILE_MIN && profile <= VP8PROFILE_MAX)
     {
         encoder_ = gst_element_factory_make("omxvp8enc", "encoder");
-        LOGD("selected. encoder is omxvp8enc");
+        PLOGD("selected. encoder is omxvp8enc");
     }
     else
     {
-        LOGE(": Unsupported Codedc");
+        PLOGE(": Unsupported Codedc");
         return false;
     }
 
     if (!encoder_)
     {
-        LOGE("encoder_ element creation failed.");
+        PLOGE("encoder_ element creation failed.");
         return false;
     }
     return true;
@@ -163,7 +163,7 @@ bool BufferEncoder::CreateSink()
     sink_ = gst_element_factory_make("appsink", "sink");
     if (!sink_)
     {
-        LOGE("sink_ element creation failed.");
+        PLOGE("sink_ element creation failed.");
         return false;
     }
     g_object_set(G_OBJECT(sink_), "emit-signals", TRUE, "sync", FALSE, NULL);
@@ -174,12 +174,12 @@ bool BufferEncoder::CreateSink()
 
 bool BufferEncoder::LinkElements(const EncoderConfig *configData)
 {
-    LOGD(": width: %d, height: %d", configData->width, configData->height);
+    PLOGD(": width: %d, height: %d", configData->width, configData->height);
 
     filter_YUY2_ = gst_element_factory_make("capsfilter", "filter-YUY2");
     if (!filter_YUY2_)
     {
-        LOGE("filter_YUY2_(%p) Failed", filter_YUY2_);
+        PLOGE("filter_YUY2_(%p) Failed", filter_YUY2_);
         return false;
     }
 
@@ -193,7 +193,7 @@ bool BufferEncoder::LinkElements(const EncoderConfig *configData)
     filter_H264_ = gst_element_factory_make("capsfilter", "filter-h264");
     if (!filter_H264_)
     {
-        LOGE("filter_H264_ element creation failed.");
+        PLOGE("filter_H264_ element creation failed.");
         return false;
     }
     caps_H264_ = gst_caps_new_simple("video/x-h264", "level", G_TYPE_STRING, "4", NULL);
@@ -203,7 +203,7 @@ bool BufferEncoder::LinkElements(const EncoderConfig *configData)
     filter_NV12_ = gst_element_factory_make("capsfilter", "filter-NV");
     if (!filter_NV12_)
     {
-        LOGE("filter_ element creation failed.");
+        PLOGE("filter_ element creation failed.");
         return false;
     }
 
@@ -215,14 +215,14 @@ bool BufferEncoder::LinkElements(const EncoderConfig *configData)
     converter_ = gst_element_factory_make("videoconvert", "converted");
     if (!converter_)
     {
-        LOGE("converter_(%p) Failed", converter_);
+        PLOGE("converter_(%p) Failed", converter_);
         return false;
     }
 
     parse_ = gst_element_factory_make("rawvideoparse", "parser");
     if (!parse_)
     {
-        LOGE("parse_(%p) Failed", parse_);
+        PLOGE("parse_(%p) Failed", parse_);
         return false;
     }
 
@@ -248,50 +248,50 @@ bool BufferEncoder::LinkElements(const EncoderConfig *configData)
 
     if (!gst_element_link(source_, filter_YUY2_))
     {
-        LOGE("Linkerror - source_ & filter_YUY2");
+        PLOGE("Linkerror - source_ & filter_YUY2");
         return false;
     }
 
     if (!gst_element_link(filter_YUY2_, parse_))
     {
-        LOGE("Link error - filter_YUY2 & converter_");
+        PLOGE("Link error - filter_YUY2 & converter_");
         return false;
     }
 
     if (!gst_element_link(parse_, converter_))
     {
-        LOGE("Link error - parse_ & converter_");
+        PLOGE("Link error - parse_ & converter_");
         return false;
     }
 
 #if defined(GST_V4L2_ENCODER)
     if (!gst_element_link(converter_, encoder_))
     {
-        LOGE("Link error - converter_ & encoder_");
+        PLOGE("Link error - converter_ & encoder_");
         return false;
     }
     if (!gst_element_link(encoder_, filter_H264_))
     {
-        LOGE("Link error - encoder_ & filter_H264_");
+        PLOGE("Link error - encoder_ & filter_H264_");
         return false;
     }
 #else
 #if defined(USE_NV12)
     if (!gst_element_link(converter_, filter_NV12_))
     {
-        LOGE("Link error - converter_ & filter_NV12_");
+        PLOGE("Link error - converter_ & filter_NV12_");
         return false;
     }
 
     if (!gst_element_link(filter_NV12_, encoder_))
     {
-        LOGE("Link error - filter_NV12_ & encoder_");
+        PLOGE("Link error - filter_NV12_ & encoder_");
         return false;
     }
 #else
     if (!gst_element_link(converter_, encoder_))
     {
-        LOGE("Link error - converter_ & encoder_");
+        PLOGE("Link error - converter_ & encoder_");
         return false;
     }
 #endif
@@ -300,13 +300,13 @@ bool BufferEncoder::LinkElements(const EncoderConfig *configData)
 #if defined(GST_V4L2_ENCODER)
     if (!gst_element_link(filter_H264_, sink_))
     {
-        LOGE("Link error - filter_H264_ & sink_");
+        PLOGE("Link error - filter_H264_ & sink_");
         return false;
     }
 #else
     if (!gst_element_link(encoder_, sink_))
     {
-        LOGE("Link error - encoder_ & sink_");
+        PLOGE("Link error - encoder_ & sink_");
         return false;
     }
 #endif
@@ -318,8 +318,8 @@ gboolean BufferEncoder::HandleBusMessage(GstBus *bus_, GstMessage *message, gpoi
     GstMessageType messageType = GST_MESSAGE_TYPE(message);
     if (messageType != GST_MESSAGE_QOS && messageType != GST_MESSAGE_TAG)
     {
-        LOGD("Element[ %s ][ %d ][ %s ]", GST_MESSAGE_SRC_NAME(message), messageType,
-             gst_message_type_get_name(messageType));
+        PLOGD("Element[ %s ][ %d ][ %s ]", GST_MESSAGE_SRC_NAME(message), messageType,
+              gst_message_type_get_name(messageType));
     }
     return true;
 }
@@ -330,18 +330,18 @@ bool BufferEncoder::CreatePipeline(const EncoderConfig *configData)
 
     gst_init(NULL, NULL);
     gst_pb_utils_init();
-    LOGI(" ");
+    PLOGI(" ");
     pipeline_ = gst_pipeline_new("video-encoder");
     if (!pipeline_)
     {
-        LOGE("Cannot create encoder pipeline!");
+        PLOGE("Cannot create encoder pipeline!");
         return false;
     }
 
     source_ = gst_element_factory_make("appsrc", "app-source");
     if (!source_)
     {
-        LOGE("source_ element creation failed.");
+        PLOGE("source_ element creation failed.");
         return false;
     }
 
@@ -350,19 +350,19 @@ bool BufferEncoder::CreatePipeline(const EncoderConfig *configData)
 
     if (!CreateEncoder(configData->profile))
     {
-        LOGE("Encoder creation failed !!!");
+        PLOGE("Encoder creation failed !!!");
         return false;
     }
 
     if (!CreateSink())
     {
-        LOGE("Sink creation failed !!!");
+        PLOGE("Sink creation failed !!!");
         return false;
     }
 
     if (!LinkElements(configData))
     {
-        LOGE("element linking failed !!!");
+        PLOGE("element linking failed !!!");
         return false;
     }
 
@@ -390,7 +390,7 @@ GstFlowReturn BufferEncoder::OnEncodedBuffer(GstElement *elt, gpointer *data)
 
         if (!map_info.data || map_info.size == 0)
         {
-            LOGD(": Empty buffer received");
+            PLOGD(": Empty buffer received");
             gst_buffer_unmap(buffer, &map_info);
             gst_sample_unref(sample);
             return GST_FLOW_OK;
@@ -412,14 +412,14 @@ GstFlowReturn BufferEncoder::OnEncodedBuffer(GstElement *elt, gpointer *data)
         if (time_past >= std::chrono::seconds(1))
         {
             encoder->current_seconds_++;
-            LOGI(": Encoder @ %d secs => %d fps", encoder->current_seconds_,
-                 encoder->buffers_per_sec_);
+            PLOGI(": Encoder @ %d secs => %d fps", encoder->current_seconds_,
+                  encoder->buffers_per_sec_);
             encoder->start_time_      = std::chrono::system_clock::now();
             encoder->buffers_per_sec_ = 0;
         }
 
         uint64_t timestamp = GST_BUFFER_TIMESTAMP(buffer);
-        LOGI("OnEncodedBuffer: Buffer ready, calling MCIL::GstVideoEncoder. --#");
+        PLOGD("OnEncodedBuffer: Buffer ready, calling MCIL::GstVideoEncoder. --#");
         encoder->buffer_callback_(map_info.data, map_info.size, timestamp, is_keyframe);
 
         gst_buffer_unmap(buffer, &map_info);
@@ -430,10 +430,10 @@ GstFlowReturn BufferEncoder::OnEncodedBuffer(GstElement *elt, gpointer *data)
 
 void BufferEncoder::SetGstreamerDebug()
 {
-    pbnjson::JValue parsed = pbnjson::JDomParser::fromFile("/etc/g-record-pipeline/gst_debug.conf");
+    pbnjson::JValue parsed = pbnjson::JDomParser::fromFile("/etc/gst-video-encoder/gst_debug.conf");
     if (!parsed.isObject())
     {
-        LOGE("Gst debug file parsing error");
+        PLOGE("Gst debug file parsing error");
     }
 
     pbnjson::JValue debug = parsed["gst_debug"];
@@ -451,4 +451,4 @@ void BufferEncoder::SetGstreamerDebug()
             setenv(kDebugDot, debug[i][kDebugDot].asString().c_str(), 1);
     }
 }
-} // namespace mrp
+} // namespace mrf

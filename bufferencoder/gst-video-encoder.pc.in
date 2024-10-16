@@ -17,8 +17,8 @@
 libdir=@WEBOS_INSTALL_LIBDIR@
 includedir=@WEBOS_INSTALL_INCLUDEDIR@
 
-Name: @CMAKE_PROJECT_NAME@
-Description: @WEBOS_PROJECT_SUMMARY@
+Name: gst-video-encoder
+Description: buffer encoder
 Version: @WEBOS_COMPONENT_VERSION@
-Libs: -L${libdir} -lbuffer-encoder
-Cflags: -I${includedir}/mrp
+Libs: -L${libdir} -lgst-video-encoder
+Cflags: -I${includedir}/gst-video-encoder
