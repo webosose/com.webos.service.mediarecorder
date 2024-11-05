@@ -63,10 +63,11 @@ set(GSTAPP_LIB gstapp-1.0)
 set(BUFFER_ENCODER_LIB buffer-encoder)
 
 if(USE_RPI)
-    add_definitions(-DUSE_RPI)
+    add_definitions(-DGST_V4L2_ENCODER)
 endif()
-if(USE_SAMSUNG)
-    add_definitions(-DUSE_SAMSUNG)
+
+if(USE_NV12)
+    add_definitions(-DUSE_NV12)
 endif()
 
 include_directories(${CMAKE_SOURCE_DIR}/pipeline/src/base)

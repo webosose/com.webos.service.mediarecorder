@@ -22,14 +22,6 @@
 #include <chrono>
 #include <gst/gst.h>
 
-#ifdef USE_RPI
-#define GST_V4L2_ENCODER
-#endif
-
-#ifndef USE_SAMSUNG
-#define USE_NV12
-#endif
-
 using namespace std;
 
 namespace mrp
@@ -192,23 +184,15 @@ private:
     GstElement *pipeline_    = nullptr;
     GstElement *source_      = nullptr;
     GstElement *filter_YUY2_ = nullptr;
-#if defined(GST_V4L2_ENCODER)
     GstElement *filter_H264_ = nullptr;
-#endif
     GstElement *parse_       = nullptr;
     GstElement *converter_   = nullptr;
-#if defined(USE_NV12) && !defined(GST_V4L2_ENCODER)
     GstElement *filter_NV12_ = nullptr;
-#endif
     GstElement *encoder_     = nullptr;
     GstElement *sink_        = nullptr;
     GstCaps *caps_YUY2_      = nullptr;
-#if defined(USE_NV12) && !defined(GST_V4L2_ENCODER)
     GstCaps *caps_NV12_      = nullptr;
-#endif
-#if defined(GST_V4L2_ENCODER)
     GstCaps *caps_H264_      = nullptr;
-#endif
     uint32_t bitrate_        = 0;
 
     std::chrono::time_point<std::chrono::system_clock> start_time_;

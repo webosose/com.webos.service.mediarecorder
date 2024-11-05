@@ -36,7 +36,13 @@
 namespace mrp
 {
 
-BufferEncoder::BufferEncoder() {}
+BufferEncoder::BufferEncoder()
+{
+    filter_H264_ = nullptr;
+    caps_H264_   = nullptr;
+    filter_NV12_ = nullptr;
+    caps_NV12_   = nullptr;
+}
 
 BufferEncoder::~BufferEncoder() { Destroy(); }
 
