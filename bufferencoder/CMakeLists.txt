@@ -60,28 +60,25 @@ endif (PMLOGLIB_FOUND)
 
 set(GSTAPP_LIB gstapp-1.0)
 
-set(BUFFER_ENCODER_LIB buffer-encoder)
+set(BUFFER_ENCODER_LIB gst-video-encoder)
 
 if(USE_RPI)
-    add_definitions(-DUSE_RPI)
-endif()
-if(USE_SAMSUNG)
-    add_definitions(-DUSE_SAMSUNG)
+    add_definitions(-DGST_V4L2_ENCODER)
 endif()
 
-include_directories(${CMAKE_SOURCE_DIR}/pipeline/src/base)
-include_directories(${CMAKE_SOURCE_DIR}/pipeline/src/log)
+if(USE_NV12)
+    add_definitions(-DUSE_NV12)
+endif()
+
+include_directories(${CMAKE_SOURCE_DIR}/include)
 
 set(BUFFER_ENCODER_HEADERS
     buffer_encoder.h
-    ${CMAKE_SOURCE_DIR}/pipeline/src/base/base.h
-    ${CMAKE_SOURCE_DIR}/pipeline/src/base/message.h
-    ${CMAKE_SOURCE_DIR}/pipeline/src/log/glog.h
+    ${CMAKE_SOURCE_DIR}/include/log.h
 )
 
 set(BUFFER_ENCODER_SRC
     buffer_encoder.cpp
-    ${CMAKE_SOURCE_DIR}/pipeline/src/log/glog.cpp
 )
 
 set(BUFFER_ENCODER_LIBRARIES
@@ -103,13 +100,13 @@ set_target_properties(${BUFFER_ENCODER_LIB} PROPERTIES VERSION 1.0 SOVERSION 1)
 target_link_libraries(${BUFFER_ENCODER_LIB} ${BUFFER_ENCODER_LIBRARIES})
 
 install(TARGETS ${BUFFER_ENCODER_LIB} DESTINATION ${WEBOS_INSTALL_LIBDIR})
-install(FILES ${BUFFER_ENCODER_HEADERS} DESTINATION ${WEBOS_INSTALL_INCLUDEDIR}/mrp)
+install(FILES ${BUFFER_ENCODER_HEADERS} DESTINATION ${WEBOS_INSTALL_INCLUDEDIR}/gst-video-encoder)
 
-#install buffer-encoder.pc file
-configure_file(buffer-encoder.pc.in ${CMAKE_BINARY_DIR}/buffer-encoder.pc @ONLY)
-install(FILES ${CMAKE_BINARY_DIR}/buffer-encoder.pc DESTINATION share/pkgconfig)
+#install gst-video-encoder.pc file
+configure_file(gst-video-encoder.pc.in ${CMAKE_BINARY_DIR}/gst-video-encoder.pc @ONLY)
+install(FILES ${CMAKE_BINARY_DIR}/gst-video-encoder.pc DESTINATION share/pkgconfig)
 
 #use gst debug file
 message(STATUS "Using gst debug file")
-install(FILES ${CMAKE_SOURCE_DIR}/bufferencoder/gst_debug.conf DESTINATION /etc/g-record-pipeline)
+install(FILES gst_debug.conf DESTINATION /etc/gst-video-encoder)
 
