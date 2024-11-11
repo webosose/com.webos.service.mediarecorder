@@ -62,7 +62,7 @@ set(GSTAPP_LIB gstapp-1.0)
 
 set(BUFFER_ENCODER_LIB gst-video-encoder)
 
-if(USE_RPI)
+if(GST_V4L2_ENCODER)
     add_definitions(-DGST_V4L2_ENCODER)
 endif()
 

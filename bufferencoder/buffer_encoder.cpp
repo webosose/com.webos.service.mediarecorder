@@ -50,7 +50,7 @@ bool BufferEncoder::Initialize(const mrf::EncoderConfig *config_data,
                                BufferCallback buffer_callback)
 {
     PLOGI(" ");
-    buffer_callback_ = buffer_callback;
+    buffer_callback_ = std::move(buffer_callback);
     if (!CreatePipeline(config_data))
     {
         PLOGE("CreatePipeline Failed");
