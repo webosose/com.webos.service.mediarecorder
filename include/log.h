@@ -43,8 +43,8 @@ static inline PmLogContext getRecorderLunaPmLogContext()
  */
 #ifndef PLOGI
 #define PLOGI(FORMAT__, ...)                                                                       \
-    PmLogInfo(getRecorderLunaPmLogContext(), LOG_TAG, 0, "[%d] %s():%d " FORMAT__, gettid(),       \
-              __FUNCTION__, __LINE__, ##__VA_ARGS__)
+    PmLogInfo(getRecorderLunaPmLogContext(), LOG_TAG, 0, "[%d:%d][%s():%d] " FORMAT__, getpid(),   \
+              gettid(), __FUNCTION__, __LINE__, ##__VA_ARGS__)
 #endif
 
 /*
@@ -52,8 +52,8 @@ static inline PmLogContext getRecorderLunaPmLogContext()
  */
 #ifndef PLOGW
 #define PLOGW(FORMAT__, ...)                                                                       \
-    PmLogWarning(getRecorderLunaPmLogContext(), LOG_TAG, 0, "%s():%d " FORMAT__, __FUNCTION__,     \
-                 __LINE__, ##__VA_ARGS__)
+    PmLogWarning(getRecorderLunaPmLogContext(), LOG_TAG, 0, "[%d:%d][%s():%d] " FORMAT__,          \
+                 getpid(), gettid(), __FUNCTION__, __LINE__, ##__VA_ARGS__)
 #endif
 
 /*
@@ -61,8 +61,8 @@ static inline PmLogContext getRecorderLunaPmLogContext()
  */
 #ifndef PLOGE
 #define PLOGE(FORMAT__, ...)                                                                       \
-    PmLogError(getRecorderLunaPmLogContext(), LOG_TAG, 0, "%s():%d " FORMAT__, __FUNCTION__,       \
-               __LINE__, ##__VA_ARGS__)
+    PmLogError(getRecorderLunaPmLogContext(), LOG_TAG, 0, "[%d:%d][%s():%d] " FORMAT__, getpid(),  \
+               gettid(), __FUNCTION__, __LINE__, ##__VA_ARGS__)
 #endif
 
 /*
@@ -70,8 +70,8 @@ static inline PmLogContext getRecorderLunaPmLogContext()
  */
 #ifndef PLOGD
 #define PLOGD(FORMAT__, ...)                                                                       \
-    PmLogDebug(getRecorderLunaPmLogContext(), "[%s:%d]" FORMAT__, __PRETTY_FUNCTION__, __LINE__,   \
-               ##__VA_ARGS__)
+    PmLogDebug(getRecorderLunaPmLogContext(), "[%d:%d][%s():%d] " FORMAT__, getpid(), gettid(),    \
+               __FUNCTION__, __LINE__, ##__VA_ARGS__)
 #endif
 
 #endif /* MEDIARECORDER_SERVICE_LOG_MESSAGES_H_ */

@@ -23,19 +23,20 @@
 PmLogContext GetPmLogContext();
 
 #define LOGI(FORMAT__, ...)                                                                        \
-    PmLogInfo(GetPmLogContext(), "grp", 0, "[%s:%d] " FORMAT__, __PRETTY_FUNCTION__, __LINE__,     \
-              ##__VA_ARGS__)
+    PmLogInfo(GetPmLogContext(), "grp", 0, "[%d:%d][%s:%d] " FORMAT__, getpid(), gettid(),         \
+              __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__)
 
 #define LOGD(FORMAT__, ...)                                                                        \
-    PmLogDebug(GetPmLogContext(), "[%s:%d]" FORMAT__, __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__)
+    PmLogDebug(GetPmLogContext(), "[%d:%d][%s:%d]" FORMAT__, getpid(), gettid(),                   \
+               __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__)
 
 #define LOGE(FORMAT__, ...)                                                                        \
-    PmLogError(GetPmLogContext(), "grp", 0, "[%s:%d] " FORMAT__, __PRETTY_FUNCTION__, __LINE__,    \
-               ##__VA_ARGS__)
+    PmLogError(GetPmLogContext(), "grp", 0, "[%d:%d][%s:%d] " FORMAT__, getpid(), gettid(),        \
+               __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__)
 
 #define LOGW(FORMAT__, ...)                                                                        \
-    PmLogWarning(GetPmLogContext(), "grp", 0, "[%s:%d] " FORMAT__, __PRETTY_FUNCTION__, __LINE__,  \
-                 ##__VA_ARGS__)
+    PmLogWarning(GetPmLogContext(), "grp", 0, "[%d:%d][%s:%d] " FORMAT__, getpid(), gettid(),      \
+                 __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__)
 
 /* Assert print */
 #define GRPASSERT(cond)                                                                            \
