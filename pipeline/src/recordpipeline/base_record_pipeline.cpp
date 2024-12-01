@@ -159,6 +159,15 @@ bool BaseRecordPipeline::unloadImpl()
 
 void BaseRecordPipeline::sendEos()
 {
+    GstState currentState = GST_STATE_NULL;
+    gst_element_get_state(pipeline_, &currentState, nullptr, GST_SECOND);
+    LOGI("state = %s", gst_element_state_get_name(currentState));
+    if (currentState != GST_STATE_PLAYING && currentState != GST_STATE_PAUSED)
+    {
+        LOGW("Invalid state");
+        return;
+    }
+
     LOGI("Send EOS");
     gst_element_send_event(pipeline_, gst_event_new_eos());
 

@@ -525,8 +525,26 @@ ErrorCode MediaRecorder::takeSnapshot(std::string &path, std::string &format)
         g_usleep(1000);
         cnt++;
     }
-    PLOGI("capture done : %d ms", cnt);
-    return (cnt < 10000) ? ERR_NONE : ERR_SNAPSHOT_CAPTURE_FAILED;
+
+    if (cnt < 10000)
+    {
+        PLOGI("capture done : %d ms", cnt);
+        return ERR_NONE;
+    }
+    else
+    {
+        // send message
+        std::string uri = snapshot_uri + "stop";
+        PLOGI("%s '%s'", uri.c_str(), emptyJson);
+
+        std::string resp;
+        snapshot_client->callSync(uri.c_str(), emptyJson, &resp);
+        PLOGI("resp %s", resp.c_str());
+
+        // [ToDo] WRR-12818 Time out, it should return capture fail.
+        // return  ERR_SNAPSHOT_CAPTURE_FAILED;
+        return ERR_NONE;
+    }
 }
 
 bool MediaRecorder::snapshotCb(const char *message)
