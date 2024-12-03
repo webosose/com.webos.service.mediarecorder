@@ -436,6 +436,7 @@ ErrorCode MediaRecorder::stop()
         {
             state = OPEN;
             record_process.reset();
+            record_client.reset();
             return ERR_NONE;
         }
     }
