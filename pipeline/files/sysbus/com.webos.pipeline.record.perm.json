@@ -1,5 +1,5 @@
 {
-    "com.webos.pipeline.*": [
+    "com.webos.pipeline.record.*": [
     ],
     "com.webos.rm.client*": [
     ]

@@ -1,0 +1,13 @@
+{
+    "recordpipeline.resourcemanagement": [
+        "com.webos.rm.client._*/acquireComplete",
+        "com.webos.rm.client._*/policyAction"
+   ],
+    "recordpipeline.operation": [
+        "com.webos.pipeline.record.*/start",
+        "com.webos.pipeline.record.*/stop",
+        "com.webos.pipeline.record.*/pause",
+        "com.webos.pipeline.record.*/resume",
+        "com.webos.pipeline.record.*/subscribe"
+    ]
+}

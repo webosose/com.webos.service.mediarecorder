@@ -313,7 +313,7 @@ ErrorCode MediaRecorder::start()
 
     // Create record pipeline
     std::string guid = GenerateUniqueID()();
-    std::string uid  = "com.webos.pipeline." + guid;
+    std::string uid  = "com.webos.pipeline.record." + guid;
     std::string cmd  = "/usr/sbin/g-record-pipeline -s" + uid;
     record_process   = std::make_unique<Process>(cmd);
 
@@ -470,7 +470,7 @@ ErrorCode MediaRecorder::takeSnapshot(std::string &path, std::string &format)
 
     // Create snapshot pipeline
     std::string guid = GenerateUniqueID()();
-    std::string uid  = "com.webos.pipeline." + guid;
+    std::string uid  = "com.webos.pipeline.record." + guid;
     std::string cmd  = "/usr/sbin/g-record-pipeline -s" + uid;
     Process snapshot_process(cmd);
 

@@ -3,12 +3,13 @@
     "type": "regular",
     "trustLevel" : "oem",
     "allowedNames": [
-        "com.webos.pipeline.*",
+        "com.webos.pipeline.record.*",
         "com.webos.rm.client*"
     ],
     "permissions": [
         {
-            "service":"com.webos.pipeline.*",
+            "service":"com.webos.pipeline.record.*",
+            "inbound" : ["com.webos.service.mediarecorder-*"],
             "outbound": []
         },
         {

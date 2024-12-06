@@ -1,6 +1,6 @@
 {
         "allowedNames": [
-            "com.webos.pipeline.*",
+            "com.webos.pipeline.record.*",
             "com.webos.rm.client*"
         ],
         "recordpipeline.resourcemanagement": ["oem"],

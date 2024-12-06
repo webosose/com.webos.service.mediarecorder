@@ -14,22 +14,22 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-configure_file(sysbus/g-record-pipeline.manifest.json.in sysbus/g-record-pipeline.manifest.json @ONLY)
-configure_file(sysbus/com.webos.g-record-pipeline.role.json.in sysbus/com.webos.g-record-pipeline.role.json @ONLY)
-configure_file(sysbus/com.webos.g-record-pipeline.service.in sysbus/com.webos.g-record-pipeline.service @ONLY)
-configure_file(sysbus/com.webos.g-record-pipeline.api.json sysbus/com.webos.g-record-pipeline.api.json @ONLY)
-configure_file(sysbus/com.webos.g-record-pipeline.perm.json sysbus/com.webos.g-record-pipeline.perm.json @ONLY)
-configure_file(sysbus/com.webos.g-record-pipeline.groups.json sysbus/com.webos.g-record-pipeline.groups.json @ONLY)
+configure_file(sysbus/com.webos.pipeline.record.manifest.json.in sysbus/com.webos.pipeline.record.manifest.json @ONLY)
+configure_file(sysbus/com.webos.pipeline.record.role.json.in sysbus/com.webos.pipeline.record.role.json @ONLY)
+configure_file(sysbus/com.webos.pipeline.record.service.in sysbus/com.webos.pipeline.record.service @ONLY)
+configure_file(sysbus/com.webos.pipeline.record.api.json sysbus/com.webos.pipeline.record.api.json @ONLY)
+configure_file(sysbus/com.webos.pipeline.record.perm.json sysbus/com.webos.pipeline.record.perm.json @ONLY)
+configure_file(sysbus/com.webos.pipeline.record.groups.json sysbus/com.webos.pipeline.record.groups.json @ONLY)
 
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/sysbus/g-record-pipeline.manifest.json
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/sysbus/com.webos.pipeline.record.manifest.json
     DESTINATION /usr/share/luna-service2/manifests.d/)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/sysbus/com.webos.g-record-pipeline.role.json
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/sysbus/com.webos.pipeline.record.role.json
     DESTINATION /usr/share/luna-service2/roles.d/)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/sysbus/com.webos.g-record-pipeline.service
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/sysbus/com.webos.pipeline.record.service
     DESTINATION /usr/share/luna-service2/services.d/)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/sysbus/com.webos.g-record-pipeline.api.json
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/sysbus/com.webos.pipeline.record.api.json
     DESTINATION /usr/share/luna-service2/api-permissions.d/)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/sysbus/com.webos.g-record-pipeline.perm.json
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/sysbus/com.webos.pipeline.record.perm.json
     DESTINATION /usr/share/luna-service2/client-permissions.d/)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/sysbus/com.webos.g-record-pipeline.groups.json
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/sysbus/com.webos.pipeline.record.groups.json
     DESTINATION /usr/share/luna-service2/groups.d/)
