@@ -30,10 +30,8 @@ public:
     bool setSolutions(bool enable);
 
     int handle{0};
-    int key{0};
     std::vector<std::string> captureFileList;
     int preview_fps = 30;
-    std::string mediaId;
     std::string cameraId;
 
     enum State

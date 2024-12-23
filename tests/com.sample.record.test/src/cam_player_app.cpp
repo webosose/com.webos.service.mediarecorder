@@ -18,7 +18,7 @@ using namespace nlohmann;
 
 CustomData appParm = {
     false,   // use UMS
-    "shmem", // memory type (shmem, posixshm, device)
+    "shmem", // memory type (shmem, device)
     "JPEG",  // Image format (JPEG, YUV)
     1280,    // Camera width
     720,     // Camear height
@@ -149,7 +149,7 @@ void CamPlayerApp::printHelp()
     std::cout << "Usage: record_test [OPTION]..." << std::endl;
     std::cout << "Options" << std::endl;
     std::cout << "  -u          use ums" << std::endl;
-    std::cout << "  -m          mode (shmem, posixshm, device)" << std::endl;
+    std::cout << "  -m          mode (shmem, device)" << std::endl;
     std::cout << "  -f          format (JPEG, YUV)" << std::endl;
     std::cout << "  -w          width" << std::endl;
     std::cout << "  -h          height" << std::endl;
@@ -173,6 +173,47 @@ void CamPlayerApp::printOption()
     std::cout << std::endl;
 }
 
+bool CamPlayerApp::startCamera()
+{
+    DEBUG_LOG("state %d", static_cast<int>(mCameraPlayer->state));
+    if (mCameraPlayer->state == MediaState::PLAY)
+    {
+        DEBUG_LOG("invalid state");
+        return false;
+    }
+
+    if (mCameraClient->state == CameraClient::START)
+    {
+        DEBUG_LOG("invalid state");
+        return false;
+    }
+
+    DEBUG_LOG("start");
+
+    bool ret = mCameraClient->getCameraList();
+    DEBUG_LOG("ret=%d", ret);
+    if (!ret)
+    {
+        return false;
+    }
+
+    mCameraClient->open();
+    mCameraClient->setFormat();
+
+    if (appParm.use_start_camera)
+    {
+        mCameraClient->startCamera();
+        loadMedia();
+    }
+    else
+    {
+        mCameraClient->startPreview(mWindowManager->exporter[0].getWindowID());
+    }
+
+    mWindowManager->setRect(0);
+    return true;
+}
+
 /*
 # luna-send -n 1 -f luna://com.webos.media/load '{
     "uri": "camera://com.webos.service.camera2/7010",
@@ -192,54 +233,15 @@ void CamPlayerApp::printOption()
     "type": "camera"
 }'
 */
-bool CamPlayerApp::startCamera()
+void CamPlayerApp::loadMedia()
 {
-    DEBUG_LOG("state %d", static_cast<int>(mCameraPlayer->state));
-    if (mCameraPlayer->state == MediaState::PLAY)
-    {
-        DEBUG_LOG("invalid state");
-        return false;
-    }
-
-    if (mCameraClient->state == CameraClient::START)
-    {
-        DEBUG_LOG("invalid state");
-        return false;
-    }
-
-    DEBUG_LOG("start");
-
-    if (appParm.memType == "shmem" || appParm.memType == "posixshm")
-    {
-        bool ret = mCameraClient->getCameraList();
-        DEBUG_LOG("ret=%d", ret);
-        if (!ret)
-        {
-            return false;
-        }
-
-        mCameraClient->open();
-        mCameraClient->setFormat();
-
-        if (appParm.use_start_camera)
-        {
-            mCameraClient->startCamera();
-        }
-        else
-        {
-            mCameraClient->startPreview(mWindowManager->exporter[0].getWindowID());
-            mWindowManager->setRect(0);
-            return true;
-        }
-    }
-
     std::string image_format = appParm.format;
     if (image_format == "YUV")
     {
         image_format = "YUY2";
     }
 
-    std::string mem_src = std::to_string(mCameraClient->key);
+    std::string mem_src;
     if (appParm.memType == "device")
     {
         mem_src = "/dev/video0"; //[ToDo] Set temporarily.
@@ -257,16 +259,9 @@ bool CamPlayerApp::startCamera()
     option["frameRate"]        = mCameraClient->preview_fps;
     option["memType"]          = appParm.memType;
     option["memSrc"]           = mem_src;
-
-    if (appParm.memType == "posixshm")
-    {
-        option["handle"] = mCameraClient->handle;
-    }
+    option["handle"]           = mCameraClient->handle;
 
     mCameraPlayer->load(option);
-    mWindowManager->setRect(0);
-
-    return true;
 }
 
 void CamPlayerApp::stopCamera()
@@ -286,30 +281,22 @@ void CamPlayerApp::stopCamera()
         }
 
         DEBUG_LOG("start");
-
         mCameraPlayer->unload();
 
-        if (appParm.memType == "shmem" || appParm.memType == "posixshm")
-        {
-            mCameraClient->stopCamera();
-            mCameraClient->close();
-        }
+        mCameraClient->stopCamera();
     }
     else
     {
-
         if (mCameraClient->state == CameraClient::STOP)
         {
             DEBUG_LOG("invalid state");
             return;
         }
 
-        if (appParm.memType == "shmem" || appParm.memType == "posixshm")
-        {
-            mCameraClient->stopPreview();
-            mCameraClient->close();
-        }
+        mCameraClient->stopPreview();
     }
+
+    mCameraClient->close();
 
     mWindowManager->clearRect(0);
 

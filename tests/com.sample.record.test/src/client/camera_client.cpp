@@ -221,11 +221,6 @@ bool CameraClient::startCamera()
 
     json j;
     j["handle"] = handle;
-
-    json params;
-    params["type"]   = (appParm.memType == "shmem") ? "sharedmemory" : appParm.memType;
-    params["source"] = "0";
-    j["params"]      = params;
     DEBUG_LOG("%s '%s'", uri.c_str(), to_string(j).c_str());
 
     std::string resp;
@@ -242,9 +237,6 @@ bool CameraClient::startCamera()
     bool return_value = get_optional<bool>(jOut, returnValueStr.c_str()).value_or(false);
     if (return_value)
     {
-        key = get_optional<int>(jOut, "key").value_or(0);
-        DEBUG_LOG("key : %d\n", key);
-
         state = START;
     }
 
@@ -291,13 +283,8 @@ bool CameraClient::startPreview(const std::string &window_id)
     std::string uri = mUri + __func__;
 
     json j;
-    j["handle"] = handle;
-
-    json params;
-    params["type"]   = (appParm.memType == "shmem") ? "sharedmemory" : appParm.memType;
-    params["source"] = "0";
-    j["params"]      = params;
-    j["windowId"]    = window_id;
+    j["handle"]   = handle;
+    j["windowId"] = window_id;
     DEBUG_LOG("%s '%s'", uri.c_str(), to_string(j).c_str());
 
     std::string resp;
@@ -314,11 +301,6 @@ bool CameraClient::startPreview(const std::string &window_id)
     bool return_value = get_optional<bool>(jOut, returnValueStr.c_str()).value_or(false);
     if (return_value)
     {
-        key = get_optional<int>(jOut, "key").value_or(0);
-        DEBUG_LOG("key : %d\n", key);
-
-        mediaId = get_optional<std::string>(jOut, "mediaId").value_or("");
-        DEBUG_LOG("mediaId = %s", mediaId.c_str());
         state = START;
     }
 
@@ -327,12 +309,6 @@ bool CameraClient::startPreview(const std::string &window_id)
 
 bool CameraClient::stopPreview()
 {
-    if (!key)
-    {
-        DEBUG_LOG("Preview is already stopped");
-        return true;
-    }
-
     bool ret = false;
 
     // send message
@@ -357,7 +333,6 @@ bool CameraClient::stopPreview()
     if (return_value)
     {
         DEBUG_LOG("ok\n");
-        key   = 0;
         state = STOP;
     }
 

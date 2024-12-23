@@ -13,6 +13,7 @@ class MediaPlayer;
 class CamPlayerApp
 {
     bool startCamera();
+    void loadMedia();
     void stopCamera();
     void startCapture();
     void stopCapture();
