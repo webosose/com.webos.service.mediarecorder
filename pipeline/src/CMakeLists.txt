@@ -121,12 +121,15 @@ if(USE_RPI)
   message(STATUS "Using config & debug file for raspberrypi")
   install(FILES recordpipeline/raspberrypi/gst_debug.conf DESTINATION /etc/g-record-pipeline)
   install(FILES recordpipeline/raspberrypi/gst_elements.conf DESTINATION /etc/g-record-pipeline)
+elseif(USE_OMX_VENC)
+  message(STATUS "Using config & debug file for v920")
+  install(FILES recordpipeline/v920/gst_debug.conf DESTINATION /etc/g-record-pipeline)
+  install(FILES recordpipeline/v920/gst_elements.conf DESTINATION /etc/g-record-pipeline)
 # emulator or default
 else()
   message(STATUS "Using config & debug file for software")
   install(FILES recordpipeline/qemux86/gst_debug.conf DESTINATION /etc/g-record-pipeline)
   install(FILES recordpipeline/qemux86/gst_elements.conf DESTINATION /etc/g-record-pipeline)
-
 endif()
 
 install(TARGETS g-record-pipeline DESTINATION ${WEBOS_INSTALL_SBINDIR})
