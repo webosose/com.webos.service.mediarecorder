@@ -426,7 +426,7 @@ ErrorCode MediaRecorder::stop()
     PLOGI("%s '%s'", uri.c_str(), emptyJson);
 
     std::string resp;
-    record_client->callSync(uri.c_str(), emptyJson, &resp);
+    record_client->callSync(uri.c_str(), emptyJson, &resp, 16000);
     PLOGI("resp %s", resp.c_str());
 
     try
